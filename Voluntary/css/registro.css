@@ -4,35 +4,37 @@
     box-sizing: border-box;
 }
 
-body, html {
+html, body {
     height: 100%;
     font-family: 'Montserrat', sans-serif;
+    overflow: hidden; 
     background-image: url('/Voluntary/img/fundo-login-cadastro.png');
     background-size: cover; 
     background-repeat: no-repeat; 
     background-position: center;
-}
+    }
 
-.login-container {
+.registro-container {
     display: flex;
     width: 100%;
-    height: 100vh;
+    height: 100vh; 
+
 }
 
-.login-panel {
+.registro-panel {
     flex-basis: 40%;
     background: linear-gradient(to bottom, hsla(16, 100%, 60%, 0.70), hsla(175, 100%, 49%, 0.70));
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 40px;
+    justify-content: center; 
+    align-items: center;     
+    padding: 20px; 
     color: #0d2a3c;
+    height: 100%; 
 }
-
 .logo-area {
     text-align: center;
-    margin-bottom: 50px;
+    margin-bottom: 30px;
 }
 
 .logo-img {
@@ -41,7 +43,7 @@ body, html {
 }
 
 .logo-area h1 {
-    font-size: 2.5em;
+    font-size: 2.2em;
     font-weight: 700;
     letter-spacing: 2px;
 }
@@ -53,44 +55,46 @@ body, html {
     margin-top: 5px;
 }
 
-.login-form {
+.registro-form {
     width: 100%;
     max-width: 320px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin-top: -30px;
 }
 
-.login-form h2 {
+.registro-form h2 {
     font-weight: 700;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     font-size: 1.2em;
 }
 
 .input-group {
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
-.login-form input, .login-form button {
+.registro-form input,
+.registro-form button {
     width: 100%;
-    padding: 15px 25px;
+    padding: 12px 20px;
     border: none;
     border-radius: 50px;
     font-size: 1em;
     font-family: 'Montserrat', sans-serif;
 }
 
-.login-form input {
+.registro-form input {
     background-color: #004d40;
     color: white;
 }
 
-.login-form input::placeholder {
+.registro-form input::placeholder {
     color: rgba(255, 255, 255, 0.8);
 }
 
-.login-form button {
+.registro-form button {
     background-color: #004d40;
     color: white;
     font-weight: 700;
@@ -99,23 +103,25 @@ body, html {
     margin-top: 10px;
 }
 
-.login-form button:hover {
+.registro-form button:hover {
     background-color: #00695c;
 }
 
 .decorative-panel {
     flex-basis: 60%;
+    height: 100%; /* ocupa tela inteira */
 }
 
 @media (max-width: 768px) {
-    .login-container {
+    .registro-container {
         flex-direction: column;
     }
 
-    .login-panel {
+    .registro-panel {
         flex-basis: 100%;
-        min-height: 100vh;
+        height: 100%; /* ocupa tela toda */
         width: 100%;
+        padding: 20px;
     }
 
     .decorative-panel {
