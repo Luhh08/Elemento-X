@@ -1,0 +1,124 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body, html {
+    height: 100%;
+    font-family: 'Montserrat', sans-serif;
+    background-image: url('/Voluntary/Frontend/img/fundo-login-cadastro.png');
+    background-size: cover; 
+    background-repeat: no-repeat; 
+    background-position: center;
+}
+
+.login-container {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+}
+
+.login-panel {
+    flex-basis: 40%;
+    background: linear-gradient(to bottom, hsla(16, 100%, 60%, 0.70), hsla(175, 100%, 49%, 0.70));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    color: #0d2a3c;
+}
+
+.logo-area {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.logo-img {
+    width: 100px;
+    margin-bottom: 15px;
+}
+
+.logo-area h1 {
+    font-size: 2.5em;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.logo-area p {
+    font-size: 0.9em;
+    letter-spacing: 1.5px;
+    font-weight: 400;
+    margin-top: 5px;
+}
+
+.login-form {
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.login-form h2 {
+    font-weight: 700;
+    margin-bottom: 30px;
+    font-size: 1.2em;
+}
+
+.input-group {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.login-form input, .login-form button {
+    width: 100%;
+    padding: 15px 25px;
+    border: none;
+    border-radius: 50px;
+    font-size: 1em;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.login-form input {
+    background-color: #004d40;
+    color: white;
+}
+
+.login-form input::placeholder {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.login-form button {
+    background-color: #004d40;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+}
+
+.login-form button:hover {
+    background-color: #00695c;
+}
+
+.decorative-panel {
+    flex-basis: 60%;
+}
+
+@media (max-width: 768px) {
+    .login-container {
+        flex-direction: column;
+    }
+
+    .login-panel {
+        flex-basis: 100%;
+        min-height: 100vh;
+        width: 100%;
+    }
+
+    .decorative-panel {
+        display: none;
+    }
+}
