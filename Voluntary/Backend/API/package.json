@@ -1,0 +1,24 @@
+{
+  "name": "elemeto-x",
+  "version": "1.0.0",
+  "description": "Componentes:\r Luiza da Silva - Gerente\r Ana da Luiza - Analista de Requisitos\r Marcelo Henrique - Documentação\r Thalita Kamille - Desenvoldedora\r Ryan Pereira - Desenvolvedor\r Silas Querino - Desenvolvedor",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Luhh08/Elemeto-X.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Luhh08/Elemeto-X/issues"
+  },
+  "homepage": "https://github.com/Luhh08/Elemeto-X#readme",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
