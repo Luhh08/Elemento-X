@@ -1,29 +1,15 @@
 {
-  "name": "elemeto-x",
+  "name": "elemeto-x-main",
   "version": "1.0.0",
-  "description": "Componentes:\r Luiza da Silva - Gerente\r Ana da Luiza - Analista de Requisitos\r Marcelo Henrique - Documentação\r Thalita Kamille - Desenvoldedora\r Ryan Pereira - Desenvolvedor\r Silas Querino - Desenvolvedor",
+  "description": "Componentes: Luiza da Silva - Gerente Ana da Luiza - Analista de Requisitos Marcelo Henrique - Documentação Thalita Kamille - Desenvoldedora Ryan Pereira - Desenvolvedor Silas Querino - Desenvolvedor",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Luhh08/Elemeto-X.git"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
-  "bugs": {
-    "url": "https://github.com/Luhh08/Elemeto-X/issues"
-  },
-  "homepage": "https://github.com/Luhh08/Elemeto-X#readme",
   "dependencies": {
-    "@prisma/client": "^6.16.2",
-    "dotenv": "^17.2.2",
-    "express": "^5.1.0"
-  },
-  "devDependencies": {
-    "prisma": "^6.16.2"
+    "dotenv": "^17.2.2"
   }
 }
