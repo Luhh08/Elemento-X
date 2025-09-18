@@ -28,6 +28,10 @@ form.addEventListener("submit", async (e) => {
       const usuarioCriado = await response.json();
       alert("Usuário criado com sucesso! ID: " + usuarioCriado.id);
       form.reset(); // limpa o formulário
+
+      // 🔹 Redireciona para a página de login
+      window.location.href = "login.html"; // coloque aqui o caminho da sua página de login
+
     } else {
       const erro = await response.json();
       alert("Erro ao criar usuário: " + erro.error);

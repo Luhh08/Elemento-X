@@ -35,8 +35,25 @@
                 
                 
                 <div class="input-group">
-                    <input type="password" id="senha" name="senha" placeholder="Senha" required>
-                </div>
+    <input type="password" id="senha" name="senha" placeholder="Senha" required>
+    </div>
+
+    <script>
+    const senhaInput = document.getElementById("senha");
+
+    const regexSenha = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+=[\]{};':"\\|,.<>/?]).{8,}$/;
+
+    senhaInput.addEventListener("input", () => {
+    if (!regexSenha.test(senhaInput.value)) {
+        senhaInput.setCustomValidity(
+            "A senha deve ter no mínimo 8 caracteres, 1 letra maiúscula, 1 número e 1 caractere especial"
+        );
+    } else {
+        senhaInput.setCustomValidity(""); // limpa a mensagem quando estiver válida
+    }
+});
+    </script>
+
                 <button id="submitBtn" type="submit">REGISTRAR</button>
             </form>
         </div>
