@@ -5,16 +5,16 @@ generator client {
 
 datasource db {
   provider = "mongodb"
-  url      = env("Voluntary/Backend/prisma\bancodedados.db")
+  url      = env("DATABASE_URL")
 }
+// Aqui é uma tabela do banco de dados, chamada de Model
+model Usuario {
 
-model Voluntario {
-
-  id    String @id @default(uuid()) @map("_id") @db.ObjectId 
-  nome String
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  nome    String
   usuario String
-  cpf   Int @unique 
-  email String @unique 
-  senha String 
-
+  email   String @unique
+  cpf     String @unique
+  senha   String
+  
 }

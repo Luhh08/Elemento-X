@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Elemento X - Registro</title>
-    <link rel="stylesheet" href="Voluntary\Frontend\css\registro.css">
+    <link rel="stylesheet" href="css/registro.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
@@ -13,12 +13,12 @@
     <div class="registro-container">
         <div class="registro-panel">
             <header class="logo-area">
-                <img src="/Voluntary/Frontend/img/logo.png" alt="Logo Elemento X" class="logo-img">
+                <img src="img/logo.png" alt="Logo Elemento X" class="logo-img">
                 <h1>ELEMENTO X</h1>
                 <p>PORTAL DE VOLUNTARIADO</p>
             </header>
 
-            <form action="/cadastrar" method="post" class="registro-form">
+            <form class="registro-form">
                 <h2>REGISTRO</h2>
                 <div class="input-group">
                     <input type="text" id="nome" name="nome" placeholder="Nome Completo" required>
@@ -43,6 +43,7 @@
         <div class="decorative-panel">
             </div>
         </div>
+        <script src="scripts/armazenarcadastro.js"></script>
         <script>
             function mascaraCPF(campo) {
               let valor = campo.value.replace(/\D/g, "");

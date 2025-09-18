@@ -8,7 +8,7 @@ html, body {
     height: 100%;
     font-family: 'Montserrat', sans-serif;
     overflow: hidden; 
-    background-image: url('/Voluntary/Frontend/img/fundo-login-cadastro.png');
+    background-image: url('../img/fundo-login-cadastro.png');
     background-size: cover; 
     background-repeat: no-repeat; 
     background-position: center;
