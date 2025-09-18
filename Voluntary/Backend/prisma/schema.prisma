@@ -9,7 +9,6 @@ datasource db {
 }
 // Aqui é uma tabela do banco de dados, chamada de Model
 model Usuario {
-<<<<<<< HEAD
 
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   nome    String
@@ -18,16 +17,4 @@ model Usuario {
   cpf     String @unique
   senha   String
   
-=======
-  // O ID no MongoDB é um ObjectId, então configura desse jeito ai, acho que é um padrão
-  // Segue a estrutura
-  // nome do campo        tipo de dado         configuracoes do campo
-  id    String @id @default(auto()) @map("_id") @db.ObjectId // Vou mostrar o campo de cpf sendo unico, depois tu faz email e senha
-  email String @unique // Acabei de criar um campo chamado CPF que é único na tabela, ou seja, ele não permite cadastrar um cpf igual
-  // Faz ai de email e senha
-  senha String 
-  // dataNascimento DateTime
-  // genero String
-  // tipo String
->>>>>>> a07e1d56e6e678da717f19b22bb5b87e44dcd359
 }
