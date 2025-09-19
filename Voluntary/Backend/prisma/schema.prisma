@@ -12,7 +12,7 @@ model Usuario {
 
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   nome    String
-  usuario String @unique
+  nomeUsuario String @unique
   email   String @unique
   cpf     String @unique
   senha   String
