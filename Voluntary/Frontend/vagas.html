@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vagas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Cal+Sans&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="/Elemeto-X/Voluntary/Frontend/css/vagas.css" rel="stylesheet">
+  </head>
+  <body>
+<header id="section-header" class="site-header">
+    <div class="container header-container">
+        <a href="#" class="logo-link">
+            <h1 class="logo">Voluntary</h1>
+        </a>
+        <nav class="main-navigation">
+        </nav>
+        <div class="auth-buttons">
+            <button class="btn btn-login">Login</button>
+            <button class="btn btn-signup">Cadastrar-se</button>
+        </div>
+    </div>
+</header>
+
+<section id="jobs" class="jobs-section">
+    <div class="container jobs-container">
+        <aside class="filters-sidebar">
+            <div class="filter-group">
+                <h2 class="filter-title">Tags</h2>
+                <form class="filter-search-form">
+                    <input type="search" placeholder="Pesquisar" id="pesquisar_tags" class="filter-search-input">
+                    <img src="/Elemeto-X/Voluntary/Frontend/img/lupa.png" alt="Search Icon" class="search-icon">
+                </form>
+                <div class="tags-list">
+                    <button class="tag"><span>Saude</span><img src="/Elemeto-X/Voluntary/Frontend/img/plus.png" alt="Add"></button>
+                    <button class="tag"><span>Educação</span><img src="/Elemeto-X/Voluntary/Frontend/img/plus.png" alt="Add"></button>
+                    <button class="tag"><span>Meio Ambiente</span><img src="/Elemeto-X/Voluntary/Frontend/img/plus.png" alt="Add"></button>
+                    <button class="tag"><span>Arrecadação</span><img src="/Elemeto-X/Voluntary/Frontend/img/plus.png" alt="Add"></button>
+                    <button class="tag"><span>Limpeza</span><img src="/Elemeto-X/Voluntary/Frontend/img/plus.png" alt="Add"></button>
+                    <button class="tag tag-remove"><span>Remoto</span><img src="/Elemeto-X/Voluntary/Frontend/img/x.png" alt="Remove"></button>
+                    <button class="tag tag-selected"><span>Presencial</span><img src="/Elemeto-X/Voluntary/Frontend/img/checkmark.png" alt="Selected"></button>
+                </div>
+            </div>
+<div class="filter-group">
+  <h2 class="filter-title">Horário</h2>
+  <div class="checkbox-group">
+    <label class="checkbox-label">
+      <input type="checkbox" name="horario" value="manha">
+      <span class="custom-checkbox"></span>
+      Manhã
+    </label>
+    <label class="checkbox-label">
+      <input type="checkbox" name="horario" value="tarde">
+      <span class="custom-checkbox"></span>
+      Tarde
+    </label>
+    <label class="checkbox-label">
+      <input type="checkbox" name="horario" value="noite" checked>
+      <span class="custom-checkbox"></span>
+      Noturno
+    </label>
+  </div>
+</div>
+<div class="filter-group">
+  <h2 class="filter-title">Modalidade</h2>
+  <div class="checkbox-group">
+    <label class="checkbox-label">
+      <input type="checkbox" name="modalidade" value="presencial">
+      <span class="custom-checkbox"></span>
+      Presencial
+    </label>
+    <label class="checkbox-label">
+      <input type="checkbox" name="modalidade" value="remoto">
+      <span class="custom-checkbox"></span>
+      Remoto
+    </label>
+    <label class="checkbox-label">
+      <input type="checkbox" name="modalidade" value="hibrido" checked>
+      <span class="custom-checkbox"></span>
+      Híbrido
+    </label>
+  </div>
+</div>
+        </aside>
+        <main class="main-content">
+            <form class="main-search-form">
+                <input type="search" id="pesquisar_vagas" placeholder="Pesquisar" class="main-search-input">
+                <img src="/Elemeto-X/Voluntary/Frontend/img/lupa.png" alt="Search Icon" class="search-icon">
+            </form>
+            <div class="jobs-grid">
+                <article class="job-card">
+                    <div class="job-card-image-wrapper">
+                        <img src="/Elemeto-X/Voluntary/Frontend/img/placeholdervaga.png" alt="Group of people planting trees" class="job-card-image">
+                    </div>
+                    <div class="vaga">
+                        <p class="titulo_vaga">Vaga</p>
+                        <h3 class="descricao_vaga">Descrição_vaga</h3>
+                        <div class="tags_vaga">
+                            <span class="tag-vaga">Manhã</span>
+                            <span class="tag-vaga">Educação</span>
+                            <span class="tag-vaga">Presencial</span>
+                        </div>
+                    </div>
+                    <a href="#" class="btn btn-details">Ver Detalhes</a>
+                </article>
+                <article class="job-card">
+                    <div class="job-card-image-wrapper">
+                        <img src="/Elemeto-X/Voluntary/Frontend/img/placeholdervaga.png" alt="Group of people planting trees" class="job-card-image">
+                    </div>
+                    <div class="vaga">
+                        <p class="titulo_vaga">Vaga</p>
+                        <h3 class="descricao_vaga">Descrição_vaga</h3>
+                        <div class="tags_vaga">
+                            <span class="tag-vaga">Manhã</span>
+                            <span class="tag-vaga">Educação</span>
+                            <span class="tag-vaga">Presencial</span>
+                        </div>
+                    </div>
+                    <a href="#" class="btn btn-details">Ver Detalhes</a>
+                </article>
+                <article class="job-card">
+                    <div class="job-card-image-wrapper">
+                        <img src="/Elemeto-X/Voluntary/Frontend/img/placeholdervaga.png" alt="Group of people planting trees" class="job-card-image">
+                    </div>
+                    <div class="vaga">
+                        <p class="titulo_vaga">Vaga</p>
+                        <h3 class="descricao_vaga">Descrição_vaga</h3>
+                        <div class="tags_vaga">
+                            <span class="tag-vaga">Manhã</span>
+                            <span class="tag-vaga">Educação</span>
+                            <span class="tag-vaga">Presencial</span>
+                        </div>
+                    </div>
+                    <a href="#" class="btn btn-details">Ver Detalhes</a>
+                </article>
+                <article class="job-card">
+                    <div class="job-card-image-wrapper">
+                        <img src="/Elemeto-X/Voluntary/Frontend/img/placeholdervaga.png" alt="Group of people planting trees" class="job-card-image">
+                    </div>
+                    <div class="vaga">
+                        <p class="titulo_vaga">Vaga</p>
+                        <h3 class="descricao_vaga">Descrição_vaga</h3>
+                        <div class="tags_vaga">
+                            <span class="tag-vaga">Manhã</span>
+                            <span class="tag-vaga">Educação</span>
+                            <span class="tag-vaga">Presencial</span>
+                        </div>
+                    </div>
+                    <a href="#" class="btn btn-details">Ver Detalhes</a>
+                </article>
+                <article class="job-card">
+                    <div class="job-card-image-wrapper">
+                        <img src="/Elemeto-X/Voluntary/Frontend/img/placeholdervaga.png" alt="Group of people planting trees" class="job-card-image">
+                    </div>
+                    <div class="vaga">
+                        <p class="titulo_vaga">Vaga</p>
+                        <h3 class="descricao_vaga">Descrição_vaga</h3>
+                        <div class="tags_vaga">
+                            <span class="tag-vaga">Manhã</span>
+                            <span class="tag-vaga">Educação</span>
+                            <span class="tag-vaga">Presencial</span>
+                        </div>
+                    </div>
+                    <a href="#" class="btn btn-details">Ver Detalhes</a>
+                </article>
+                <article class="job-card">
+                    <div class="job-card-image-wrapper">
+                        <img src="/Elemeto-X/Voluntary/Frontend/img/placeholdervaga.png" alt="Group of people planting trees" class="job-card-image">
+                    </div>
+                    <div class="vaga">
+                        <p class="titulo_vaga">Vaga</p>
+                        <h3 class="descricao_vaga">Descrição_vaga</h3>
+                        <div class="tags_vaga">
+                            <span class="tag-vaga">Manhã</span>
+                            <span class="tag-vaga">Educação</span>
+                            <span class="tag-vaga">Presencial</span>
+                        </div>
+                    </div>
+                    <a href="#" class="btn btn-details">Ver Detalhes</a>
+                </article>
+               
+            <nav class="pagination">
+                <a href="#" class="pagination-link prev-link disabled">
+                    <img src="/Elemeto-X/Voluntary/Frontend/img/arrowleft.png" alt="Previous">
+                    Previous
+                </a>
+                <div class="pagination-pages">
+                    <a href="#" class="pagination-link page-number active">1</a>
+                    <a href="#" class="pagination-link page-number">2</a>
+                    <a href="#" class="pagination-link page-number">3</a>
+                    <span class="pagination-ellipsis">...</span>
+                    <a href="#" class="pagination-link page-number">67</a>
+                    <a href="#" class="pagination-link page-number">68</a>
+                </div>
+                <a href="#" class="pagination-link next-link">
+                    Next
+                    <img src="/Elemeto-X/Voluntary/Frontend/img/arrowright.png" alt="Next">
+                </a>
+            </nav>
+        </main>
+    </div>
+</section>
+</body>
+</html>
