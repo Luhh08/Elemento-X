@@ -15,5 +15,9 @@
     "express": "^5.1.0",
     "mongodb": "^6.20.0",
     "prisma": "^6.17.0"
-  }
+  },
+  "devDependencies": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

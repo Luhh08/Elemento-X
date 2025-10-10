@@ -18,3 +18,32 @@ model Usuario {
   senha   String
   
 }
+// tabela da empresa
+model Empresa {
+
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  razao_social    String
+  email_empresa    String @unique
+  cnpj     String @unique
+  telefone_empresa String @unique
+  cep      String
+  endereco String
+  senha    String
+  
+}
+
+model RepresentanteLegal {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  nome     String
+  cpf      String @unique
+  cargo    String 
+  email_representante    String @unique
+  telefone_representante String @unique
+
+}
+
+model Administrador {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  usuario  String 
+  senha    String
+}

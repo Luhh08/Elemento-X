@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elemento X - Registro Empresa</title>
+  <link rel="stylesheet" href="css/registro_empresa.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* Adicione isso no final do seu CSS ou aqui no <style> */
+    .registro-form {
+      display: none;
+    }
+    .registro-form.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="registro-container">
+    <div class="registro-panel">
+
+      <!-- FORMULÁRIO 1 -->
+      <form class="registro-form active" id="form1">
+        <h2>Informações da Empresa</h2>
+        <div class="input-group">
+          <input type="text" id="razao_social" name="razao_social" placeholder="Razão Social" required>
+        </div>
+        <div class="input-group">
+          <input type="email" id="email_empresa" name="email_empresa" placeholder="E-mail Corporativo" required>
+        </div>
+        <div class="input-group">
+          <input type="text" id="cnpj" name="cnpj" placeholder="CNPJ" required>
+        </div>
+        <div class="input-group">
+          <input type="text" id="telefone_empresa" name="telefone_empresa" placeholder="Telefone de contato" required>
+        </div>
+
+        <h2>Endereço</h2>
+        <div class="input-group">
+          <input type="text" id="cep" name="cep" placeholder="CEP" required>
+        </div>
+        <div class="input-group">
+          <input type="text" id="endereco" name="endereco" placeholder="Rua/Número/Complemento" required>
+        </div>
+
+        <button id="next1" type="button">Próximo →</button>
+      </form>
+
+      <!-- FORMULÁRIO 2 -->
+      <form class="registro-form" id="form2">
+        <h2>Representante Legal</h2>
+        <div class="input-group">
+          <input type="text" id="nome" name="nome" placeholder="Nome Completo" required>
+        </div>
+        <div class="input-group">
+            <input type="text" id="cpf" name="cpf"  pattern="\d{3}\.\d{3}\.\d{3}-\d{2}" maxlength="14" oninput="mascaraCPF(this)" placeholder="CPF" required>
+        </div>
+        <div class="input-group">
+          <input type="text" id="cargo" name="cargo" placeholder="Cargo" required>
+        </div>
+        <div class="input-group">
+          <input type="email" id="email_representante" name="email_representante" placeholder="Email" required>
+        </div>
+        <div class="input-group">
+          <input type="text" id="telefone_representante" name="telefone_representante" placeholder="Telefone de contato" required>
+        </div>
+
+        <h2>Senha de Acesso</h2>
+        <div class="input-group">
+          <input type="password" id="senha" name="senha" placeholder="Senha" required
+            title="8-24 caracteres, com ao menos 1 letra maiúscula, 1 número e 1 símbolo."
+            pattern="^(?=.{8,24}$)(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).*$">
+        </div>
+        <div class="input-group">
+          <input type="password" id="confirmarSenha" name="confirmarSenha" placeholder="Confirmar Senha" required>
+        </div>
+
+        <p id="erroSenha" style="color: rgb(255, 255, 255); font-size: 14px; display: none;">
+          As senhas não coincidem.
+        </p>
+
+        <div class="button-group">
+          <button type="button" id="prev2">← Voltar</button>
+          <button id="submitBtn" type="submit">Cadastrar</button>
+        </div>
+      </form>
+    </div>
+    <div class="decorative-panel"></div>
+  </div>
+
+  <script src="scripts/cadastro_empresa.js"></script>
+</body>
+</html>

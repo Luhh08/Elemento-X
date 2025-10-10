@@ -10,7 +10,7 @@
 body {
     background: 
         linear-gradient(to bottom right, rgba(0, 80, 255, 0.4), rgba(255, 180, 0, 0.4)),
-        url('/Voluntary/Frontend/img/fundo-login-cadastro.png') no-repeat center center/cover;
+        url('../img/fundo-login-cadastro.png') no-repeat center center/cover;
     height: 100vh;
     display: flex;
     justify-content: center;
