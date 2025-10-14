@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="css/vagas.css" rel="stylesheet">
+    <link href="css/teste.css" rel="stylesheet">
   </head>
   <body>
 <header id="section-header" class="site-header">
@@ -31,21 +31,91 @@
     <div class="container jobs-container">
         <aside class="filters-sidebar">
             <div class="filter-group">
-                <h2 class="filter-title">Tags</h2>
-                <form class="filter-search-form">
-                    <input type="search" placeholder="Pesquisar" id="pesquisar_tags" class="filter-search-input">
-                    <img src="img/lupa.png" alt="Search Icon" class="search-icon">
-                </form>
-                <div class="tags-list">
-                    <button class="tag"><span>Saude</span><img src="img/plus.png" alt="Add"></button>
-                    <button class="tag"><span>Educação</span><img src="img/plus.png" alt="Add"></button>
-                    <button class="tag"><span>Meio Ambiente</span><img src="img/plus.png" alt="Add"></button>
-                    <button class="tag"><span>Arrecadação</span><img src="img/plus.png" alt="Add"></button>
-                    <button class="tag"><span>Limpeza</span><img src="img/plus.png" alt="Add"></button>
-                    <button class="tag tag-remove"><span>Remoto</span><img src="img/x.png" alt="Remove"></button>
-                    <button class="tag tag-selected"><span>Presencial</span><img src="img/checkmark.png" alt="Selected"></button>
-                </div>
-            </div>
+  <h2 class="filter-title">Tags</h2>
+  <form class="filter-search-form">
+    <input type="search" placeholder="Pesquisar" id="pesquisar_tags" class="filter-search-input">
+    <img src="img/lupa.png" alt="Search Icon" class="search-icon">
+  </form>
+
+  <div class="tags-list">
+    <!-- Cada tag agora é interativa -->
+    <div class="tag-container">
+      <div class="tag">
+        <span>Saúde</span>
+        <div class="plus" onclick="toggleOptions(this)">+</div>
+      </div>
+      <div class="options">
+        <label class="option">
+          <input type="checkbox" class="add"> Adicionar
+        </label>
+        <label class="option">
+          <input type="checkbox" class="remove"> Remover
+        </label>
+      </div>
+    </div>
+
+    <div class="tag-container">
+      <div class="tag">
+        <span>Educação</span>
+        <div class="plus" onclick="toggleOptions(this)">+</div>
+      </div>
+      <div class="options">
+        <label class="option">
+          <input type="checkbox" class="add"> Adicionar
+        </label>
+        <label class="option">
+          <input type="checkbox" class="remove"> Remover
+        </label>
+      </div>
+    </div>
+
+    <div class="tag-container">
+      <div class="tag">
+        <span>Arrecadação</span>
+        <div class="plus" onclick="toggleOptions(this)">+</div>
+      </div>
+      <div class="options">
+        <label class="option">
+          <input type="checkbox" class="add"> Adicionar
+        </label>
+        <label class="option">
+          <input type="checkbox" class="remove"> Remover
+        </label>
+      </div>
+    </div>
+
+    <div class="tag-container">
+      <div class="tag">
+        <span>Meio Ambiente</span>
+        <div class="plus" onclick="toggleOptions(this)">+</div>
+      </div>
+      <div class="options">
+        <label class="option">
+          <input type="checkbox" class="add"> Adicionar
+        </label>
+        <label class="option">
+          <input type="checkbox" class="remove"> Remover
+        </label>
+      </div>
+    </div>
+
+    <div class="tag-container">
+      <div class="tag">
+        <span>Limpeza</span>
+        <div class="plus" onclick="toggleOptions(this)">+</div>
+      </div>
+      <div class="options">
+        <label class="option">
+          <input type="checkbox" class="add"> Adicionar
+        </label>
+        <label class="option">
+          <input type="checkbox" class="remove"> Remover
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="filter-group">
   <h2 class="filter-title">Horário</h2>
   <div class="checkbox-group">
@@ -194,8 +264,8 @@
                     <a href="#" class="pagination-link page-number">2</a>
                     <a href="#" class="pagination-link page-number">3</a>
                     <span class="pagination-ellipsis">...</span>
-                    <a href="#" class="pagination-link page-number">67</a>
-                    <a href="#" class="pagination-link page-number">68</a>
+                    <a href="#" class="pagination-link page-number">9</a>
+                    <a href="#" class="pagination-link page-number">10</a>
                 </div>
                 <a href="#" class="pagination-link next-link">
                     Next
@@ -205,5 +275,39 @@
         </main>
     </div>
 </section>
+<script>
+  function toggleOptions(el) {
+    const container = el.closest('.tag-container');
+    container.classList.toggle('active');
+  }
+
+  // Função genérica para TODAS as tags
+  document.querySelectorAll('.tag-container').forEach(container => {
+    const tag = container.querySelector('.tag');
+    const add = container.querySelector('.add');
+    const remove = container.querySelector('.remove');
+
+    add.addEventListener('change', () => {
+      if (add.checked) {
+        remove.checked = false;
+        tag.classList.add('added');
+        tag.classList.remove('removed');
+      } else {
+        tag.classList.remove('added');
+      }
+    });
+
+    remove.addEventListener('change', () => {
+      if (remove.checked) {
+        add.checked = false;
+        tag.classList.add('removed');
+        tag.classList.remove('added');
+      } else {
+        tag.classList.remove('removed');
+      }
+    });
+  });
+</script>
 </body>
 </html>
+
