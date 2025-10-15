@@ -16,6 +16,8 @@ model Usuario {
   email   String @unique
   cpf     String @unique
   senha   String
+  validacao Boolean @default(false)
+  validacaoToken String? // O campo validacaoToken foi adicionado aqui, como opcional.
   
 }
 // tabela da empresa

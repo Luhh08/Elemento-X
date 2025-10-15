@@ -1,0 +1,199 @@
+/* Layout geral */
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  display: flex;
+  background: #f5f5f5;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  background: linear-gradient(180deg, #c4ffe3, #aef1ec);
+  height: 100vh;
+  padding: 20px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.sidebar .logo {
+  font-size: 1.8rem;
+  color: #0b8457;
+  margin-bottom: 40px;
+}
+
+.sidebar button {
+  background: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 12px 15px;
+  width: 100%;
+  margin-bottom: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.3s;
+}
+
+.sidebar button:hover {
+  background: #d8fff0;
+}
+
+/* Área principal */
+.content {
+  margin-left: 240px;
+  width: calc(100% - 240px);
+  padding: 20px 40px;
+}
+
+/* Cabeçalho do perfil */
+.perfil-header {
+  position: relative;
+  background: #fff;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.capa {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.perfil-info {
+  display: flex;
+  align-items: center;
+  padding: 15px 30px;
+  position: relative;
+}
+
+.avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 4px solid white;
+  margin-right: 20px;
+  margin-top: -60px;
+}
+
+.perfil-info h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.descricao {
+  color: gray;
+}
+
+.botoes {
+  margin-left: auto;
+}
+
+.denunciar {
+  background: #f5b5b5;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 10px;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.editar {
+  background: #eee;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* Conteúdo */
+.conteudo {
+  display: flex;
+  gap: 20px;
+  margin-top: 25px;
+}
+
+/* Histórico */
+.historico {
+  flex: 2;
+  background: #e7f7ef;
+  border-radius: 15px;
+  padding: 20px;
+}
+
+.card-vaga {
+  background: #fff;
+  border-radius: 15px;
+  margin-bottom: 15px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.card-vaga img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.info-vaga {
+  padding: 10px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status {
+  padding: 5px 12px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.status.verde {
+  background: #57b65f;
+}
+
+.status.roxo {
+  background: #7b5bf4;
+}
+
+.avaliar {
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Lateral */
+.lateral {
+  flex: 1;
+  background: #fff;
+  border-radius: 15px;
+  padding: 20px;
+  height: fit-content;
+}
+
+.lateral h3 {
+  margin-top: 0;
+}
+
+.tags span {
+  background: #eee;
+  padding: 6px 10px;
+  border-radius: 8px;
+  margin: 5px;
+  display: inline-block;
+}
+
+.disponibilidade, .contatos {
+  margin-top: 20px;
+}
+
+h4 {
+  margin-bottom: 5px;
+}

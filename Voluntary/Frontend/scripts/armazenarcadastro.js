@@ -1,37 +1,61 @@
 // Seleciona o formulário
 const form = document.querySelector(".registro-form");
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault(); // Evita que a página recarregue
+// Confirmação de senha
+const senhaInput = document.getElementById('senha');
+const confirmarInput = document.getElementById('confirmarSenha');
+const erro = document.getElementById('erroSenha');
 
-  // Pega os valores dos inputs
+// Validação de senha
+form.addEventListener('submit', function(e) {
+  if (senhaInput.value !== confirmarInput.value) {
+    e.preventDefault(); // impede o envio
+    erro.style.display = 'block';
+    confirmarInput.style.borderColor = 'red';
+    return; // sai da função, não envia para o backend
+  } else {
+    erro.style.display = 'none';
+    confirmarInput.style.borderColor = 'green';
+  }
+});
+
+// Feedback em tempo real enquanto o usuário digita
+confirmarInput.addEventListener('input', function() {
+  if (confirmarInput.value !== senhaInput.value) {
+    confirmarInput.style.borderColor = 'red';
+    erro.style.display = 'block';
+  } else {
+    confirmarInput.style.borderColor = 'green';
+    erro.style.display = 'none';
+  }
+});
+
+// Envio para o backend (apenas se as senhas coincidirem)
+form.addEventListener("submit", async (e) => {
+  e.preventDefault(); // Evita recarregar a página
+
+  if (senhaInput.value !== confirmarInput.value) return; // segurança extra
+
   const nome = document.getElementById("nome").value;
   const usuario = document.getElementById("usuario").value;
   const email = document.getElementById("email").value;
   const cpf = document.getElementById("cpf").value;
-  const senha = document.getElementById("senha").value;
+  const senha = senhaInput.value;
 
-  // Monta o objeto com os dados
   const dadosUsuario = { nome, usuario, email, cpf, senha };
 
   try {
-    // Envia para o backend
     const response = await fetch("http://localhost:3000/users", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(dadosUsuario)
     });
 
     if (response.ok) {
       const usuarioCriado = await response.json();
       alert("Usuário criado com sucesso! ID: " + usuarioCriado.id);
-      form.reset(); // limpa o formulário
-
-      // 🔹 Redireciona para a página de login
-      window.location.href = "login.html"; // coloque aqui o caminho da sua página de login
-
+      form.reset();
+      window.location.href = "login.html";
     } else {
       const erro = await response.json();
       alert("Erro ao criar usuário: " + erro.error);
