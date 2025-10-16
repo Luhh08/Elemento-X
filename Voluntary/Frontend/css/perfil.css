@@ -1,6 +1,7 @@
 /* Layout geral */
 body {
   margin: 0;
+  background: linear-gradient(to bottom, hsla(25, 100%, 76%, 1), hsla(173, 99%, 82%, 1));;
   font-family: "Poppins", sans-serif;
   display: flex;
   background: #f5f5f5;
@@ -9,7 +10,7 @@ body {
 /* Sidebar */
 .sidebar {
   width: 220px;
-  background: linear-gradient(180deg, #c4ffe3, #aef1ec);
+  background: #ffffff;
   height: 100vh;
   padding: 20px;
   position: fixed;
@@ -27,20 +28,22 @@ body {
 }
 
 .sidebar button {
-  background: #fff;
+  background: #7FDCD7;
   border: none;
   border-radius: 20px;
   padding: 12px 15px;
   width: 100%;
   margin-bottom: 15px;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 36px;
+  font-family: Inter;
   cursor: pointer;
   text-align: left;
   transition: background 0.3s;
 }
 
 .sidebar button:hover {
-  background: #d8fff0;
+  background: #99e6e2;
 }
 
 /* Área principal */

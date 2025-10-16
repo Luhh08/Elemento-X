@@ -22,7 +22,7 @@ formLogin.addEventListener("submit", async (e) => {
             alert(data.message); // Mostra "Login realizado com sucesso!"
             
             // Redireciona para a página do dashboard
-            window.location.href = "dashboard.html";
+            window.location.href = "perfil-usuario.html";
         } else {
             // Exibe erros de autenticação
             alert(data.error);
