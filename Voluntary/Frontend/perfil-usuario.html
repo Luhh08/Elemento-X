@@ -1,79 +1,86 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Perfil | Voluntary</title>
-  <link rel="stylesheet" href="../Frontend/css/perfil.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil de Voluntário</title>
+    <link rel="stylesheet" href="../css/perfil.css">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
 </head>
 <body>
-  <aside class="sidebar">
-    <h1 class="logo">Voluntary</h1>
-    <nav>
-      <button>🧭 Procurar Vagas</button>
-      <button>🔔 Notificações</button>
-      <button>⚙️ Configurações</button>
-    </nav>
-  </aside>
 
-  <main class="content">
-    <section class="perfil-header">
-      <img src="img/capa.png" class="capa" alt="Capa do perfil">
-      <div class="perfil-info">
-        <img src="img/user.png" class="avatar" alt="Foto do usuário">
-        <div>
-          <h2>Keyla</h2>
-          <p>@usuario</p>
-          <p class="descricao">Descrição_usuario</p>
-        </div>
-        <div class="botoes">
-          <button class="denunciar">Denunciar</button>
-          <button class="editar">Editar Perfil</button>
-        </div>
-      </div>
-    </section>
+    <div class="main-container">
+        <nav class="sidebar">
+            <div class="logo">Voluntary</div>
+            <ul>
+                <li class="active"><a href="#"><i class="ri-search-line"></i> Procurar Vagas</a></li>
+                <li><a href="#"><i class="ri-notification-3-line"></i> Notificações</a></li>
+                <li><a href="#"><i class="ri-settings-3-line"></i> Configurações</a></li>
+                <li class="logout"><a href="#"><i class="ri-logout-box-r-line"></i> Sair</a></li>
+            </ul>
+        </nav>
 
-    <section class="conteudo">
-      <div class="historico">
-        <h3>Histórico</h3>
-        <div class="card-vaga">
-          <img src="img/vaga.png" alt="Imagem da vaga">
-          <div class="info-vaga">
-            <h4>Vaga</h4>
-            <span class="status verde">Participando</span>
-          </div>
-        </div>
+        <main class="content">
+            <header class="profile-header">
+                <div class="banner"></div>
+                <div class="profile-info">
+                    <img src="../Frontend/img/perfil.jpg" alt="Foto de Perfil" class="profile-picture" id="profile-picture">
+                    <div class="profile-details">
+                        <h2>Keyla</h2>
+                        <p class="username">@usuario</p>
+                        <p class="description">Descrição_usuario</p>
+                    </div>
+                    <div class="profile-actions">
+                        <button class="btn-report">Denunciar</button>
+                        <button class="btn-edit">Editar Perfil</button>
+                    </div>
+                </div>
+            </header>
 
-        <div class="card-vaga">
-          <img src="img/vaga.png" alt="Imagem da vaga">
-          <div class="info-vaga">
-            <h4>Vaga</h4>
-            <span class="status roxo">Finalizado</span>
-            <button class="avaliar">Avaliar projeto</button>
-          </div>
-        </div>
-      </div>
+            <div class="content-body">
+                <section class="history-section">
+                    <h3>Histórico</h3>
+                    <div class="history-card">
+                        <img src="https://images.unsplash.com/photo-1531313642994-3a716c905b38?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjA5fDB8MXxzZWFyY2h8N3x8dm9sdW50ZWVyJTIwZ3JvdXB8ZW58MHx8fHwxNjE3MzY2NzYy&ixlib=rb-1.2.1&q=80&w=400" alt="Imagem da Vaga">
+                        <div class="card-content">
+                            <p>Vaga</p>
+                            <span class="status participating">Participando</span>
+                        </div>
+                    </div>
+                    <div class="history-card">
+                        <img src="https://images.unsplash.com/photo-1531313642994-3a716c905b38?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjA5fDB8MXxzZWFyY2h8N3x8dm9sdW50ZWVyJTIwZ3JvdXB8ZW58MHx8fHwxNjE3MzY2NzYy&ixlib=rb-1.2.1&q=80&w=400" alt="Imagem da Vaga">
+                        <div class="card-content">
+                            <p>Vaga</p>
+                            <div class="card-footer">
+                                <span class="status finished">Finalizado</span>
+                                <button class="btn-evaluate">Avaliar projeto</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
-      <aside class="lateral">
-        <h3>Competências</h3>
-        <div class="tags">
-          <span>Culinária</span>
-          <span>Educação</span>
-          <span>Limpeza</span>
-          <span>Programação</span>
-        </div>
+                <aside class="info-sidebar">
+                    <div class="info-block">
+                        <h4>Competências</h4>
+                        <div class="tags">
+                            <span class="tag">Culinária</span>
+                            <span class="tag">Educação</span>
+                            <span class="tag">Limpeza</span>
+                            <span class="tag">Programação</span>
+                        </div>
+                    </div>
+                    <div class="info-block">
+                        <h4><i class="ri-time-line"></i> Disponibilidade</h4>
+                        <p>Turno da manhã</p>
+                    </div>
+                    <div class="info-block">
+                        <h4><i class="ri-user-line"></i> Contatos</h4>
+                        <p>Email@gmail.com</p>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
 
-        <div class="disponibilidade">
-          <h4>🕒 Disponibilidade</h4>
-          <p>Turno da manhã</p>
-        </div>
-
-        <div class="contatos">
-          <h4>📞 Contatos</h4>
-          <p>Email@gmail.com</p>
-        </div>
-      </aside>
-    </section>
-  </main>
 </body>
 </html>

@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Cal+Sans&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+
 * {
     margin: 0;
     padding: 0;
@@ -41,9 +44,12 @@ body, html {
 }
 
 .logo-area h1 {
+    font-family: "Alfa Slab One";
+    font-style: normal;
     font-size: 2.5em;
-    font-weight: 700;
-    letter-spacing: 2px;
+    letter-spacing: -1.08px;
+    font-weight: 400;
+    line-height: 120%
 }
 
 .logo-area p {
@@ -72,7 +78,7 @@ body, html {
     margin-bottom: 20px;
 }
 
-.login-form input, .login-form button {
+.login-form input {
     width: 100%;
     padding: 15px 25px;
     border: none;
@@ -91,6 +97,11 @@ body, html {
 }
 
 .login-form button {
+    padding: 15px 50px;
+    border: none;
+    border-radius: 50px;
+    font-size: 1em;
+    font-family: 'Montserrat', sans-serif;
     background-color: #004d40;
     color: white;
     font-weight: 700;
@@ -101,6 +112,22 @@ body, html {
 
 .login-form button:hover {
     background-color: #00695c;
+}
+
+a {
+    color: #FFF;
+    font-family: "Inter";
+    font-size: 18px;
+    font-style: normal;
+    text-decoration-line: underline;
+}
+
+.cadastro{
+    margin-top: 5%;
+}
+
+.esqueceu {
+    margin-top: 10%;
 }
 
 .decorative-panel {

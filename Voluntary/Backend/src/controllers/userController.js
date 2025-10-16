@@ -7,7 +7,6 @@ const { generateToken } = require("../utils/generateToken");
 const prisma = new PrismaClient();
 
 // Cadastro de usuário
-// Cadastro de usuário
 async function registrarUsuario(req, res, next) {
   try {
     const { nome, usuario, email, cpf, senha } = req.body;

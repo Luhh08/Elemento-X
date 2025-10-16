@@ -8,6 +8,7 @@ require("dotenv").config();
 const { errorHandler } = require("./src/middlewares/errorMiddleware");
 const mainRoutes = require("./src/routes"); // Assumindo que você tem um index.js em /routes
 const verifyRoutes = require('./src/routes/verifyRoutes'); // Importando as novas rotas de verificação
+const passwordRoutes = require("./src/routes/passwordRoutes");
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -28,6 +29,7 @@ app.get("/", (_req, res) => {
 
 app.use(mainRoutes); // Suas rotas principais (login, registro, etc.)
 app.use('/api', verifyRoutes); // Nossas rotas de verificação com prefixo /api
+app.use("/api", passwordRoutes);
 
 // --- Middleware de Erro (Deve ser o último) ---
 app.use(errorHandler);

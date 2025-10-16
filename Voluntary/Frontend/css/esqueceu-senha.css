@@ -47,9 +47,12 @@ html, body {
 }
 
 .logo-area h1 {
-    font-size: 2.2em;
-    font-weight: 700;
-    letter-spacing: 2px;
+    font-family: "Alfa Slab One";
+    font-style: normal;
+    font-size: 2.5em;
+    letter-spacing: -1.08px;
+    font-weight: 400;
+    line-height: 120%
 }
 
 .logo-area p {
@@ -111,28 +114,75 @@ html, body {
     background-color: #00695c;
 }
 
-.decorative-panel {
-    flex-basis: 60%;
-    height: 100%; /* ocupa tela inteira */
-}
+#password-checklist {
+            width: 100%;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 10px 15px;
+            border-radius: 10px;
+        }
 
-.insira{
-    color: white;
-}
+        #password-checklist p {
+            display: none; /* Opcional: O título "Sua senha deve conter" é redundante */
+        }
 
-@media (max-width: 768px) {
-    .registro-container {
-        flex-direction: column;
-    }
+        #password-checklist ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
 
-    .registro-panel {
-        flex-basis: 100%;
-        height: 100%; /* ocupa tela toda */
-        width: 100%;
-        padding: 20px;
-    }
+        #password-checklist li {
+            color: #ffffff;
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+        #password-checklist li:last-child {
+            margin-bottom: 0;
+        }
 
-    .decorative-panel {
-        display: none;
-    }
-}
+        .invalid {
+            opacity: 0.6;
+        }
+        .invalid::before {
+            content: url("../img/wrong.png");
+            margin-right: 8px;
+            color: #ff8a80;
+        }
+
+        .valid {
+            opacity: 1;
+            color: #ffffff;
+            font-weight: bold;
+        }
+        .valid::before {
+            content: url("../img/check.png");
+            margin-right: 8px;
+            color: #b9f6ca;
+        }
+
+        #erroSenha {
+            color: #ffffff;
+            background-color: rgba(128, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .decorative-panel {
+            flex-basis: 60%;
+            height: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .decorative-panel {
+                display: none;
+            }
+            .registro-panel {
+                flex-basis: 100%;
+            }
+        }

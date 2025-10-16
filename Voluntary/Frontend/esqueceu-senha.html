@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elemento X - Registro</title>
+  <link rel="stylesheet" href="css/registro.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Cal+Sans&family=Open+Sans:wght@300..800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <div class="registro-container">
+    <div class="registro-panel">
+      <header class="logo-area">
+        <h1 class="logo">Voluntary</h1>
+      </header>
+
+      <!-- Etapa 1: Enviar email -->
+      <form id="emailForm" class="registro-form">
+        <h2 class="insira">Insira o email da conta</h2>
+        <div class="input-group">
+          <input type="email" id="email" name="email" placeholder="Email" required>
+        </div>
+        <button type="submit">Enviar código</button>
+      </form>
+
+      <!-- Etapa 2: Confirmar código -->
+      <form id="codigoForm" class="registro-form" style="display: none;">
+        <h2 class="insira">Digite o código enviado</h2>
+        <div class="input-group">
+          <input type="text" id="codigo" name="codigo" placeholder="Código de verificação" required>
+        </div>
+        <button type="submit">Confirmar</button>
+        <p id="voltar" style="cursor: pointer; color: #007bff; margin-top: 10px;">← Voltar</p>
+      </form>
+
+      <p id="mensagem" class="mensagem"></p>
+    </div>
+  </div>
+
+  <script>
+  const emailForm = document.getElementById("emailForm");
+  const codigoForm = document.getElementById("codigoForm");
+  const mensagem = document.getElementById("mensagem");
+  const voltar = document.getElementById("voltar");
+
+  // Etapa 1 — enviar email
+  emailForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("email").value;
+
+    mensagem.textContent = "Enviando código...";
+    mensagem.style.color = "black";
+
+    try {
+      const resposta = await fetch("/api/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await resposta.json();
+
+      if (resposta.ok) {
+        mensagem.textContent = "Código enviado! Verifique seu email.";
+        mensagem.style.color = "green";
+        emailForm.style.display = "none";
+        codigoForm.style.display = "block";
+      } else {
+        mensagem.textContent = data.error || "Erro ao enviar código.";
+        mensagem.style.color = "red";
+      }
+    } catch (err) {
+      mensagem.textContent = "Erro de conexão com o servidor.";
+      mensagem.style.color = "red";
+    }
+  });
+
+  // Etapa 2 — verificar código
+  codigoForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("email").value;
+    const codigo = document.getElementById("codigo").value;
+
+    mensagem.textContent = "Verificando código...";
+    mensagem.style.color = "black";
+
+    try {
+      const resposta = await fetch("/api/verify-reset-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, codigo }),
+      });
+
+      const data = await resposta.json();
+
+      if (resposta.ok) {
+        mensagem.textContent = "Código verificado com sucesso!";
+        mensagem.style.color = "green";
+        window.location.href = `/redefinir-senha.html?email=${encodeURIComponent(email)}`; 
+      } else {
+        mensagem.textContent = data.error || "Código incorreto.";
+        mensagem.style.color = "red";
+      }
+    } catch (err) {
+      mensagem.textContent = "Erro de conexão com o servidor.";
+      mensagem.style.color = "red";
+    }
+  });
+
+  voltar.addEventListener("click", () => {
+    codigoForm.style.display = "none";
+    emailForm.style.display = "block";
+    mensagem.textContent = "";
+  });
+</script>
+</body>
+</html>
