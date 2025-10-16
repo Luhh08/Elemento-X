@@ -20,10 +20,33 @@
         </a>
         <nav class="main-navigation">
         </nav>
-        <div class="auth-buttons">
-            <button class="btn btn-login">Login</button>
-            <button class="btn btn-signup">Cadastrar-se</button>
+        <div class="header-actions">
+    <!-- Ícone de notificações -->
+    <div class="notification-icon">
+        <img src="img/bell.png" alt="Notificações" class="icon-bell">
+        <span class="notification-count">3</span>
+    </div>
+
+    <!-- Menu do usuário -->
+    <div class="user-menu">
+        <img src="img/foto_perfil.png" alt="Foto do usuário" class="user-avatar" id="userAvatar">
+        <div class="dropdown-menu" id="dropdownMenu">
+            <a href="#" class="dropdown-item">
+                <span class="icon">👤</span> Perfil
+            </a>
+            <a href="#" class="dropdown-item">
+                <span class="icon">🔍</span> Procurar Vagas
+            </a>
+            <a href="#" class="dropdown-item">
+                <span class="icon">⚙️</span> Configurações
+            </a>
+            <a href="#" class="dropdown-item logout">
+                <span class="icon">🚪</span> Sair
+            </a>
         </div>
+    </div>
+</div>
+
     </div>
 </header>
 
@@ -307,6 +330,21 @@
       }
     });
   });
+</script>
+<script>
+    const avatar = document.getElementById('userAvatar');
+    const dropdown = document.getElementById('dropdownMenu');
+
+    avatar.addEventListener('click', () => {
+        dropdown.classList.toggle('active');
+    });
+
+    // Fechar o menu ao clicar fora
+    window.addEventListener('click', function(e) {
+        if (!avatar.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('active');
+        }
+    });
 </script>
 </body>
 </html>
