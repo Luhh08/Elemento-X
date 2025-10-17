@@ -9,7 +9,7 @@
 body, html {
     height: 100%;
     font-family: 'Montserrat', sans-serif;
-    background-image: url('/Elemeto-X/Voluntary/Frontend/img/fundo-login-cadastro.png');
+    background-image: url('../img/fundo-login-cadastro.png');
     background-size: cover; 
     background-repeat: no-repeat; 
     background-position: center;

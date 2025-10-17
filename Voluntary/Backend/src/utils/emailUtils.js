@@ -1,5 +1,6 @@
 const nodemailer = require("nodemailer");
 
+// Configurações do Nodemailer
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -8,17 +9,14 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-async function enviarEmail(destinatario, assunto, html) {
+exports.enviarEmail = async (to, subject, html) => {
   return transporter.sendMail({
     from: `"Equipe Voluntary 👋" <${process.env.EMAIL_USER}>`,
-    to: destinatario,
-    subject: assunto,
+    to,
+    subject,
     html,
   });
-}
+};
 
-function gerarCodigo() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-module.exports = { enviarEmail, gerarCodigo };
+// Gera código aleatório de 6 dígitos
+exports.gerarCodigo = () => Math.floor(100000 + Math.random() * 900000).toString();
