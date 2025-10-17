@@ -1,4 +1,3 @@
-/* ===== ESTILOS GERAIS ===== */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Poppins:wght@400;500;600;700&display=swap');
 
@@ -25,18 +24,16 @@
 }
 
 body {
-    font-family: 'Inter', sans-serif; /* Alterado de 'Poppins' para 'Inter' */
+    font-family: 'Inter', sans-serif;
     background-color: var(--color-background);
     color: var(--color-text);
 }
 
-/* ===== LAYOUT PRINCIPAL ===== */
 .main-container {
     display: flex;
     min-height: 100vh;
 }
 
-/* ===== BARRA LATERAL DE NAVEGAÇÃO ===== */
 .sidebar {
     width: 260px;
     background-color: var(--color-white);
@@ -48,10 +45,10 @@ body {
 .sidebar .logo {
     font-family: 'Alfa Slab One', cursive;
     font-size: 36px;
-    font-weight: 400; /* Regular */
+    font-weight: 400;
     color: #06C9A8;
     line-height: 120%;
-    letter-spacing: -0.03em; /* Equivalente a -3% */
+    letter-spacing: -0.03em;
     margin-bottom: 3rem;
 }
 
@@ -63,15 +60,15 @@ body {
 .sidebar ul li a {
     display: flex;
     align-items: center;
-    width: 215px; /* Largura fixa */
-    height: 44px; /* Altura fixa */
-    gap: 13px; /* Espaço entre ícone e texto */
-    padding: 10px; /* Espaçamento interno */
+    width: 215px;
+    height: 44px;
+    gap: 13px;
+    padding: 10px;
     margin-bottom: 0.5rem;
     text-decoration: none;
     color: var(--color-text-light);
     font-weight: 500;
-    border-radius: 20px; /* Bordas arredondadas */
+    border-radius: 20px;
     transition: all 0.3s ease;
 }
 
@@ -82,8 +79,8 @@ body {
 
 .sidebar ul li.active a,
 .sidebar ul li a:hover {
-    background-color: var(--color-active-btn); /* Nova cor de fundo */
-    color: #00566d; /* Cor do texto mais escura para melhor contraste */
+    background-color: var(--color-active-btn);
+    color: #00566d;
 }
 
 .sidebar ul li.logout a {
@@ -96,13 +93,11 @@ body {
     color: var(--color-danger-dark);
 }
 
-/* ===== CONTEÚDO PRINCIPAL ===== */
 .content {
     flex: 1;
     padding: 2rem 3rem;
 }
 
-/* ===== CABEÇALHO DO PERFIL ===== */
 .profile-header .banner {
     height: 200px;
     background-image: url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
@@ -179,7 +174,6 @@ body {
     background-color: #d1d1d1;
 }
 
-/* ===== CORPO DO CONTEÚDO (HISTÓRICO E INFOS) ===== */
 .content-body {
     display: flex;
     gap: 2rem;
