@@ -229,9 +229,31 @@ body {
 
 .status.participating {
     background-color: var(--color-success);
-    color: var(--color-success-dark);
+    color:#014c27;
 }
 
 .status.finished {
-    background-color: var(--color-finished);
-    color
+    background-color: #8883D3;
+}
+
+.tag {
+    background-color: #c0c0c0;
+    padding: 7px ;
+    border-radius: 15px;
+}
+
+.btn-evaluate {
+    background-color: #77cded;
+    border-radius: 15px;
+    padding: 5px;
+    padding-left: 7px;
+    padding-right: 7px;
+    border: none;
+    font-weight: bold;
+    color:#015369;
+}
+.tagturno {
+    background-color: #c0c0c0;
+    padding: 7px ;
+    border-radius: 15px;
+}

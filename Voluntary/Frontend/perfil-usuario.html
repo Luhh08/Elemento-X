@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perfil de Voluntário</title>
-    <link rel="stylesheet" href="../css/perfil.css">
+    <link rel="stylesheet" href="css/perfil.css">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
 </head>
 <body>
@@ -13,7 +13,7 @@
         <nav class="sidebar">
             <div class="logo">Voluntary</div>
             <ul>
-                <li class="active"><a href="#"><i class="ri-search-line"></i> Procurar Vagas</a></li>
+                <li class="active"><a href="../Frontend/vagas.html"><i class="ri-search-line"></i> Procurar Vagas</a></li>
                 <li><a href="#"><i class="ri-notification-3-line"></i> Notificações</a></li>
                 <li><a href="#"><i class="ri-settings-3-line"></i> Configurações</a></li>
                 <li class="logout"><a href="#"><i class="ri-logout-box-r-line"></i> Sair</a></li>
@@ -41,16 +41,22 @@
                 <section class="history-section">
                     <h3>Histórico</h3>
                     <div class="history-card">
-                        <img src="https://images.unsplash.com/photo-1531313642994-3a716c905b38?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjA5fDB8MXxzZWFyY2h8N3x8dm9sdW50ZWVyJTIwZ3JvdXB8ZW58MHx8fHwxNjE3MzY2NzYy&ixlib=rb-1.2.1&q=80&w=400" alt="Imagem da Vaga">
+                        <img src="img/vaga-foto.png" alt="Imagem da Vaga">
                         <div class="card-content">
-                            <p>Vaga</p>
+                            <p>Vaga</p> <br> 
+                            <p>
+                                Empresa
+                            </p> <br>
                             <span class="status participating">Participando</span>
                         </div>
                     </div>
                     <div class="history-card">
-                        <img src="https://images.unsplash.com/photo-1531313642994-3a716c905b38?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjA5fDB8MXxzZWFyY2h8N3x8dm9sdW50ZWVyJTIwZ3JvdXB8ZW58MHx8fHwxNjE3MzY2NzYy&ixlib=rb-1.2.1&q=80&w=400" alt="Imagem da Vaga">
+                        <img src="img/vaga-foto.png" alt="Imagem da Vaga">
                         <div class="card-content">
-                            <p>Vaga</p>
+                            <p>Vaga</p> <br>
+                            <p> 
+                                Empresa
+                            </p> <br>
                             <div class="card-footer">
                                 <span class="status finished">Finalizado</span>
                                 <button class="btn-evaluate">Avaliar projeto</button>
@@ -67,15 +73,15 @@
                             <span class="tag">Educação</span>
                             <span class="tag">Limpeza</span>
                             <span class="tag">Programação</span>
-                        </div>
+                        </div> <br>
                     </div>
                     <div class="info-block">
                         <h4><i class="ri-time-line"></i> Disponibilidade</h4>
-                        <p>Turno da manhã</p>
+                        <p class="tagturno"><span>Turno da manhã</span></p> <br>
                     </div>
                     <div class="info-block">
                         <h4><i class="ri-user-line"></i> Contatos</h4>
-                        <p>Email@gmail.com</p>
+                        <p><a href="mailto:Email@gmail.com">Email@gmail.com</a></p>
                     </div>
                 </aside>
             </div>
