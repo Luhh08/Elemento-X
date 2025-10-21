@@ -74,6 +74,9 @@ html, body {
     font-size: 1.2em;
 }
 
+.insira{
+    position: center;
+}
 .input-group {
     width: 100%;
     margin-bottom: 15px;
@@ -135,4 +138,17 @@ html, body {
     .decorative-panel {
         display: none;
     }
+}
+
+/* --- Mantém títulos no mesmo alinhamento --- */
+.registro-form h2.insira {
+  color: white;
+  text-align: center;
+  width: 100%;
+  margin-bottom: 10px;
+  min-height: 30px; /* altura fixa */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease;
 }

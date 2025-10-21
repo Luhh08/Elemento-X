@@ -1,3 +1,4 @@
+// src/routes/userProfileRoutes.js
 const express = require("express");
 const router = express.Router();
 const { autenticarToken } = require("../middlewares/authMiddleware");
@@ -6,6 +7,7 @@ const {
   updateUsuario,
   updateBannerUrl,
   updateFotoUrl,
+  denunciarUsuario,
 } = require("../controllers/userProfileController");
 const { upload } = require("../middlewares/uploadMiddleware");
 const { PrismaClient } = require("@prisma/client");
@@ -16,15 +18,17 @@ router.get("/usuario/:id", autenticarToken, getUsuario);
 router.put("/usuario/:id", autenticarToken, updateUsuario);
 router.put("/usuario/:id/banner", autenticarToken, updateBannerUrl);
 router.put("/usuario/:id/foto", autenticarToken, updateFotoUrl);
+router.post("/usuario/:id/denunciar", autenticarToken, denunciarUsuario);
 
-// --- Upload local de imagem do dispositivo ---
+// --- Upload local de imagem ---
 router.post(
   "/usuario/:id/upload/:tipo",
   autenticarToken,
   upload.single("imagem"),
   async (req, res, next) => {
     try {
-      if (!req.file) return res.status(400).json({ error: "Nenhum arquivo enviado." });
+      if (!req.file)
+        return res.status(400).json({ error: "Nenhum arquivo enviado." });
 
       const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
       const { tipo } = req.params;

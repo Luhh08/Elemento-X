@@ -2,9 +2,11 @@
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 
-// ----------- Tokens de sessão -----------
+// ----------- Tokens e identificação -----------
 const token = localStorage.getItem("token");
-const userId = localStorage.getItem("userId");
+const loggedUserId = localStorage.getItem("userId");
+const params = new URLSearchParams(window.location.search);
+const perfilId = params.get("id") || loggedUserId;
 
 // ----------- POPUPS -----------
 const popupEdicao = $("#popupEdicao");
@@ -26,16 +28,16 @@ $$("[data-close]").forEach((btn) =>
   })
 );
 
-// ----------- Caminhos padrão de imagem -----------
+// ----------- Caminhos padrão -----------
 const defaultFoto = "../img/default-avatar.jpg";
 const defaultBanner = "../img/default-banner.png";
 
-// ----------- Função principal: carregar perfil -----------
+// ----------- Função principal -----------
 async function carregarPerfil() {
-  if (!token || !userId) return;
+  if (!token || !perfilId) return;
 
   try {
-    const res = await fetch(`/api/usuario/${userId}`, {
+    const res = await fetch(`/api/usuario/${perfilId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -43,19 +45,16 @@ async function carregarPerfil() {
 
     const data = await res.json();
 
-    // Header
     $("#nomeUsuario").textContent = data.nome || "";
     $("#usuarioTag").textContent = data.usuario ? `@${data.usuario}` : "";
     $("#descricaoUsuario").textContent =
       data.descricao || "Este usuário ainda não adicionou uma descrição.";
 
-    // Imagens
     $("#bannerUsuario").src = data.bannerUrl || defaultBanner;
     $("#fotoUsuario").src = data.fotoUrl || defaultFoto;
     $("#bannerPreview").src = data.bannerUrl || defaultBanner;
     $("#fotoPreview").src = data.fotoUrl || defaultFoto;
 
-    // Competências
     const tagsEl = $("#listaCompetencias");
     tagsEl.innerHTML = "";
     (data.competencias || []).forEach((t) => {
@@ -65,12 +64,10 @@ async function carregarPerfil() {
       tagsEl.appendChild(span);
     });
 
-    // Disponibilidade e contatos
     $("#turnoUsuario").textContent = data.preferenciaHorario || "—";
     $("#emailContato").textContent = data.emailcontato || "—";
     $("#telefoneContato").textContent = data.telefonecontato || "—";
 
-    // Preencher popup de edição
     $("#editNome").value = data.nome || "";
     $("#editUsuario").value = data.usuario || "";
     $("#editDescricao").value = data.descricao || "";
@@ -78,7 +75,6 @@ async function carregarPerfil() {
     $("#editTelefoneContato").value = data.telefonecontato || "";
     $("#editCompetencias").value = (data.competencias || []).join(", ");
 
-    // Marcar disponibilidade
     if (data.preferenciaHorario) {
       const radio = document.querySelector(
         `input[name="disp"][value="${data.preferenciaHorario}"]`
@@ -87,12 +83,21 @@ async function carregarPerfil() {
     }
 
     atualizarBarraProgresso(data.progresso);
+
+    // ✅ Mostrar botões conforme dono ou visitante
+    if (perfilId === loggedUserId) {
+      $("#btnEditar").style.display = "inline-block";
+      $("#btnDenunciar").style.display = "none";
+    } else {
+      $("#btnEditar").style.display = "none";
+      $("#btnDenunciar").style.display = "inline-block";
+    }
   } catch (err) {
     console.error("Erro ao carregar perfil:", err);
   }
 }
 
-// ----------- Atualizar barra de progresso -----------
+// ----------- Barra de progresso -----------
 function atualizarBarraProgresso(valor) {
   const p = Math.max(0, Math.min(100, Number(valor || 0)));
   $("#barraProgresso").style.width = `${p}%`;
@@ -102,7 +107,7 @@ function atualizarBarraProgresso(valor) {
 // ----------- Salvar edição -----------
 $("#formEdicao").addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (!token || !userId) return;
+  if (!token || !loggedUserId) return;
 
   const dispSel = document.querySelector('input[name="disp"]:checked');
   const preferenciaHorario = dispSel ? dispSel.value : "";
@@ -118,7 +123,7 @@ $("#formEdicao").addEventListener("submit", async (e) => {
   };
 
   try {
-    const resp = await fetch(`/api/usuario/${userId}`, {
+    const resp = await fetch(`/api/usuario/${loggedUserId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -140,7 +145,7 @@ $("#formEdicao").addEventListener("submit", async (e) => {
   }
 });
 
-// ----------- Upload de imagem local (foto e banner) -----------
+// ----------- Uploads ----------- 
 async function uploadImagem(tipo) {
   const input = document.createElement("input");
   input.type = "file";
@@ -153,7 +158,7 @@ async function uploadImagem(tipo) {
     formData.append("imagem", arquivo);
 
     try {
-      const resp = await fetch(`/api/usuario/${userId}/upload/${tipo}`, {
+      const resp = await fetch(`/api/usuario/${loggedUserId}/upload/${tipo}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -179,15 +184,39 @@ async function uploadImagem(tipo) {
   input.click();
 }
 
-// Botões no popup
 $("#btnNovaFoto").addEventListener("click", () => uploadImagem("foto"));
 $("#btnNovoBanner").addEventListener("click", () => uploadImagem("banner"));
 
-// ----------- Denúncia visual -----------
-$("#formDenuncia").addEventListener("submit", (e) => {
+// ----------- Denúncia real ----------- 
+$("#formDenuncia").addEventListener("submit", async (e) => {
   e.preventDefault();
-  popupDenuncia.setAttribute("aria-hidden", "true");
-  popupDenunciaOk.setAttribute("aria-hidden", "false");
+  const motivo = $("#motivoDenuncia").value.trim();
+
+  if (!motivo) {
+    alert("Por favor, descreva o motivo da denúncia.");
+    return;
+  }
+
+  try {
+    const resp = await fetch(`/api/usuario/${perfilId}/denunciar`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ motivo }),
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) throw new Error(data.error || "Erro ao enviar denúncia.");
+
+    popupDenuncia.setAttribute("aria-hidden", "true");
+    popupDenunciaOk.setAttribute("aria-hidden", "false");
+  } catch (err) {
+    console.error("Erro ao denunciar:", err);
+    alert("❌ Falha ao enviar denúncia.");
+  }
 });
 
 // ----------- Inicialização -----------

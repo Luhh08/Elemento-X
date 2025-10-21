@@ -1,3 +1,4 @@
+// src/controllers/userProfileController.js
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
@@ -55,8 +56,8 @@ exports.updateUsuario = async (req, res, next) => {
     const usuarioAtualizado = await prisma.usuario.update({
       where: { id },
       data: {
-        ...(nome && { nome }),                    // ✅ agora permite editar o nome
-        ...(usuario && { usuario }),              // ✅ agora permite editar o @usuario
+        ...(nome && { nome }),
+        ...(usuario && { usuario }),
         ...(descricao && { descricao }),
         ...(competenciasArray && { competencias: competenciasArray }),
         ...(preferenciaHorario && { preferenciaHorario }),
@@ -73,7 +74,7 @@ exports.updateUsuario = async (req, res, next) => {
         emailcontato: true,
         telefonecontato: true,
         validacao: true,
-        bannerUrl: true,  // ✅ garante que o frontend veja a imagem
+        bannerUrl: true,
         fotoUrl: true,
       },
     });
@@ -89,10 +90,8 @@ exports.updateUsuario = async (req, res, next) => {
   }
 };
 
-
 /**
  * PUT /api/usuario/:id/banner
- * Atualiza a URL do banner
  */
 exports.updateBannerUrl = async (req, res, next) => {
   try {
@@ -100,9 +99,7 @@ exports.updateBannerUrl = async (req, res, next) => {
     const { bannerUrl } = req.body;
 
     if (!bannerUrl)
-      return res
-        .status(400)
-        .json({ error: "É necessário enviar a URL do banner." });
+      return res.status(400).json({ error: "É necessário enviar a URL do banner." });
 
     const usuarioAtualizado = await prisma.usuario.update({
       where: { id },
@@ -122,7 +119,6 @@ exports.updateBannerUrl = async (req, res, next) => {
 
 /**
  * PUT /api/usuario/:id/foto
- * Atualiza a URL da foto do perfil
  */
 exports.updateFotoUrl = async (req, res, next) => {
   try {
@@ -130,9 +126,7 @@ exports.updateFotoUrl = async (req, res, next) => {
     const { fotoUrl } = req.body;
 
     if (!fotoUrl)
-      return res
-        .status(400)
-        .json({ error: "É necessário enviar a URL da foto." });
+      return res.status(400).json({ error: "É necessário enviar a URL da foto." });
 
     const usuarioAtualizado = await prisma.usuario.update({
       where: { id },
@@ -152,7 +146,6 @@ exports.updateFotoUrl = async (req, res, next) => {
 
 /**
  * GET /api/usuario/:id/progresso
- * Retorna apenas a % de progresso
  */
 exports.getProgressoPerfil = async (req, res, next) => {
   try {
@@ -163,6 +156,29 @@ exports.getProgressoPerfil = async (req, res, next) => {
     res.json({ progresso: calcularProgresso(u) });
   } catch (error) {
     console.error("Erro ao calcular progresso:", error);
+    next(error);
+  }
+};
+
+/**
+ * POST /api/usuario/:id/denunciar
+ */
+exports.denunciarUsuario = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    if (userId === id)
+      return res.status(400).json({ error: "Você não pode denunciar a si mesmo." });
+
+    const { motivo } = req.body;
+    if (!motivo || motivo.length < 5)
+      return res.status(400).json({ error: "Motivo da denúncia é obrigatório." });
+
+    console.log(`🚨 Usuário ${userId} denunciou ${id}: ${motivo}`);
+    res.json({ message: "Denúncia enviada com sucesso!" });
+  } catch (error) {
+    console.error("Erro ao denunciar:", error);
     next(error);
   }
 };

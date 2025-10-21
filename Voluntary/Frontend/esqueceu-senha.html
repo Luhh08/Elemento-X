@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Cal+Sans&family=Open+Sans:wght@300..800&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -34,7 +35,6 @@
           <input type="text" id="codigo" name="codigo" placeholder="Código de verificação" required>
         </div>
         <button type="submit">Confirmar</button>
-        <p id="voltar" style="cursor: pointer; color: #007bff; margin-top: 10px;">← Voltar</p>
       </form>
 
       <p id="mensagem" class="mensagem"></p>
@@ -42,64 +42,74 @@
   </div>
 
   <script>
-  const emailForm = document.getElementById("emailForm");
-  const codigoForm = document.getElementById("codigoForm");
-  const mensagem = document.getElementById("mensagem");
-  const voltar = document.getElementById("voltar");
+    const emailForm = document.getElementById("emailForm");
+    const codigoForm = document.getElementById("codigoForm");
+    const mensagem = document.getElementById("mensagem");
 
-  // Etapa 1 — Enviar código por e-mail
-  emailForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const email = document.getElementById("email").value;
+    // === Cria mensagens mais elegantes abaixo dos inputs ===
+    function mostrarMensagem(tipo, texto) {
+      mensagem.innerHTML = `
+        <i class="ri-${tipo === "sucesso" ? "check-line" : "error-warning-line"}"></i>
+        <span>${texto}</span>
+      `;
+      mensagem.style.display = "flex";
+      mensagem.style.alignItems = "center";
+      mensagem.style.justifyContent = "center";
+      mensagem.style.gap = "8px";
+      mensagem.style.marginTop = "10px";
+      mensagem.style.padding = "10px 15px";
+      mensagem.style.borderRadius = "8px";
+      mensagem.style.fontSize = "0.95rem";
+      mensagem.style.fontWeight = "500";
+      mensagem.style.transition = "all 0.3s ease";
+      mensagem.style.backgroundColor = tipo === "sucesso" ? "#198754" : "#800000b3";
+      mensagem.style.color = tipo === "sucesso" ? "#e8f8ef" : "#fde8e8";
+    }
 
-    mensagem.textContent = "Enviando código...";
-    mensagem.style.color = "black";
+    // === Etapa 1 — Enviar código por e-mail ===
+    emailForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
 
-    try {
-      const resposta = await fetch("/api/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+      mostrarMensagem("info", "Enviando código...");
 
-      const data = await resposta.json();
+      try {
+        const resposta = await fetch("/api/forgot-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
 
-      if (resposta.ok) {
-        mensagem.textContent = "Código enviado! Verifique seu e-mail.";
-        mensagem.style.color = "green";
-        emailForm.style.display = "none";
-        codigoForm.style.display = "block";
-      } else {
-        mensagem.textContent = data.error || "Erro ao enviar código.";
-        mensagem.style.color = "red";
+        const data = await resposta.json();
+
+        if (resposta.ok) {
+          mostrarMensagem("sucesso", "Código enviado! Verifique seu e-mail.");
+          emailForm.style.display = "none";
+          codigoForm.style.display = "block";
+        } else {
+          mostrarMensagem("erro", data.error || "Erro ao enviar código.");
+        }
+      } catch (err) {
+        mostrarMensagem("erro", "Erro de conexão com o servidor.");
       }
-    } catch (err) {
-      mensagem.textContent = "Erro de conexão com o servidor.";
-      mensagem.style.color = "red";
-    }
-  });
+    });
 
-  // Etapa 2 — Digitar o código e seguir para redefinir a senha
-  codigoForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const email = document.getElementById("email").value;
-    const codigo = document.getElementById("codigo").value.trim();
+    // === Etapa 2 — Digitar o código e seguir para redefinir a senha ===
+    codigoForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const codigo = document.getElementById("codigo").value.trim();
 
-    if (!codigo) {
-      mensagem.textContent = "Digite o código recebido por e-mail.";
-      mensagem.style.color = "red";
-      return;
-    }
+      if (!codigo) {
+        mostrarMensagem("erro", "Digite o código recebido por e-mail.");
+        return;
+      }
 
-    // ✅ Redireciona direto para a página de redefinição
-    window.location.href = `/redefinir-senha.html?codigo=${encodeURIComponent(codigo)}&email=${encodeURIComponent(email)}`;
-  });
-
-  voltar.addEventListener("click", () => {
-    codigoForm.style.display = "none";
-    emailForm.style.display = "block";
-    mensagem.textContent = "";
-  });
-</script>
+      mostrarMensagem("sucesso", "Código verificado com sucesso!");
+      setTimeout(() => {
+        window.location.href = `/redefinir-senha.html?codigo=${encodeURIComponent(codigo)}&email=${encodeURIComponent(email)}`;
+      }, 800);
+    });
+  </script>
 </body>
 </html>

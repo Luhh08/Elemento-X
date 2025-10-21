@@ -91,9 +91,6 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
-    mensagem.textContent = "Redefinindo senha...";
-    mensagem.style.color = "black";
-
     try {
       // ✅ Agora enviamos código + senha
       const resposta = await fetch("/api/reset-password", {
@@ -108,9 +105,24 @@ document.addEventListener('DOMContentLoaded', function() {
       const data = await resposta.json();
 
       if (resposta.ok) {
-        mensagem.textContent = "Senha redefinida com sucesso!";
-        mensagem.style.color = "green";
-        setTimeout(() => window.location.href = "/login.html", 2000);
+  // Cria popup
+  const popup = document.createElement("div");
+  popup.classList.add("popup-sucesso");
+  popup.innerHTML = `<i class="ri-check-line"></i> Senha redefinida com sucesso!`;
+
+  document.body.appendChild(popup);
+
+  // Mostra com animação
+  setTimeout(() => popup.classList.add("mostrar"), 100);
+
+  // Some e redireciona
+  setTimeout(() => {
+    popup.classList.remove("mostrar");
+    setTimeout(() => {
+      popup.remove();
+      window.location.href = "/login.html";
+    }, 400);
+  }, 2500);
       } else {
         mensagem.textContent = data.error || "Erro ao redefinir senha.";
         mensagem.style.color = "red";
