@@ -1,92 +1,175 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfil de Voluntário</title>
-    <link rel="stylesheet" href="css/perfil.css">
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Voluntary • Perfil</title>
+  <link rel="stylesheet" href="../css/perfil.css"/>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
 </head>
 <body>
+  <div class="page">
 
-    <div class="main-container">
-        <nav class="sidebar">
-            <div class="logo">Voluntary</div>
-            <ul>
-                <li class="active"><a href="../Frontend/vagas.html"><i class="ri-search-line"></i> Procurar Vagas</a></li>
-                <li><a href="#"><i class="ri-notification-3-line"></i> Notificações</a></li>
-                <li><a href="#"><i class="ri-settings-3-line"></i> Configurações</a></li>
-                <li class="logout"><a href="#"><i class="ri-logout-box-r-line"></i> Sair</a></li>
-            </ul>
-        </nav>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h1 class="brand">Voluntary</h1>
+      <nav class="menu">
+        <a class="pill" href="vagas.html"><i class="ri-search-line"></i> Procurar Vagas</a>
+        <a class="pill" href="#"><i class="ri-notification-3-line"></i> Notificações</a>
+        <a class="pill" href="#"><i class="ri-settings-3-line"></i> Configurações</a>
+      </nav>
+      <a class="pill pill-logout" href="#"><i class="ri-logout-box-r-line"></i> Sair</a>
+    </aside>
 
-        <main class="content">
-            <header class="profile-header">
-                <div class="banner"></div>
-                <div class="profile-info">
-                    <img src="../Frontend/img/perfil.jpg" alt="Foto de Perfil" class="profile-picture" id="profile-picture">
-                    <div class="profile-details">
-                        <h2>Keyla</h2>
-                        <p class="username">@usuario</p>
-                        <p class="description">Descrição_usuario</p>
-                    </div>
-                    <div class="profile-actions">
-                        <button class="btn-report">Denunciar</button>
-                        <button class="btn-edit">Editar Perfil</button>
-                    </div>
-                </div>
-            </header>
+    <!-- Conteúdo principal -->
+    <main class="content">
 
-            <div class="content-body">
-                <section class="history-section">
-                    <h3>Histórico</h3>
-                    <div class="history-card">
-                        <img src="img/vaga-foto.png" alt="Imagem da Vaga">
-                        <div class="card-content">
-                            <p>Vaga</p> <br> 
-                            <p>
-                                Empresa
-                            </p> <br>
-                            <span class="status participating">Participando</span>
-                        </div>
-                    </div>
-                    <div class="history-card">
-                        <img src="img/vaga-foto.png" alt="Imagem da Vaga">
-                        <div class="card-content">
-                            <p>Vaga</p> <br>
-                            <p> 
-                                Empresa
-                            </p> <br>
-                            <div class="card-footer">
-                                <span class="status finished">Finalizado</span>
-                                <button class="btn-evaluate">Avaliar projeto</button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+      <!-- Header do Perfil -->
+      <section class="profile-header">
+        <img id="bannerUsuario" class="banner" src="../img/banner.png" alt="banner"/>
 
-                <aside class="info-sidebar">
-                    <div class="info-block">
-                        <h4>Competências</h4>
-                        <div class="tags">
-                            <span class="tag">Culinária</span>
-                            <span class="tag">Educação</span>
-                            <span class="tag">Limpeza</span>
-                            <span class="tag">Programação</span>
-                        </div> <br>
-                    </div>
-                    <div class="info-block">
-                        <h4><i class="ri-time-line"></i> Disponibilidade</h4>
-                        <p class="tagturno"><span>Turno da manhã</span></p> <br>
-                    </div>
-                    <div class="info-block">
-                        <h4><i class="ri-user-line"></i> Contatos</h4>
-                        <p><a href="mailto:Email@gmail.com">Email@gmail.com</a></p>
-                    </div>
-                </aside>
+        <div class="profile-actions">
+          <button id="btnDenunciar" class="chip danger">Denunciar</button>
+          <button id="btnEditar" class="chip">Editar Perfil</button>
+        </div>
+
+        <div class="avatar-wrap">
+          <img id="fotoUsuario" class="avatar" src="../img/foto-perfil.png" alt="foto de perfil"/>
+        </div>
+
+        <div class="user-info">
+          <h2 id="nomeUsuario" class="name">Nome do Usuário</h2>
+          <p id="usuarioTag" class="username">@usuario</p>
+          <p id="descricaoUsuario" class="desc">Aqui vai a descrição do usuário.</p>
+
+          <!-- ✅ Barra de progresso dentro da user-info -->
+          <div class="perfil-progresso">
+            <div class="progresso-container">
+              <div id="barraProgresso" class="progresso-barra"></div>
             </div>
-        </main>
-    </div>
+            <p id="labelProgresso" class="progresso-label">0% completo</p>
+          </div>
+        </div>
+      </section>
 
+      <!-- Histórico e Lateral -->
+      <section class="columns">
+        <!-- Histórico -->
+        <div id="historicoContainer" class="card history">
+          <h3>Histórico</h3>
+
+          <article class="vaga-card">
+            <img src="../img/vaga-foto.png" alt="vaga"/>
+            <div class="vaga-info">
+              <p class="vaga-title">Mutirão Ambiental</p>
+              <p class="vaga-sub">EcoBrasil</p>
+              <span class="status status-participando">Participando</span>
+            </div>
+          </article>
+
+          <article class="vaga-card">
+            <img src="../Frontend/img/vaga-foto.png" alt="vaga"/>
+            <div class="vaga-info">
+              <p class="vaga-title">Ação Comunitária</p>
+              <p class="vaga-sub">VidaVerde ONG</p>
+              <div class="row">
+                <span class="status status-finalizado">Finalizado</span>
+                <button class="chip outline">Avaliar projeto</button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <!-- Coluna lateral -->
+        <aside class="right-col">
+          <div id="cardCompetencias" class="card skills">
+            <h3>Competências</h3>
+            <div id="listaCompetencias" class="tags"></div>
+          </div>
+
+          <div id="cardDisponibilidade" class="card info">
+            <div class="icon-title"><i class="ri-time-line"></i><h4>Disponibilidade</h4></div>
+            <p id="turnoUsuario">—</p>
+          </div>
+
+          <div id="cardContato" class="card info">
+            <div class="icon-title"><i class="ri-user-3-line"></i><h4>Contatos</h4></div>
+            <p id="emailContato">—</p>
+            <p id="telefoneContato">—</p>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <!-- POPUP • Edição -->
+  <div id="popupEdicao" class="popup" aria-hidden="true">
+    <div class="popup-dialog">
+      <button class="close" data-close><i class="ri-close-line"></i></button>
+
+      <img id="bannerPreview" class="popup-banner" src="../Frontend/img/banner.png" alt="banner"/>
+      <div class="popup-banner-row">
+        <button class="chip" id="btnNovoBanner">Usar URL de Banner</button>
+      </div>
+
+      <div class="popup-body">
+        <div class="avatar-stack">
+          <div class="avatar-border">
+            <img id="fotoPreview" class="avatar" src="../Frontend/img/foto-perfil.png" alt="perfil"/>
+          </div>
+          <button class="chip" id="btnNovaFoto">Usar URL de Foto</button>
+        </div>
+
+        <form id="formEdicao" class="form">
+          <label class="input"><input id="editNome" type="text" placeholder="Nome"/></label>
+          <label class="input"><input id="editUsuario" type="text" placeholder="Usuário"/></label>
+          <label class="input"><input id="editCompetencias" type="text" placeholder="Competências (separadas por vírgula)" /></label>
+
+          <div class="disp">
+            <span class="disp-title">Disponibilidade</span>
+            <label class="check"><input type="radio" name="disp" value="Manhã"> Manhã</label>
+            <label class="check"><input type="radio" name="disp" value="Tarde"> Tarde</label>
+            <label class="check"><input type="radio" name="disp" value="Noite"> Noite</label>
+          </div>
+
+          <label class="input"><input id="editEmailContato" type="email" placeholder="Email de contato" /></label>
+          <label class="input"><input id="editTelefoneContato" type="text" placeholder="Telefone de contato" /></label>
+
+          <label class="textarea">
+            <textarea id="editDescricao" rows="6" placeholder="Descrição"></textarea>
+          </label>
+
+          <div class="form-actions">
+            <button type="submit" class="chip big">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP • Denúncia -->
+  <div id="popupDenuncia" class="popup" aria-hidden="true">
+    <div class="popup-dialog dialog-sm">
+      <button class="close" data-close><i class="ri-close-line"></i></button>
+      <form id="formDenuncia" class="form">
+        <label class="textarea">
+          <textarea id="motivoDenuncia" rows="6" placeholder="Motivo da denúncia"></textarea>
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="chip big">Enviar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- POPUP • Sucesso -->
+  <div id="popupDenunciaOk" class="popup" aria-hidden="true">
+    <div class="popup-dialog dialog-sm center-msg">
+      <button class="close" data-close><i class="ri-close-line"></i></button>
+      <h3>Vamos verificar sua denúncia</h3>
+    </div>
+  </div>
+
+  <script src="../scripts/perfil.js"></script>
 </body>
 </html>

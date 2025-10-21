@@ -14,12 +14,13 @@ const app = express();
 const PORT = process.env.PORT ?? 3000;
 
 // --- Middlewares Globais ---
-app.use(cors({ origin: "*" }));
+app.use(cors({ origin: process.env.FRONTEND_URL }));
 app.use(express.json());
 app.use(morgan("dev"));
 
 // Servir arquivos estáticos da pasta Frontend
 app.use(express.static(path.join(__dirname, "../Frontend")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // --- Rotas da Aplicação ---
 app.get("/", (_req, res) => {
@@ -30,6 +31,9 @@ app.get("/", (_req, res) => {
 app.use(mainRoutes); // Suas rotas principais (login, registro, etc.)
 app.use('/api', verifyRoutes); // Nossas rotas de verificação com prefixo /api
 app.use("/api", passwordRoutes);
+const userProfileRoutes = require("./src/routes/userProfileRoutes");
+app.use("/api", userProfileRoutes);
+
 
 // --- Middleware de Erro (Deve ser o último) ---
 app.use(errorHandler);

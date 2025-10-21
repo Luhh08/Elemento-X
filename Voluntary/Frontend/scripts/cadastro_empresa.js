@@ -91,7 +91,7 @@ form.addEventListener("submit", async (e) => {
 
   // === Dados da empresa ===
   const razao_social = document.getElementById("razao_social").value.trim();
-  const email_empresa = document.getElementById("email_empresa").value.trim();
+  const email = document.getElementById("email").value.trim();
   const cnpj = document.getElementById("cnpj").value.trim();
   const telefone_empresa = document.getElementById("telefone_empresa").value.trim();
   const cep = document.getElementById("cep").value.trim();
@@ -99,14 +99,14 @@ form.addEventListener("submit", async (e) => {
   const senha = document.getElementById("senha").value.trim();
 
   // Validação mínima empresa
-  if (!razao_social || !email_empresa || !cnpj || !telefone_empresa || !cep || !endereco || !senha) {
+  if (!razao_social || !email || !cnpj || !telefone_empresa || !cep || !endereco || !senha) {
     alert("Por favor, preencha todos os campos da empresa.");
     return;
   }
 
   const dadosEmpresa = { 
     razao_social, 
-    email_empresa, 
+    email, 
     cnpj, 
     telefone_empresa, 
     cep, 

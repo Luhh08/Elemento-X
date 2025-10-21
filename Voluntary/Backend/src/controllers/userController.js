@@ -1,75 +1,66 @@
-// src/controllers/userController.js
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
+const CryptoJS = require("crypto-js");
 const { sendVerificationEmail } = require("../utils/sendEmail");
 const { generateToken } = require("../utils/generateToken");
 
 const prisma = new PrismaClient();
-const SECRET_KEY = process.env.FLE_MASTER_KEY; // AES key base64
+const SECRET_KEY = process.env.FLE_MASTER_KEY; // 🔐 chave AES do .env
 
-// ----------------- Criptografia CPF -----------------
-function encrypt(text) {
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv(
-    "aes-256-cbc",
-    Buffer.from(SECRET_KEY, "base64"),
-    iv
-  );
-  let encrypted = cipher.update(text, "utf8", "base64");
-  encrypted += cipher.final("base64");
-  return iv.toString("base64") + ":" + encrypted;
-}
-
-function decrypt(data) {
-  const [iv64, encrypted] = data.split(":");
-  const iv = Buffer.from(iv64, "base64");
-  const decipher = crypto.createDecipheriv(
-    "aes-256-cbc",
-    Buffer.from(SECRET_KEY, "base64"),
-    iv
-  );
-  let decrypted = decipher.update(encrypted, "base64", "utf8");
-  decrypted += decipher.final("utf8");
-  return decrypted;
-}
-
-// ----------------- Controller -----------------
-
-// Registrar usuário
+// ------------------------------
+// Cadastro de usuário
+// ------------------------------
 async function registrarUsuario(req, res, next) {
   try {
     const { nome, usuario, email, cpf, senha } = req.body;
 
+    // 1️⃣ Verificação de e-mail duplicado
     const usuarioExistente = await prisma.usuario.findUnique({ where: { email } });
-    if (usuarioExistente) return res.status(400).json({ error: "E-mail já cadastrado." });
+    if (usuarioExistente)
+      return res.status(400).json({ error: "E-mail já cadastrado." });
 
-    const senhaHash = await bcrypt.hash(senha, 12);
+    // 2️⃣ Descriptografa a senha recebida do frontend (AES)
+    const senhaDescriptografada = CryptoJS.AES.decrypt(senha, SECRET_KEY).toString(CryptoJS.enc.Utf8);
+
+    if (!senhaDescriptografada)
+      return res.status(400).json({ error: "Erro ao descriptografar a senha." });
+
+    // 3️⃣ Gera o hash seguro da senha
+    const senhaHash = await bcrypt.hash(senhaDescriptografada, 12);
+
+    // 4️⃣ Cria token de validação
     const token = generateToken({ email }, "1h");
-    const encryptedCpf = encrypt(cpf);
 
+    // 5️⃣ Salva o usuário no banco
     await prisma.usuario.create({
       data: {
         nome,
         usuario,
-        cpf: encryptedCpf,
         email,
+        cpf,
         senha: senhaHash,
-        validacao: false,
         validacaoToken: token,
+        validacao: false,
       },
     });
 
-    sendVerificationEmail(email, token).catch(console.error);
-
+    // 6️⃣ Responde imediatamente ao cliente
     res.status(201).json({ message: "Usuário criado! Verifique seu e-mail." });
+
+    // 7️⃣ Envia o e-mail de verificação em segundo plano
+    sendVerificationEmail(email, token).catch((error) => {
+      console.error("Erro ao enviar email de verificação:", error);
+    });
+
   } catch (err) {
     next(err);
   }
 }
 
-// Verificar email
+// ------------------------------
+// Verificação de e-mail
+// ------------------------------
 async function verificarEmail(req, res, next) {
   try {
     const { token } = req.query;
@@ -89,122 +80,76 @@ async function verificarEmail(req, res, next) {
   }
 }
 
-// Login
+// ------------------------------
+// Login do usuário
+// ------------------------------
 async function loginUsuario(req, res, next) {
   try {
     const { email, senha } = req.body;
-    if (!email || !senha) return res.status(400).json({ error: "Email e senha são obrigatórios." });
 
+    if (!email || !senha)
+      return res.status(400).json({ error: "Email e senha são obrigatórios." });
+
+    // 1️⃣ Busca usuário
     const usuario = await prisma.usuario.findUnique({ where: { email } });
     if (!usuario) return res.status(401).json({ error: "Email não encontrado." });
-    if (!usuario.validacao) return res.status(401).json({ error: "E-mail não verificado." });
 
-    const isPasswordValid = await bcrypt.compare(senha, usuario.senha);
+    // 2️⃣ Descriptografa a senha enviada do frontend
+    const senhaDescriptografada = CryptoJS.AES.decrypt(senha, SECRET_KEY).toString(CryptoJS.enc.Utf8);
+
+    if (!senhaDescriptografada)
+      return res.status(400).json({ error: "Erro ao descriptografar a senha." });
+
+    // 3️⃣ Compara a senha descriptografada com o hash do BD
+    const isPasswordValid = await bcrypt.compare(senhaDescriptografada, usuario.senha);
     if (!isPasswordValid) return res.status(401).json({ error: "Senha incorreta." });
 
-    const token = generateToken({ id: usuario.id, email });
+    // 4️⃣ Verifica se o e-mail já foi validado
+    if (!usuario.validacao)
+      return res.status(401).json({ error: "E-mail não verificado." });
 
-    const { senha: _, cpf: __, ...usuarioSeguro } = usuario;
+    // 5️⃣ Gera token JWT
+    const token = generateToken({ id: usuario.id, email: usuario.email });
 
-    res.status(200).json({ message: "Login realizado com sucesso!", token, usuario: usuarioSeguro });
+    // 6️⃣ Remove o campo senha do retorno
+    const { senha: _, ...usuarioSeguro } = usuario;
+
+    res.status(200).json({
+      message: "Login realizado com sucesso!",
+      token,
+      usuario: usuarioSeguro,
+    });
+
   } catch (err) {
     next(err);
   }
 }
 
-// Listar usuários (sem dados sensíveis)
+// ------------------------------
+// Listar usuários (admin/teste)
+// ------------------------------
 async function listarUsuarios(req, res, next) {
   try {
-    const usuarios = await prisma.usuario.findMany();
-    const usuariosSeguros = usuarios.map(u => ({
-      ...u,
-      senha: undefined,
-      cpf: undefined,
-    }));
-    res.status(200).json(usuariosSeguros);
+    const usuarios = await prisma.usuario.findMany({
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        usuario: true,
+        cpf: true,
+        validacao: true,
+      },
+    });
+    res.status(200).json(usuarios);
   } catch (err) {
     next(err);
   }
 }
 
-// Redefinir senha (envio de código)
-async function enviarCodigoReset(req, res) {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ error: "Email é obrigatório." });
-
-  try {
-    const usuario = await prisma.usuario.findUnique({ where: { email } });
-    if (!usuario) return res.status(404).json({ error: "Usuário não encontrado." });
-
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expires = new Date(Date.now() + 10 * 60 * 1000);
-
-    await prisma.usuario.update({
-      where: { email },
-      data: { resetToken: code, resetTokenExpires: expires },
-    });
-
-    await sendVerificationEmail(email, `Código de redefinição: ${code} (expira em 10 minutos)`);
-
-    res.json({ message: "Código enviado com sucesso!" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao enviar o código." });
-  }
-}
-
-// Verificar código de redefinição
-async function verificarCodigoReset(req, res) {
-  const { email, codigo } = req.body;
-  if (!email || !codigo) return res.status(400).json({ error: "Email e código são obrigatórios." });
-
-  try {
-    const usuario = await prisma.usuario.findUnique({ where: { email } });
-    if (!usuario) return res.status(404).json({ error: "Usuário não encontrado." });
-
-    if (usuario.resetToken !== codigo) return res.status(400).json({ error: "Código incorreto." });
-    if (usuario.resetTokenExpires < new Date()) return res.status(400).json({ error: "Código expirado." });
-
-    await prisma.usuario.update({
-      where: { email },
-      data: { resetToken: null, resetTokenExpires: null },
-    });
-
-    res.json({ message: "Código verificado!", redirect: "/nova-senha.html" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao verificar o código." });
-  }
-}
-
-// Resetar senha
-async function resetarSenha(req, res) {
-  const { email, senha } = req.body;
-  if (!email || !senha) return res.status(400).json({ error: "Email e senha são obrigatórios." });
-
-  try {
-    const usuario = await prisma.usuario.findUnique({ where: { email } });
-    if (!usuario) return res.status(404).json({ error: "Usuário não encontrado." });
-
-    const hashedSenha = await bcrypt.hash(senha, 12);
-    await prisma.usuario.update({
-      where: { email },
-      data: { senha: hashedSenha, resetToken: null, resetTokenExpires: null },
-    });
-
-    res.json({ message: "Senha redefinida com sucesso!" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao redefinir a senha." });
-  }
-}
 
 module.exports = {
   registrarUsuario,
   verificarEmail,
   loginUsuario,
   listarUsuarios,
-  enviarCodigoReset,
-  verificarCodigoReset,
-  resetarSenha,
 };
