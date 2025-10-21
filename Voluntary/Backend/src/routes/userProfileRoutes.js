@@ -1,4 +1,3 @@
-// src/routes/userProfileRoutes.js
 const express = require("express");
 const router = express.Router();
 const { autenticarToken } = require("../middlewares/authMiddleware");
@@ -7,7 +6,6 @@ const {
   updateUsuario,
   updateBannerUrl,
   updateFotoUrl,
-  denunciarUsuario,
 } = require("../controllers/userProfileController");
 const { upload } = require("../middlewares/uploadMiddleware");
 const { PrismaClient } = require("@prisma/client");
@@ -18,9 +16,8 @@ router.get("/usuario/:id", autenticarToken, getUsuario);
 router.put("/usuario/:id", autenticarToken, updateUsuario);
 router.put("/usuario/:id/banner", autenticarToken, updateBannerUrl);
 router.put("/usuario/:id/foto", autenticarToken, updateFotoUrl);
-router.post("/usuario/:id/denunciar", autenticarToken, denunciarUsuario);
 
-// --- Upload local de imagem ---
+// --- Upload de imagem local (foto/banner) ---
 router.post(
   "/usuario/:id/upload/:tipo",
   autenticarToken,
@@ -32,14 +29,27 @@ router.post(
 
       const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
       const { tipo } = req.params;
+      const { id } = req.params;
 
-      let updateData = {};
-      if (tipo === "foto") updateData = { fotoUrl: fileUrl };
-      else if (tipo === "banner") updateData = { bannerUrl: fileUrl };
-      else return res.status(400).json({ error: "Tipo inválido (use 'foto' ou 'banner')." });
+      // --- Segurança: impede alterar imagem de outro usuário ---
+      if (id !== req.userId) {
+        return res
+          .status(403)
+          .json({ error: "Você não pode alterar imagens de outro perfil." });
+      }
+
+      const updateData =
+        tipo === "foto"
+          ? { fotoUrl: fileUrl }
+          : tipo === "banner"
+          ? { bannerUrl: fileUrl }
+          : null;
+
+      if (!updateData)
+        return res.status(400).json({ error: "Tipo inválido (foto/banner)." });
 
       const usuario = await prisma.usuario.update({
-        where: { id: req.params.id },
+        where: { id },
         data: updateData,
         select: { id: true, fotoUrl: true, bannerUrl: true },
       });

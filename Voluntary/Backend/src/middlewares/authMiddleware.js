@@ -7,7 +7,7 @@ function autenticarToken(req, res, next) {
   const token = authHeader.split(" ")[1];
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.id;
+    req.userId = decoded.id; // ✅ usado depois no controller
     next();
   } catch {
     res.status(403).json({ error: "Token inválido ou expirado" });

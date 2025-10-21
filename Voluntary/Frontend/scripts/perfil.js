@@ -5,18 +5,26 @@ const $$ = (s) => document.querySelectorAll(s);
 // ----------- Tokens e identificação -----------
 const token = localStorage.getItem("token");
 const loggedUserId = localStorage.getItem("userId");
+
+// ✅ Se não houver ?id= na URL, adiciona automaticamente o ID do usuário logado
 const params = new URLSearchParams(window.location.search);
-const perfilId = params.get("id") || loggedUserId;
+let perfilId = params.get("id");
+
+if (!perfilId && loggedUserId) {
+  perfilId = loggedUserId;
+  const novaUrl = `${window.location.pathname}?id=${perfilId}`;
+  window.history.replaceState({}, "", novaUrl);
+}
 
 // ----------- POPUPS -----------
 const popupEdicao = $("#popupEdicao");
 const popupDenuncia = $("#popupDenuncia");
 const popupDenunciaOk = $("#popupDenunciaOk");
 
-$("#btnEditar").addEventListener("click", () =>
+$("#btnEditar")?.addEventListener("click", () =>
   popupEdicao.setAttribute("aria-hidden", "false")
 );
-$("#btnDenunciar").addEventListener("click", () =>
+$("#btnDenunciar")?.addEventListener("click", () =>
   popupDenuncia.setAttribute("aria-hidden", "false")
 );
 
@@ -28,11 +36,11 @@ $$("[data-close]").forEach((btn) =>
   })
 );
 
-// ----------- Caminhos padrão -----------
+// ----------- Caminhos padrão de imagem -----------
 const defaultFoto = "../img/default-avatar.jpg";
 const defaultBanner = "../img/default-banner.png";
 
-// ----------- Função principal -----------
+// ----------- Função principal: carregar perfil -----------
 async function carregarPerfil() {
   if (!token || !perfilId) return;
 
@@ -42,19 +50,21 @@ async function carregarPerfil() {
     });
 
     if (!res.ok) throw new Error("Erro ao carregar perfil.");
-
     const data = await res.json();
 
+    // Header
     $("#nomeUsuario").textContent = data.nome || "";
     $("#usuarioTag").textContent = data.usuario ? `@${data.usuario}` : "";
     $("#descricaoUsuario").textContent =
       data.descricao || "Este usuário ainda não adicionou uma descrição.";
 
+    // Imagens
     $("#bannerUsuario").src = data.bannerUrl || defaultBanner;
     $("#fotoUsuario").src = data.fotoUrl || defaultFoto;
     $("#bannerPreview").src = data.bannerUrl || defaultBanner;
     $("#fotoPreview").src = data.fotoUrl || defaultFoto;
 
+    // Competências
     const tagsEl = $("#listaCompetencias");
     tagsEl.innerHTML = "";
     (data.competencias || []).forEach((t) => {
@@ -64,17 +74,22 @@ async function carregarPerfil() {
       tagsEl.appendChild(span);
     });
 
+    // Disponibilidade e contatos
     $("#turnoUsuario").textContent = data.preferenciaHorario || "—";
     $("#emailContato").textContent = data.emailcontato || "—";
     $("#telefoneContato").textContent = data.telefonecontato || "—";
 
-    $("#editNome").value = data.nome || "";
-    $("#editUsuario").value = data.usuario || "";
-    $("#editDescricao").value = data.descricao || "";
-    $("#editEmailContato").value = data.emailcontato || "";
-    $("#editTelefoneContato").value = data.telefonecontato || "";
-    $("#editCompetencias").value = (data.competencias || []).join(", ");
+    // Preenche popup de edição (somente se for o dono do perfil)
+    if (perfilId === loggedUserId) {
+      $("#editNome").value = data.nome || "";
+      $("#editUsuario").value = data.usuario || "";
+      $("#editDescricao").value = data.descricao || "";
+      $("#editEmailContato").value = data.emailcontato || "";
+      $("#editTelefoneContato").value = data.telefonecontato || "";
+      $("#editCompetencias").value = (data.competencias || []).join(", ");
+    }
 
+    // Marcar disponibilidade
     if (data.preferenciaHorario) {
       const radio = document.querySelector(
         `input[name="disp"][value="${data.preferenciaHorario}"]`
@@ -82,22 +97,23 @@ async function carregarPerfil() {
       if (radio) radio.checked = true;
     }
 
+    // Barra de progresso
     atualizarBarraProgresso(data.progresso);
 
-    // ✅ Mostrar botões conforme dono ou visitante
+    // Mostrar ou esconder botões conforme o perfil
     if (perfilId === loggedUserId) {
-      $("#btnEditar").style.display = "inline-block";
-      $("#btnDenunciar").style.display = "none";
+      $("#btnEditar")?.classList.remove("hidden");
+      $("#btnDenunciar")?.classList.add("hidden");
     } else {
-      $("#btnEditar").style.display = "none";
-      $("#btnDenunciar").style.display = "inline-block";
+      $("#btnEditar")?.classList.add("hidden");
+      $("#btnDenunciar")?.classList.remove("hidden");
     }
   } catch (err) {
     console.error("Erro ao carregar perfil:", err);
   }
 }
 
-// ----------- Barra de progresso -----------
+// ----------- Atualizar barra de progresso -----------
 function atualizarBarraProgresso(valor) {
   const p = Math.max(0, Math.min(100, Number(valor || 0)));
   $("#barraProgresso").style.width = `${p}%`;
@@ -105,7 +121,7 @@ function atualizarBarraProgresso(valor) {
 }
 
 // ----------- Salvar edição -----------
-$("#formEdicao").addEventListener("submit", async (e) => {
+$("#formEdicao")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!token || !loggedUserId) return;
 
@@ -133,7 +149,6 @@ $("#formEdicao").addEventListener("submit", async (e) => {
     });
 
     const result = await resp.json();
-
     if (!resp.ok) throw new Error(result.error || "Erro ao atualizar perfil.");
 
     popupEdicao.setAttribute("aria-hidden", "true");
@@ -145,7 +160,7 @@ $("#formEdicao").addEventListener("submit", async (e) => {
   }
 });
 
-// ----------- Uploads ----------- 
+// ----------- Upload de imagem local (foto e banner) -----------
 async function uploadImagem(tipo) {
   const input = document.createElement("input");
   input.type = "file";
@@ -184,39 +199,22 @@ async function uploadImagem(tipo) {
   input.click();
 }
 
-$("#btnNovaFoto").addEventListener("click", () => uploadImagem("foto"));
-$("#btnNovoBanner").addEventListener("click", () => uploadImagem("banner"));
+$("#btnNovaFoto")?.addEventListener("click", () => uploadImagem("foto"));
+$("#btnNovoBanner")?.addEventListener("click", () => uploadImagem("banner"));
 
-// ----------- Denúncia real ----------- 
-$("#formDenuncia").addEventListener("submit", async (e) => {
+// ----------- Denúncia visual -----------
+$("#formDenuncia")?.addEventListener("submit", (e) => {
   e.preventDefault();
-  const motivo = $("#motivoDenuncia").value.trim();
+  popupDenuncia.setAttribute("aria-hidden", "true");
+  popupDenunciaOk.setAttribute("aria-hidden", "false");
+});
 
-  if (!motivo) {
-    alert("Por favor, descreva o motivo da denúncia.");
-    return;
-  }
-
-  try {
-    const resp = await fetch(`/api/usuario/${perfilId}/denunciar`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ motivo }),
-    });
-
-    const data = await resp.json();
-
-    if (!resp.ok) throw new Error(data.error || "Erro ao enviar denúncia.");
-
-    popupDenuncia.setAttribute("aria-hidden", "true");
-    popupDenunciaOk.setAttribute("aria-hidden", "false");
-  } catch (err) {
-    console.error("Erro ao denunciar:", err);
-    alert("❌ Falha ao enviar denúncia.");
-  }
+// ✅ ----------- Botão de sair -----------
+document.querySelector(".pill-logout")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  localStorage.removeItem("token");
+  localStorage.removeItem("userId");
+  window.location.href = "../login.html";
 });
 
 // ----------- Inicialização -----------

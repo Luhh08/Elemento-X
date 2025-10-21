@@ -1,4 +1,3 @@
-// src/controllers/userProfileController.js
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
@@ -40,18 +39,36 @@ exports.getUsuario = async (req, res, next) => {
 
 /**
  * PUT /api/usuario/:id
- * Atualiza campos do perfil (exceto nome e usuário)
+ * Atualiza o perfil (somente o dono pode editar)
  */
 exports.updateUsuario = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { nome, usuario, descricao, competencias, preferenciaHorario, emailcontato, telefonecontato } = req.body;
+    const userIdToken = req.userId; // 🔒 vindo do middleware
 
-    const competenciasArray = Array.isArray(competencias)
-      ? competencias
-      : typeof competencias === "string" && competencias.length
-      ? competencias.split(",").map((t) => t.trim()).filter(Boolean)
-      : undefined;
+    // --- Proteção: só o dono pode editar o próprio perfil ---
+    if (id !== userIdToken) {
+      return res.status(403).json({
+        error: "Você não tem permissão para editar este perfil.",
+      });
+    }
+
+    const {
+      nome,
+      usuario,
+      descricao,
+      competencias,
+      preferenciaHorario,
+      emailcontato,
+      telefonecontato,
+    } = req.body;
+
+    const competenciasArray =
+      Array.isArray(competencias) && competencias.length
+        ? competencias
+        : typeof competencias === "string" && competencias.length
+        ? competencias.split(",").map((t) => t.trim()).filter(Boolean)
+        : undefined;
 
     const usuarioAtualizado = await prisma.usuario.update({
       where: { id },
@@ -96,10 +113,15 @@ exports.updateUsuario = async (req, res, next) => {
 exports.updateBannerUrl = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { bannerUrl } = req.body;
+    const userIdToken = req.userId;
+    if (id !== userIdToken)
+      return res
+        .status(403)
+        .json({ error: "Você não pode alterar o banner de outro perfil." });
 
+    const { bannerUrl } = req.body;
     if (!bannerUrl)
-      return res.status(400).json({ error: "É necessário enviar a URL do banner." });
+      return res.status(400).json({ error: "Envie a URL do banner." });
 
     const usuarioAtualizado = await prisma.usuario.update({
       where: { id },
@@ -123,10 +145,15 @@ exports.updateBannerUrl = async (req, res, next) => {
 exports.updateFotoUrl = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { fotoUrl } = req.body;
+    const userIdToken = req.userId;
+    if (id !== userIdToken)
+      return res
+        .status(403)
+        .json({ error: "Você não pode alterar a foto de outro perfil." });
 
+    const { fotoUrl } = req.body;
     if (!fotoUrl)
-      return res.status(400).json({ error: "É necessário enviar a URL da foto." });
+      return res.status(400).json({ error: "Envie a URL da foto." });
 
     const usuarioAtualizado = await prisma.usuario.update({
       where: { id },
@@ -156,29 +183,6 @@ exports.getProgressoPerfil = async (req, res, next) => {
     res.json({ progresso: calcularProgresso(u) });
   } catch (error) {
     console.error("Erro ao calcular progresso:", error);
-    next(error);
-  }
-};
-
-/**
- * POST /api/usuario/:id/denunciar
- */
-exports.denunciarUsuario = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user.id;
-
-    if (userId === id)
-      return res.status(400).json({ error: "Você não pode denunciar a si mesmo." });
-
-    const { motivo } = req.body;
-    if (!motivo || motivo.length < 5)
-      return res.status(400).json({ error: "Motivo da denúncia é obrigatório." });
-
-    console.log(`🚨 Usuário ${userId} denunciou ${id}: ${motivo}`);
-    res.json({ message: "Denúncia enviada com sucesso!" });
-  } catch (error) {
-    console.error("Erro ao denunciar:", error);
     next(error);
   }
 };
