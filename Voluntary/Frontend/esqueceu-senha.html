@@ -47,7 +47,7 @@
   const mensagem = document.getElementById("mensagem");
   const voltar = document.getElementById("voltar");
 
-  // Etapa 1 — enviar email
+  // Etapa 1 — Enviar código por e-mail
   emailForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = document.getElementById("email").value;
@@ -65,7 +65,7 @@
       const data = await resposta.json();
 
       if (resposta.ok) {
-        mensagem.textContent = "Código enviado! Verifique seu email.";
+        mensagem.textContent = "Código enviado! Verifique seu e-mail.";
         mensagem.style.color = "green";
         emailForm.style.display = "none";
         codigoForm.style.display = "block";
@@ -79,36 +79,20 @@
     }
   });
 
-  // Etapa 2 — verificar código
-  codigoForm.addEventListener("submit", async (e) => {
+  // Etapa 2 — Digitar o código e seguir para redefinir a senha
+  codigoForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const email = document.getElementById("email").value;
-    const codigo = document.getElementById("codigo").value;
+    const codigo = document.getElementById("codigo").value.trim();
 
-    mensagem.textContent = "Verificando código...";
-    mensagem.style.color = "black";
-
-    try {
-      const resposta = await fetch("/api/verify-reset-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, codigo }),
-      });
-
-      const data = await resposta.json();
-
-      if (resposta.ok) {
-        mensagem.textContent = "Código verificado com sucesso!";
-        mensagem.style.color = "green";
-        window.location.href = `/redefinir-senha.html?email=${encodeURIComponent(email)}`; 
-      } else {
-        mensagem.textContent = data.error || "Código incorreto.";
-        mensagem.style.color = "red";
-      }
-    } catch (err) {
-      mensagem.textContent = "Erro de conexão com o servidor.";
+    if (!codigo) {
+      mensagem.textContent = "Digite o código recebido por e-mail.";
       mensagem.style.color = "red";
+      return;
     }
+
+    // ✅ Redireciona direto para a página de redefinição
+    window.location.href = `/redefinir-senha.html?codigo=${encodeURIComponent(codigo)}&email=${encodeURIComponent(email)}`;
   });
 
   voltar.addEventListener("click", () => {

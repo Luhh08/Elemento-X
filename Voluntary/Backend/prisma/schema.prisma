@@ -35,29 +35,38 @@ model Usuario {
 
 }
 
-// tabela da empresa
 model Empresa {
+  id               String  @id @default(auto()) @map("_id") @db.ObjectId
+  razao_social     String
+  email            String  @unique
+  cnpj             String  @unique
+  telefone_empresa String  @unique
+  cep              String
+  endereco         String
+  senha            String
 
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
-  razao_social    String
-  email    String @unique
-  cnpj     String @unique
-  telefone_empresa String @unique
-  cep      String
-  endereco String
-  senha    String
-  
+  // Validação e segurança
+  validacao          Boolean  @default(false)
+  validacaoToken     String?
+  resetToken         String?
+  resetTokenExpires  DateTime?
+
+  // Relação com representantes
+  representantes     RepresentanteLegal[]
 }
 
 model RepresentanteLegal {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
-  nome     String
-  cpf      String @unique
-  cargo    String 
-  email_representante    String @unique
-  telefone_representante String @unique
+  id                     String   @id @default(auto()) @map("_id") @db.ObjectId
+  nome                   String
+  cpf                    String   @unique
+  cargo                  String
+  email_representante    String   @unique
+  telefone_representante String   @unique
+  empresaId              String?  @db.ObjectId
+  empresa Empresa? @relation(fields: [empresaId], references: [id], onDelete: Cascade)
 
 }
+
 
 model Administrador {
   id       String @id @default(auto()) @map("_id") @db.ObjectId

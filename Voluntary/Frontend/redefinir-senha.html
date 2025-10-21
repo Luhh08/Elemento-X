@@ -48,74 +48,79 @@
         <div class="decorative-panel"></div>
     </div>
     
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById("novaSenhaForm");
-        const senhaInput = document.getElementById('senha');
-        const confirmarInput = document.getElementById('confirmarSenha');
-        const lengthCheck = document.getElementById('length');
-        const upperCheck = document.getElementById('upper');
-        const numberCheck = document.getElementById('number');
-        const symbolCheck = document.getElementById('symbol');
-        const erro = document.getElementById('erroSenha');
-        const mensagem = document.getElementById('mensagem');
+ <script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById("novaSenhaForm");
+  const senhaInput = document.getElementById('senha');
+  const confirmarInput = document.getElementById('confirmarSenha');
+  const lengthCheck = document.getElementById('length');
+  const upperCheck = document.getElementById('upper');
+  const numberCheck = document.getElementById('number');
+  const symbolCheck = document.getElementById('symbol');
+  const erro = document.getElementById('erroSenha');
+  const mensagem = document.getElementById('mensagem');
 
-        // Pegamos o email do usuário via query string
-        const params = new URLSearchParams(window.location.search);
-        const email = params.get("email");
+  // ✅ Pega os parâmetros da URL (código + email)
+  const params = new URLSearchParams(window.location.search);
+  const codigo = params.get("codigo");
+  const email = params.get("email");
 
-        senhaInput.addEventListener('input', function() {
-            const senha = senhaInput.value;
-            lengthCheck.className = (senha.length >= 8 && senha.length <= 24) ? 'valid' : 'invalid';
-            upperCheck.className = /[A-Z]/.test(senha) ? 'valid' : 'invalid';
-            numberCheck.className = /\d/.test(senha) ? 'valid' : 'invalid';
-            symbolCheck.className = /[^A-Za-z0-9]/.test(senha) ? 'valid' : 'invalid';
-        });
+  senhaInput.addEventListener('input', function() {
+    const senha = senhaInput.value;
+    lengthCheck.className = (senha.length >= 8 && senha.length <= 24) ? 'valid' : 'invalid';
+    upperCheck.className = /[A-Z]/.test(senha) ? 'valid' : 'invalid';
+    numberCheck.className = /\d/.test(senha) ? 'valid' : 'invalid';
+    symbolCheck.className = /[^A-Za-z0-9]/.test(senha) ? 'valid' : 'invalid';
+  });
 
-        confirmarInput.addEventListener('input', function() {
-            if (confirmarInput.value === senhaInput.value && confirmarInput.value.length > 0) {
-                confirmarInput.style.borderColor = 'lime';
-                erro.style.display = 'none';
-            } else {
-                confirmarInput.style.borderColor = '';
-                erro.style.display = 'block';
-            }
-        });
+  confirmarInput.addEventListener('input', function() {
+    if (confirmarInput.value === senhaInput.value && confirmarInput.value.length > 0) {
+      confirmarInput.style.borderColor = 'lime';
+      erro.style.display = 'none';
+    } else {
+      confirmarInput.style.borderColor = '';
+      erro.style.display = 'block';
+    }
+  });
 
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
 
-            if (senhaInput.value !== confirmarInput.value) {
-                erro.style.display = 'block';
-                return;
-            }
+    if (senhaInput.value !== confirmarInput.value) {
+      erro.style.display = 'block';
+      return;
+    }
 
-            mensagem.textContent = "Redefinindo senha...";
-            mensagem.style.color = "black";
+    mensagem.textContent = "Redefinindo senha...";
+    mensagem.style.color = "black";
 
-            try {
-                const resposta = await fetch("/api/reset-password", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, senha: senhaInput.value })
-                });
+    try {
+      // ✅ Agora enviamos código + senha
+      const resposta = await fetch("/api/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          codigo,
+          senha: senhaInput.value
+        })
+      });
 
-                const data = await resposta.json();
+      const data = await resposta.json();
 
-                if (resposta.ok) {
-                    mensagem.textContent = "Senha redefinida com sucesso!";
-                    mensagem.style.color = "green";
-                    setTimeout(() => window.location.href = "/login.html", 2000);
-                } else {
-                    mensagem.textContent = data.error || "Erro ao redefinir senha.";
-                    mensagem.style.color = "red";
-                }
-            } catch (err) {
-                mensagem.textContent = "Erro de conexão com o servidor.";
-                mensagem.style.color = "red";
-            }
-        });
-    });
-    </script>
+      if (resposta.ok) {
+        mensagem.textContent = "Senha redefinida com sucesso!";
+        mensagem.style.color = "green";
+        setTimeout(() => window.location.href = "/login.html", 2000);
+      } else {
+        mensagem.textContent = data.error || "Erro ao redefinir senha.";
+        mensagem.style.color = "red";
+      }
+    } catch (err) {
+      mensagem.textContent = "Erro de conexão com o servidor.";
+      mensagem.style.color = "red";
+    }
+  });
+});
+</script>
 </body>
 </html>
