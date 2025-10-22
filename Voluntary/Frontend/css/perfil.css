@@ -20,11 +20,10 @@
 
 /* Reset */
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; }
 body {
   font-family: "Montserrat", system-ui, sans-serif;
   color: var(--ink);
-  background: linear-gradient(180deg, var(--brand-2) 0%, #e8fff7 100%);
+  background: linear-gradient(#FFB783, #A2FFF4);
   margin: 0;
 }
 
@@ -40,8 +39,7 @@ body {
   top: 0;
   height: 100vh;
   padding: 24px 18px;
-  background: linear-gradient(180deg, #d6fff9 0%, #dff8ff 100%);
-  border-right: 4px solid #bff2ee;
+  background: #ffffff;
 }
 
 .brand {
