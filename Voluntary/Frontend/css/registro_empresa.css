@@ -87,20 +87,20 @@ html, body {
 
 .decorative-panel {
     flex-basis: 60%;
-    height: 100%; /* ocupa tela inteira */
+    height: 100%;
 }
 
 .button-group {
     display: flex;
-    justify-content: center; /* centraliza o grupo */
+    justify-content: center;
     align-items: center;
-    gap: 10px; /* espaço entre os botões */
+    gap: 10px;
     width: 100%;
 }
 
 .button-group button {
-    flex: 1; /* deixa ambos com o mesmo tamanho */
-    max-width: 140px; /* evita que fiquem grandes demais */
+    flex: 1;
+    max-width: 140px;
     background-color: #004d40;
     color: white;
     border: none;
@@ -124,7 +124,7 @@ html, body {
 
     .registro-panel {
         flex-basis: 100%;
-        height: 100%; /* ocupa tela toda */
+        height: 100%;
         width: 100%;
         padding: 20px;
     }

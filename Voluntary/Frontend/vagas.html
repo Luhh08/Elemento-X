@@ -11,6 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="css/vagas.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
   </head>
   <body>
 <header id="section-header" class="site-header">
@@ -21,26 +22,21 @@
         <nav class="main-navigation">
         </nav>
         <div class="header-actions">
-    <!-- Ícone de notificações -->
     <div class="notification-icon">
         <img src="img/bell.png" alt="Notificações" class="icon-bell">
         <span class="notification-count">3</span>
     </div>
 
-    <!-- Menu do usuário -->
     <div class="user-menu">
         <img src="img/foto-perfil.png" alt="Foto do usuário" class="user-avatar" id="userAvatar">
         <div class="dropdown-menu" id="dropdownMenu">
-            <a href="#" class="dropdown-item">
+            <a href="../Frontend/perfil-usuario.html" class="dropdown-item">
                 <span class="icon">👤</span> Perfil
-            </a>
-            <a href="#" class="dropdown-item">
-                <span class="icon">🔍</span> Procurar Vagas
             </a>
             <a href="#" class="dropdown-item">
                 <span class="icon">⚙️</span> Configurações
             </a>
-            <a href="#" class="dropdown-item logout">
+            <a href="../Frontend/login.html" class="dropdown-item logout">
                 <span class="icon">🚪</span> Sair
             </a>
         </div>
@@ -59,9 +55,7 @@
     <input type="search" placeholder="Pesquisar" id="pesquisar_tags" class="filter-search-input">
     <img src="img/lupa.png" alt="Search Icon" class="search-icon">
   </form>
-
-  <div class="tags-list">
-    <!-- Cada tag agora é interativa -->
+  <div class="tags-list"> 
     <div class="tag-container">
       <div class="tag">
         <span>Saúde</span>
@@ -79,7 +73,7 @@
 
     <div class="tag-container">
       <div class="tag">
-        <span>Educação</span>
+        <span>Educação</span><br>
         <div class="plus" onclick="toggleOptions(this)">+</div>
       </div>
       <div class="options">

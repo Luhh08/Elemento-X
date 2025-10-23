@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Poppins:wght@400;500;600;700&display=swap');
+
+=======
+>>>>>>> f25831d0ac49fcbd7494be4e49c64189258ed2c5
 :root {
   --bg: #f3f8f7;
   --panel: #ffffff;
@@ -21,6 +27,18 @@
 /* Reset */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
+<<<<<<< HEAD
+    font-family: 'Inter', sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-text);
+}
+
+.main-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+=======
   font-family: "Montserrat", system-ui, sans-serif;
   color: var(--ink);
   background: linear-gradient(#FFB783, #A2FFF4);
@@ -34,6 +52,7 @@ body {
 }
 
 /* Sidebar */
+>>>>>>> f25831d0ac49fcbd7494be4e49c64189258ed2c5
 .sidebar {
   position: sticky;
   top: 0;
@@ -42,10 +61,21 @@ body {
   background: #ffffff;
 }
 
+<<<<<<< HEAD
+.sidebar .logo {
+    font-family: 'Alfa Slab One', cursive;
+    font-size: 36px;
+    font-weight: 400;
+    color: #06C9A8;
+    line-height: 120%;
+    letter-spacing: -0.03em;
+    margin-bottom: 3rem;
+=======
 .brand {
   font-size: 34px;
   color: #0bb1a6;
   margin-bottom: 20px;
+>>>>>>> f25831d0ac49fcbd7494be4e49c64189258ed2c5
 }
 
 .menu {
@@ -55,6 +85,21 @@ body {
   margin-bottom: 24px;
 }
 
+<<<<<<< HEAD
+.sidebar ul li a {
+    display: flex;
+    align-items: center;
+    width: 215px;
+    height: 44px;
+    gap: 13px;
+    padding: 10px;
+    margin-bottom: 0.5rem;
+    text-decoration: none;
+    color: var(--color-text-light);
+    font-weight: 500;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+=======
 .pill {
   display: flex;
   align-items: center;
@@ -67,6 +112,7 @@ body {
   font-weight: 600;
   border: 2px solid #bfeee8;
   transition: 0.2s ease;
+>>>>>>> f25831d0ac49fcbd7494be4e49c64189258ed2c5
 }
 
 .pill:hover { background: #d3f3ef; }
@@ -76,6 +122,69 @@ body {
   border-color: #ffc7c7;
 }
 
+<<<<<<< HEAD
+.sidebar ul li.active a,
+.sidebar ul li a:hover {
+    background-color: var(--color-active-btn);
+    color: #00566d;
+}
+
+.sidebar ul li.logout a {
+    color: var(--color-danger-dark);
+}
+
+.sidebar ul li.logout.active a,
+.sidebar ul li.logout a:hover {
+    background-color: var(--color-danger);
+    color: var(--color-danger-dark);
+}
+
+.content {
+    flex: 1;
+    padding: 2rem 3rem;
+}
+
+.profile-header .banner {
+    height: 200px;
+    background-image: url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+    background-size: cover;
+    background-position: center;
+    border-radius: 12px;
+}
+
+.profile-header .profile-info {
+    display: flex;
+    align-items: flex-start;
+    padding: 0 2rem;
+    margin-top: -50px;
+    position: relative;
+}
+
+.profile-picture {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 5px solid var(--color-white);
+    object-fit: cover;
+}
+
+.profile-details {
+    margin-left: 1.5rem;
+    padding-top: 55px;
+}
+
+.profile-details h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.profile-details .username {
+    color: var(--color-text-light);
+}
+
+.profile-details .description {
+    margin-top: 0.5rem;
+=======
 /* Conteúdo */
 .content { padding: 24px 28px; }
 
@@ -92,6 +201,7 @@ body {
   width: 100%;
   height: 240px;
   object-fit: cover;
+>>>>>>> f25831d0ac49fcbd7494be4e49c64189258ed2c5
 }
 
 .profile-actions {
@@ -148,13 +258,19 @@ body {
   border-radius: 50%;
 }
 
+<<<<<<< HEAD
+.content-body {
+    display: flex;
+    gap: 2rem;
+    margin-top: 3rem;
+=======
 .user-info {
   margin-top: 30px; /* empurra o nome pra baixo da foto */
   margin-left: 40px; /* alinha com a imagem */
   padding: 0 18px;
   position: relative;
   z-index: 2;
-  margin-bottom: 30px;
+>>>>>>> f25831d0ac49fcbd7494be4e49c64189258ed2c5
 }
 
 .name {
