@@ -20,11 +20,10 @@
 
 /* Reset */
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; }
 body {
   font-family: "Montserrat", system-ui, sans-serif;
   color: var(--ink);
-  background: linear-gradient(180deg, var(--brand-2) 0%, #e8fff7 100%);
+  background: linear-gradient(#FFB783, #A2FFF4);
   margin: 0;
 }
 
@@ -40,8 +39,7 @@ body {
   top: 0;
   height: 100vh;
   padding: 24px 18px;
-  background: linear-gradient(180deg, #d6fff9 0%, #dff8ff 100%);
-  border-right: 4px solid #bff2ee;
+  background: #ffffff;
 }
 
 .brand {
@@ -105,7 +103,6 @@ body {
   z-index: 4;
 }
 
-
 .chip {
   background: #f6f6f6;
   border: 1.5px solid #cfd8dc;
@@ -157,8 +154,8 @@ body {
   padding: 0 18px;
   position: relative;
   z-index: 2;
+  margin-bottom: 30px;
 }
-
 
 .name {
   font-size: 34px;
@@ -168,7 +165,7 @@ body {
 .username {
   color: var(--muted);
   font-weight: 600;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
 
 .desc {
@@ -329,7 +326,6 @@ body {
   max-height: 95vh;
 }
 
-
 .dialog-sm { width: min(900px, 96vw); }
 .center-msg {
   display: flex;
@@ -457,12 +453,60 @@ body {
   font-size: 14px;
   color: var(--ink);
   font-weight: 600;
-  margin-top: 4px;
 }
-
 
 /* Responsivo */
 @media (max-width: 1200px) {
   .columns { grid-template-columns: 1fr; }
   .right-col { order: -1; }
+}
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 18px 18px;
+  margin-top: -60px;
+}
+
+.avatar-wrap {
+  position: relative;
+  left: 0; top: 0;
+  margin-left: 40px;         
+  width: 150px; height: 150px;
+  border-radius: 50%;
+  border: 5px solid #fff;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 6px 14px rgba(0,0,0,.25);
+  z-index: 5;
+}
+
+.user-info {
+  margin: 0;
+  padding: 0;
+  z-index: 2;
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;       
+}
+
+.progresso-container.lg {
+  width: 320px;             
+  height: 14px;
+  border-width: 2px;
+  margin: 0;                
+}
+
+.name { margin: 0 0 6px; line-height: 1.1; }
+.username { margin-bottom: 10px; }
+
+@media (max-width: 720px) {
+  .profile-row { flex-direction: column; align-items: flex-start; margin-top: -40px; }
+  .avatar-wrap { margin-left: 18px; }
+  .progresso-container.lg { width: 220px; }
 }

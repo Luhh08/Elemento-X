@@ -2,19 +2,9 @@
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 
-// ----------- Tokens e identificação -----------
+// ----------- Tokens de sessão -----------
 const token = localStorage.getItem("token");
-const loggedUserId = localStorage.getItem("userId");
-
-// ✅ Se não houver ?id= na URL, adiciona automaticamente o ID do usuário logado
-const params = new URLSearchParams(window.location.search);
-let perfilId = params.get("id");
-
-if (!perfilId && loggedUserId) {
-  perfilId = loggedUserId;
-  const novaUrl = `${window.location.pathname}?id=${perfilId}`;
-  window.history.replaceState({}, "", novaUrl);
-}
+const userId = localStorage.getItem("userId");
 
 // ----------- POPUPS -----------
 const popupEdicao = $("#popupEdicao");
@@ -22,16 +12,16 @@ const popupDenuncia = $("#popupDenuncia");
 const popupDenunciaOk = $("#popupDenunciaOk");
 
 $("#btnEditar")?.addEventListener("click", () =>
-  popupEdicao.setAttribute("aria-hidden", "false")
+  popupEdicao?.setAttribute("aria-hidden", "false")
 );
 $("#btnDenunciar")?.addEventListener("click", () =>
-  popupDenuncia.setAttribute("aria-hidden", "false")
+  popupDenuncia?.setAttribute("aria-hidden", "false")
 );
 
 $$("[data-close]").forEach((btn) =>
   btn.addEventListener("click", () => {
     [popupEdicao, popupDenuncia, popupDenunciaOk].forEach((p) =>
-      p.setAttribute("aria-hidden", "true")
+      p?.setAttribute("aria-hidden", "true")
     );
   })
 );
@@ -42,14 +32,15 @@ const defaultBanner = "../img/default-banner.png";
 
 // ----------- Função principal: carregar perfil -----------
 async function carregarPerfil() {
-  if (!token || !perfilId) return;
+  if (!token || !userId) return;
 
   try {
-    const res = await fetch(`/api/usuario/${perfilId}`, {
+    const res = await fetch(`/api/usuario/${userId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
     if (!res.ok) throw new Error("Erro ao carregar perfil.");
+
     const data = await res.json();
 
     // Header
@@ -66,48 +57,44 @@ async function carregarPerfil() {
 
     // Competências
     const tagsEl = $("#listaCompetencias");
-    tagsEl.innerHTML = "";
-    (data.competencias || []).forEach((t) => {
-      const span = document.createElement("span");
-      span.className = "tag";
-      span.textContent = t;
-      tagsEl.appendChild(span);
-    });
+    if (tagsEl) {
+      tagsEl.innerHTML = "";
+      (data.competencias || []).forEach((t) => {
+        const span = document.createElement("span");
+        span.className = "tag";
+        span.textContent = t;
+        tagsEl.appendChild(span);
+      });
+    }
 
-    // Disponibilidade e contatos
-    $("#turnoUsuario").textContent = data.preferenciaHorario || "—";
+    // Disponibilidade (agora array) e contatos
+    const horarios = Array.isArray(data.preferenciaHorario)
+      ? data.preferenciaHorario
+      : data.preferenciaHorario
+      ? [data.preferenciaHorario]
+      : [];
+
+    $("#turnoUsuario").textContent = horarios.length ? horarios.join(", ") : "—";
     $("#emailContato").textContent = data.emailcontato || "—";
     $("#telefoneContato").textContent = data.telefonecontato || "—";
 
-    // Preenche popup de edição (somente se for o dono do perfil)
-    if (perfilId === loggedUserId) {
-      $("#editNome").value = data.nome || "";
-      $("#editUsuario").value = data.usuario || "";
-      $("#editDescricao").value = data.descricao || "";
-      $("#editEmailContato").value = data.emailcontato || "";
-      $("#editTelefoneContato").value = data.telefonecontato || "";
-      $("#editCompetencias").value = (data.competencias || []).join(", ");
-    }
+    // Preencher popup de edição
+    $("#editNome").value = data.nome || "";
+    $("#editUsuario").value = data.usuario || "";
+    $("#editDescricao").value = data.descricao || "";
+    $("#editEmailContato").value = data.emailcontato || "";
+    $("#editTelefoneContato").value = data.telefonecontato || "";
+    $("#editCompetencias").value = (data.competencias || []).join(", ");
 
-    // Marcar disponibilidade
-    if (data.preferenciaHorario) {
-      const radio = document.querySelector(
-        `input[name="disp"][value="${data.preferenciaHorario}"]`
-      );
-      if (radio) radio.checked = true;
-    }
+    // Marcar disponibilidade (checkboxes)
+    $$('input[name="disp[]"]').forEach((ch) => (ch.checked = false));
+    horarios.forEach((h) => {
+      const cb = document.querySelector(`input[name="disp[]"][value="${h}"]`);
+      if (cb) cb.checked = true;
+    });
 
     // Barra de progresso
     atualizarBarraProgresso(data.progresso);
-
-    // Mostrar ou esconder botões conforme o perfil
-    if (perfilId === loggedUserId) {
-      $("#btnEditar")?.classList.remove("hidden");
-      $("#btnDenunciar")?.classList.add("hidden");
-    } else {
-      $("#btnEditar")?.classList.add("hidden");
-      $("#btnDenunciar")?.classList.remove("hidden");
-    }
   } catch (err) {
     console.error("Erro ao carregar perfil:", err);
   }
@@ -123,23 +110,24 @@ function atualizarBarraProgresso(valor) {
 // ----------- Salvar edição -----------
 $("#formEdicao")?.addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (!token || !loggedUserId) return;
+  if (!token || !userId) return;
 
-  const dispSel = document.querySelector('input[name="disp"]:checked');
-  const preferenciaHorario = dispSel ? dispSel.value : "";
+  // coleta múltiplos horários marcados
+  const selecionados = [...document.querySelectorAll('input[name="disp[]"]:checked')]
+    .map((el) => el.value); // ex.: ["Manhã","Noite"]
 
   const body = {
     nome: $("#editNome").value,
     usuario: $("#editUsuario").value,
     descricao: $("#editDescricao").value,
-    competencias: $("#editCompetencias").value,
-    preferenciaHorario,
+    competencias: $("#editCompetencias").value, // string "a, b, c" — backend já converte
+    preferenciaHorario: selecionados,           // agora array
     emailcontato: $("#editEmailContato").value,
     telefonecontato: $("#editTelefoneContato").value,
   };
 
   try {
-    const resp = await fetch(`/api/usuario/${loggedUserId}`, {
+    const resp = await fetch(`/api/usuario/${userId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -149,9 +137,10 @@ $("#formEdicao")?.addEventListener("submit", async (e) => {
     });
 
     const result = await resp.json();
+
     if (!resp.ok) throw new Error(result.error || "Erro ao atualizar perfil.");
 
-    popupEdicao.setAttribute("aria-hidden", "true");
+    popupEdicao?.setAttribute("aria-hidden", "true");
     await carregarPerfil();
     alert("✅ Perfil atualizado com sucesso!");
   } catch (err) {
@@ -160,7 +149,7 @@ $("#formEdicao")?.addEventListener("submit", async (e) => {
   }
 });
 
-// ----------- Upload de imagem local (foto e banner) -----------
+// ----------- Upload de imagem (foto e banner) -----------
 async function uploadImagem(tipo) {
   const input = document.createElement("input");
   input.type = "file";
@@ -173,7 +162,7 @@ async function uploadImagem(tipo) {
     formData.append("imagem", arquivo);
 
     try {
-      const resp = await fetch(`/api/usuario/${loggedUserId}/upload/${tipo}`, {
+      const resp = await fetch(`/api/usuario/${userId}/upload/${tipo}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -183,11 +172,11 @@ async function uploadImagem(tipo) {
       if (!resp.ok) throw new Error(data.error || "Erro no upload.");
 
       if (tipo === "foto") {
-        $("#fotoUsuario").src = data.usuario.fotoUrl;
-        $("#fotoPreview").src = data.usuario.fotoUrl;
+        $("#fotoUsuario").src = data.usuario.fotoUrl || defaultFoto;
+        $("#fotoPreview").src = data.usuario.fotoUrl || defaultFoto;
       } else {
-        $("#bannerUsuario").src = data.usuario.bannerUrl;
-        $("#bannerPreview").src = data.usuario.bannerUrl;
+        $("#bannerUsuario").src = data.usuario.bannerUrl || defaultBanner;
+        $("#bannerPreview").src = data.usuario.bannerUrl || defaultBanner;
       }
 
       alert("🖼️ Imagem enviada com sucesso!");
@@ -199,22 +188,15 @@ async function uploadImagem(tipo) {
   input.click();
 }
 
+// Botões de upload nos popups
 $("#btnNovaFoto")?.addEventListener("click", () => uploadImagem("foto"));
 $("#btnNovoBanner")?.addEventListener("click", () => uploadImagem("banner"));
 
 // ----------- Denúncia visual -----------
 $("#formDenuncia")?.addEventListener("submit", (e) => {
   e.preventDefault();
-  popupDenuncia.setAttribute("aria-hidden", "true");
-  popupDenunciaOk.setAttribute("aria-hidden", "false");
-});
-
-// ✅ ----------- Botão de sair -----------
-document.querySelector(".pill-logout")?.addEventListener("click", (e) => {
-  e.preventDefault();
-  localStorage.removeItem("token");
-  localStorage.removeItem("userId");
-  window.location.href = "../login.html";
+  popupDenuncia?.setAttribute("aria-hidden", "true");
+  popupDenunciaOk?.setAttribute("aria-hidden", "false");
 });
 
 // ----------- Inicialização -----------

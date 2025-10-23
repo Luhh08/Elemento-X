@@ -16,7 +16,6 @@
       <nav class="menu">
         <a class="pill" href="vagas.html"><i class="ri-search-line"></i> Procurar Vagas</a>
         <a class="pill" href="#"><i class="ri-notification-3-line"></i> Notificações</a>
-        <a class="pill" href="#"><i class="ri-settings-3-line"></i> Configurações</a>
       </nav>
       <a class="pill pill-logout" href="#"><i class="ri-logout-box-r-line"></i> Sair</a>
     </aside>
@@ -26,30 +25,34 @@
 
       <!-- Header do Perfil -->
       <section class="profile-header">
-        <img id="bannerUsuario" class="banner" src="../img/banner.png" alt="banner"/>
+        <img id="bannerUsuario" class="banner" src="../img/default-banner.png" alt="banner"/>
 
         <div class="profile-actions">
           <button id="btnDenunciar" class="chip danger">Denunciar</button>
           <button id="btnEditar" class="chip">Editar Perfil</button>
         </div>
 
-        <div class="avatar-wrap">
-          <img id="fotoUsuario" class="avatar" src="../img/foto-perfil.png" alt="foto de perfil"/>
-        </div>
+        <div class="profile-row">
+  <div class="avatar-wrap">
+    <img id="fotoUsuario" class="avatar" src="../img/default-avatar.jpg" alt="foto de perfil"/>
+  </div>
 
-        <div class="user-info">
-          <h2 id="nomeUsuario" class="name">Nome do Usuário</h2>
-          <p id="usuarioTag" class="username">@usuario</p>
-          <p id="descricaoUsuario" class="desc">Aqui vai a descrição do usuário.</p>
+  <div class="user-info">
+    <!-- barra ao lado da foto -->
+    <div class="progress-row">
+      <div class="progresso-container lg">
+        <div id="barraProgresso" class="progresso-barra"></div>
+      </div>
+      <span id="labelProgresso" class="progresso-label">0% completo</span>
+    </div>
 
-          <!-- ✅ Barra de progresso dentro da user-info -->
-          <div class="perfil-progresso">
-            <div class="progresso-container">
-              <div id="barraProgresso" class="progresso-barra"></div>
-            </div>
-            <p id="labelProgresso" class="progresso-label">0% completo</p>
-          </div>
-        </div>
+    <h2 id="nomeUsuario" class="name">Nome do Usuário</h2>
+    <p id="usuarioTag" class="username">@usuario</p>
+    <p id="descricaoUsuario" class="desc">Aqui vai a descrição do usuário.</p>
+  </div>
+</div>
+
+
       </section>
 
       <!-- Histórico e Lateral -->
@@ -68,7 +71,7 @@
           </article>
 
           <article class="vaga-card">
-            <img src="../Frontend/img/vaga-foto.png" alt="vaga"/>
+            <img src="../img/vaga-foto.png" alt="vaga"/>
             <div class="vaga-info">
               <p class="vaga-title">Ação Comunitária</p>
               <p class="vaga-sub">VidaVerde ONG</p>
@@ -109,7 +112,7 @@
 
       <img id="bannerPreview" class="popup-banner" src="../Frontend/img/banner.png" alt="banner"/>
       <div class="popup-banner-row">
-        <button class="chip" id="btnNovoBanner">Usar URL de Banner</button>
+        <button class="chip" id="btnNovoBanner">Enviar Banner</button>
       </div>
 
       <div class="popup-body">
@@ -117,7 +120,7 @@
           <div class="avatar-border">
             <img id="fotoPreview" class="avatar" src="../Frontend/img/foto-perfil.png" alt="perfil"/>
           </div>
-          <button class="chip" id="btnNovaFoto">Usar URL de Foto</button>
+          <button class="chip" id="btnNovaFoto">Enviar Foto</button>
         </div>
 
         <form id="formEdicao" class="form">
@@ -127,9 +130,9 @@
 
           <div class="disp">
             <span class="disp-title">Disponibilidade</span>
-            <label class="check"><input type="radio" name="disp" value="Manhã"> Manhã</label>
-            <label class="check"><input type="radio" name="disp" value="Tarde"> Tarde</label>
-            <label class="check"><input type="radio" name="disp" value="Noite"> Noite</label>
+            <label class="check"><input type="checkbox" name="disp[]" value="Manhã"> Manhã</label>
+            <label class="check"><input type="checkbox" name="disp[]" value="Tarde"> Tarde</label>
+            <label class="check"><input type="checkbox" name="disp[]" value="Noite"> Noite</label>
           </div>
 
           <label class="input"><input id="editEmailContato" type="email" placeholder="Email de contato" /></label>

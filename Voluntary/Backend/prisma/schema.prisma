@@ -25,7 +25,7 @@ model Usuario {
   // Campos extras de perfil
   descricao          String?         // descrição do usuário
   competencias       String[]        // array de tags
-  preferenciaHorario String?         // "Manhã", "Tarde", "Noite"
+  preferenciaHorario String[]         // "Manhã", "Tarde", "Noite"
   emailcontato       String?         // email alternativo ou contato público
   telefonecontato    String?         // telefone de contato
 
