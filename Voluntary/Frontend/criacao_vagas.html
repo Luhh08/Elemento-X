@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Criação de Vagas</title>
+  <link rel="stylesheet" href="css/criacao_vagas.css" />
+</head>
+<body>
+  <div class="container">
+    <!-- FORMULÁRIO -->
+    <section class="form-section">
+      <h2>Criação de vagas</h2>
+      <form id="vagaForm">
+        <input type="text" id="nomeProjeto" placeholder="Nome do projeto" />
+        <textarea id="descricao" placeholder="Descrição"></textarea>
+        <input type="text" id="tags" placeholder="Tags (separe por vírgula)" />
+        <input type="text" id="localizacao" placeholder="Localização" />
+        <input type="text" id="turno" placeholder="Adicionar turno" />
+        <input type="date" id="data" />
+
+        <label class="foto-label">Adicionar fotos:</label>
+        <div class="foto-container" id="fotoContainer">
+          <div class="foto" id="fotoPlaceholder">+</div>
+          <input type="file" id="fotoInput" accept="image/*" multiple hidden />
+        </div>
+
+        <button type="button" id="salvarBtn" class="btn-salvar">Salvar</button>
+      </form>
+    </section>
+
+    <!-- PREVIEW -->
+    <section class="preview-section">
+      <h3>Preview de Projeto</h3>
+      <div id="previewCard" class="preview-card">
+        <div class="preview-images" id="previewImages"></div>
+        <h4 id="previewTitulo">Nome do projeto...</h4>
+        <p id="previewDescricao">Descrição do projeto aparecerá aqui.</p>
+        <p id="previewLocalizacao"><strong>Localização:</strong> —</p>
+        <p id="previewTurnoData"><strong>Turno:</strong> — | <strong>Data:</strong> —</p>
+        <div id="previewTags"></div>
+      </div>
+    </section>
+  </div>
+
+  <script src="scripts/criacao_vagas.js"></script>
+</body>
+</html>

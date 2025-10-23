@@ -1,26 +1,38 @@
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const CryptoJS = require("crypto-js");
 const { sendVerificationEmail } = require("../utils/sendEmail");
 const { generateToken } = require("../utils/generateToken");
 
 const prisma = new PrismaClient();
+const SECRET_KEY = process.env.FLE_MASTER_KEY; // 🔐 chave AES do .env
 
+// ------------------------------
 // Cadastro de usuário
+// ------------------------------
 async function registrarUsuario(req, res, next) {
   try {
     const { nome, usuario, email, cpf, senha } = req.body;
 
-    // 1. Verificação (Rápida)
+    // 1️⃣ Verificação de e-mail duplicado
     const usuarioExistente = await prisma.usuario.findUnique({ where: { email } });
-    if (usuarioExistente) return res.status(400).json({ error: "E-mail já cadastrado." });
+    if (usuarioExistente)
+      return res.status(400).json({ error: "E-mail já cadastrado." });
 
-    // 2. Hash da Senha (Intencionalmente Lento)
-    // Se 12 rounds for demais, reduza para 10 ou 11.
-    const senhaHash = await bcrypt.hash(senha, 12);
+    // 2️⃣ Descriptografa a senha recebida do frontend (AES)
+    const senhaDescriptografada = CryptoJS.AES.decrypt(senha, SECRET_KEY).toString(CryptoJS.enc.Utf8);
+
+    if (!senhaDescriptografada)
+      return res.status(400).json({ error: "Erro ao descriptografar a senha." });
+
+    // 3️⃣ Gera o hash seguro da senha
+    const senhaHash = await bcrypt.hash(senhaDescriptografada, 12);
+
+    // 4️⃣ Cria token de validação
     const token = generateToken({ email }, "1h");
 
-    // 3. Criação do Usuário no BD (Rápida se houver índices)
+    // 5️⃣ Salva o usuário no banco
     await prisma.usuario.create({
       data: {
         nome,
@@ -33,14 +45,12 @@ async function registrarUsuario(req, res, next) {
       },
     });
 
-    // 4. RETORNA A RESPOSTA AO USUÁRIO IMEDIATAMENTE!
+    // 6️⃣ Responde imediatamente ao cliente
     res.status(201).json({ message: "Usuário criado! Verifique seu e-mail." });
-    
-    // 5. Envia o e-mail em segundo plano.
-    // O .catch() é crucial para registrar erros sem afetar o usuário.
-    sendVerificationEmail(email, token).catch(error => {
-        console.error("Erro ao enviar email de verificação:", error);
-        // Opcional: Aqui você pode tentar reenviar o email ou registrar um log no BD.
+
+    // 7️⃣ Envia o e-mail de verificação em segundo plano
+    sendVerificationEmail(email, token).catch((error) => {
+      console.error("Erro ao enviar email de verificação:", error);
     });
 
   } catch (err) {
@@ -48,7 +58,9 @@ async function registrarUsuario(req, res, next) {
   }
 }
 
+// ------------------------------
 // Verificação de e-mail
+// ------------------------------
 async function verificarEmail(req, res, next) {
   try {
     const { token } = req.query;
@@ -68,7 +80,9 @@ async function verificarEmail(req, res, next) {
   }
 }
 
-// Login
+// ------------------------------
+// Login do usuário
+// ------------------------------
 async function loginUsuario(req, res, next) {
   try {
     const { email, senha } = req.body;
@@ -76,32 +90,66 @@ async function loginUsuario(req, res, next) {
     if (!email || !senha)
       return res.status(400).json({ error: "Email e senha são obrigatórios." });
 
+    // 1️⃣ Busca usuário
     const usuario = await prisma.usuario.findUnique({ where: { email } });
     if (!usuario) return res.status(401).json({ error: "Email não encontrado." });
 
-    const isPasswordValid = await bcrypt.compare(senha, usuario.senha);
+    // 2️⃣ Descriptografa a senha enviada do frontend
+    const senhaDescriptografada = CryptoJS.AES.decrypt(senha, SECRET_KEY).toString(CryptoJS.enc.Utf8);
+
+    if (!senhaDescriptografada)
+      return res.status(400).json({ error: "Erro ao descriptografar a senha." });
+
+    // 3️⃣ Compara a senha descriptografada com o hash do BD
+    const isPasswordValid = await bcrypt.compare(senhaDescriptografada, usuario.senha);
     if (!isPasswordValid) return res.status(401).json({ error: "Senha incorreta." });
 
+    // 4️⃣ Verifica se o e-mail já foi validado
     if (!usuario.validacao)
       return res.status(401).json({ error: "E-mail não verificado." });
 
+    // 5️⃣ Gera token JWT
     const token = generateToken({ id: usuario.id, email: usuario.email });
 
+    // 6️⃣ Remove o campo senha do retorno
     const { senha: _, ...usuarioSeguro } = usuario;
-    res.status(200).json({ message: "Login realizado com sucesso!", token, usuario: usuarioSeguro });
+
+    res.status(200).json({
+      message: "Login realizado com sucesso!",
+      token,
+      usuario: usuarioSeguro,
+    });
+
   } catch (err) {
     next(err);
   }
 }
 
-// Listar usuários
+// ------------------------------
+// Listar usuários (admin/teste)
+// ------------------------------
 async function listarUsuarios(req, res, next) {
   try {
-    const usuarios = await prisma.usuario.findMany();
+    const usuarios = await prisma.usuario.findMany({
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+        usuario: true,
+        cpf: true,
+        validacao: true,
+      },
+    });
     res.status(200).json(usuarios);
   } catch (err) {
     next(err);
   }
 }
 
-module.exports = { registrarUsuario, verificarEmail, loginUsuario, listarUsuarios };
+
+module.exports = {
+  registrarUsuario,
+  verificarEmail,
+  loginUsuario,
+  listarUsuarios,
+};

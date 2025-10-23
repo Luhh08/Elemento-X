@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Voluntary — Detalhes da Vaga</title>
+  <link rel="stylesheet" href="css/descricao_vagas.css" />
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">Voluntary</div>
+    <div class="header-actions">
+      <button id="notifBtn" class="icon-btn" title="Notificações"><i class="fa-solid fa-bell"></i></button>
+      <div class="avatar"><a href="perfil-usuario.html"a><img src="img/foto-perfil.png" width="35px" height="35px"></a></div>
+    </div>
+  </header>
+
+  <main class="page">
+    <article class="job-card">
+      <!-- Gallery / imagem principal -->
+      <section class="gallery">
+        <div class="carousel" id="carousel">
+          <button class="carousel-btn left" id="prevBtn">‹</button>
+          <div class="carousel-track" id="carouselTrack">
+            <img src="https://images.unsplash.com/photo-1520975912609-0b8a06a2a1b7?w=1400&q=80&auto=format&fit=crop" alt="foto 1">
+            <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1400&q=80&auto=format&fit=crop" alt="foto 2">
+            <img src="https://images.unsplash.com/photo-1526318472351-c75fcf0702c8?w=1400&q=80&auto=format&fit=crop" alt="foto 3">
+          </div>
+          <button class="carousel-btn right" id="nextBtn">›</button>
+        </div>
+      </section>
+
+      <!-- Conteúdo principal da vaga -->
+      <section class="content">
+        <div class="content-header">
+          <h1 class="job-title">Vaga</h1>
+          <div class="company">Nome_empresa</div>
+          <button id="reportBtn" class="report-btn">Denunciar</button>
+        </div>
+
+        <p class="job-desc" id="jobDesc">
+          Descrição_vaga Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer massa tortor, laoreet nec mauris sit amet, tristique ornare lorem. Maecenas purus ipsum, varius eget justo sed, viverra blandit urna.
+        </p>
+
+        <div class="meta-row">
+          <div class="left-meta">
+            <h3>Tags</h3>
+            <div class="tags" id="tagsList">
+              <button class="tag">Culinária</button>
+              <button class="tag">Educação</button>
+              <button class="tag">Limpeza</button>
+              <button class="tag">Programação</button>
+            </div>
+
+            <div class="info-block">
+              <div class="info-item">
+                <div class="icon"><i class="fa-solid fa-clock"></i></div>
+                <div>
+                  <div class="info-title">Horário</div>
+                  <div class="info-text">Turno da manhã<br>08:00 - 11:30</div>
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="icon"><i class="fa-solid fa-calendar"></i></div>
+                <div>
+                  <div class="info-title">Data</div>
+                  <div class="info-text" id="jobDate">10/11/2025</div>
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="icon"><i class="fa-solid fa-map"></i></div>
+                <div>
+                  <div class="info-title">Localização</div>
+                  <div class="info-text">Endereço / Bairro</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="right-meta">
+            <label for="applyMessage">Explique o porquê quer ajudar nessa causa:</label>
+            <textarea id="applyMessage" placeholder="Escreva sua motivação..." rows="10"></textarea>
+            <div class="apply-note">Ao clicar no botão de aplicar vaga, os seus dados serão enviados para a empresa</div>
+
+            <div class="apply-row">
+              <div id="applicationsCount" class="applications-count">Aplicações: 0</div>
+              <button id="applyBtn" class="apply-btn">Aplicar para a vaga</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </article>
+
+    <!-- Lista de candidaturas (visível opcionalmente) -->
+    <aside class="applications" id="applicationsPanel" aria-hidden="true">
+      <h4>Candidaturas</h4>
+      <ul id="applicationsList"></ul>
+      <button id="closeApps" class="small-btn">Fechar</button>
+    </aside>
+  </main>
+
+  <!-- modal simples para denunciar -->
+  <div id="reportModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <h3>Denunciar vaga</h3>
+      <p>Explique o motivo da denúncia (opcional):</p>
+      <textarea id="reportText" rows="5" placeholder="Motivo..."></textarea>
+      <div class="mod

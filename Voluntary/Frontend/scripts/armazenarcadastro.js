@@ -6,6 +6,9 @@ const senhaInput = document.getElementById('senha');
 const confirmarInput = document.getElementById('confirmarSenha');
 const erro = document.getElementById('erroSenha');
 
+// 🧩 Chave secreta — deve ser a mesma usada no backend (.env)
+const SECRET_KEY = "chaveSeguraDe32Caracteres1234567890"; 
+
 // Validação de senha
 form.addEventListener('submit', function(e) {
   if (senhaInput.value !== confirmarInput.value) {
@@ -42,7 +45,10 @@ form.addEventListener("submit", async (e) => {
   const cpf = document.getElementById("cpf").value;
   const senha = senhaInput.value;
 
-  const dadosUsuario = { nome, usuario, email, cpf, senha };
+  // 🔒 Criptografa a senha ANTES de enviar
+  const senhaCriptografada = CryptoJS.AES.encrypt(senha, SECRET_KEY).toString();
+
+  const dadosUsuario = { nome, usuario, email, cpf, senha: senhaCriptografada };
 
   try {
     const response = await fetch("http://localhost:3000/users", {

@@ -7,27 +7,40 @@ datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
 }
-// Aqui é uma tabela do banco de dados, chamada de Model
-model Usuario {
 
-  id      String @id @default(auto()) @map("_id") @db.ObjectId
-  nome    String
-  usuario String @unique
-  email   String @unique
-  cpf     String @unique
-  senha   String
-  validacao Boolean @default(false)
-  validacaoToken String? 
-  resetToken String?
-  resetTokenExpires DateTime?
-  
+model Usuario {
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
+  nome               String
+  usuario            String   @unique
+  email              String   @unique
+  cpf                String   @unique
+  senha              String
+
+  // Validação e segurança
+  validacao          Boolean  @default(false)
+  validacaoToken     String?
+  resetToken         String?
+  resetTokenExpires  DateTime?
+
+  // Campos extras de perfil
+  descricao          String?         // descrição do usuário
+  competencias       String[]        // array de tags
+  preferenciaHorario String?         // "Manhã", "Tarde", "Noite"
+  emailcontato       String?         // email alternativo ou contato público
+  telefonecontato    String?         // telefone de contato
+
+  // URLs de imagens
+  bannerUrl          String?   // URL da imagem de capa
+  fotoUrl            String?   // URL da foto de perfil
+
 }
+
 // tabela da empresa
 model Empresa {
 
   id       String @id @default(auto()) @map("_id") @db.ObjectId
   razao_social    String
-  email_empresa    String @unique
+  email    String @unique
   cnpj     String @unique
   telefone_empresa String @unique
   cep      String
