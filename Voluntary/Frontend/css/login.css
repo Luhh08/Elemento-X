@@ -149,3 +149,35 @@ a {
         display: none;
     }
 }
+
+.btn-voltar{
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  text-decoration: none;
+  line-height: 1;
+  border: 1px solid #0f172a;
+  background: #0f172a;
+  color: rgba(255,255,255,0.92);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 18px rgba(15,23,42,0.12);
+}
+
+.btn-voltar:hover{
+  transform: translateY(-1px);
+  background: rgba(204, 204, 204, 0.12);
+  border-color: #f8fafc;
+}
+
+
+
+body .btn-voltar:hover{
+  color: #004d40;
+}

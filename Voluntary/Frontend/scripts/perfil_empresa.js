@@ -3,16 +3,26 @@ const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 
 const token = localStorage.getItem("token");
-const loggedId = localStorage.getItem("userId"); // empresa logada
+
+// ids salvos pelo login da EMPRESA
+const empresaId = localStorage.getItem("empresaId") || localStorage.getItem("userId") || "";
+const tipoConta = (localStorage.getItem("tipoConta") || localStorage.getItem("role") || "").toLowerCase();
 
 // id do perfil na URL (?id=) ou o próprio id
 const qs = new URLSearchParams(location.search);
-const viewedId = qs.get("id") || loggedId;
-const isSelf = viewedId === loggedId;
+const viewedId = qs.get("id") || empresaId;
+
+// sou o dono do perfil?
+const isSelf = viewedId && empresaId && String(viewedId) === String(empresaId);
 
 // se abriu sem ?id, coloca na URL
-if (!qs.get("id")) {
+if (!qs.get("id") && viewedId) {
   history.replaceState(null, "", `${location.pathname}?id=${encodeURIComponent(viewedId)}`);
+}
+
+// se não tem sessão válida de empresa, manda pro login
+if (!token || !empresaId || !tipoConta.includes("empresa")) {
+  window.location.href = "login_empresa.html";
 }
 
 // mostra/oculta ações conforme o dono do perfil
@@ -65,6 +75,23 @@ $("#btnEditar")?.addEventListener("click", () => openPopup(popupEdicao));
 $("#btnDenunciar")?.addEventListener("click", () => openPopup(popupDenuncia));
 $$("[data-close]").forEach((b) => b.addEventListener("click", closeAllPopups));
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && anyModalOpen()) closeAllPopups(); });
+
+// ----------------- logout -----------------
+$("#logout")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  try {
+    localStorage.removeItem("token");
+    localStorage.removeItem("empresaId");
+    localStorage.removeItem("empresa_nome");
+    localStorage.removeItem("tipoConta");
+    localStorage.removeItem("role");
+    // se tiver resquício de login de usuário PF:
+    localStorage.removeItem("userId");
+    localStorage.removeItem("tipoUsuario");
+  } finally {
+    window.location.href = "login_empresa.html";
+  }
+});
 
 // ----------------- telefone -----------------
 function aplicarMascaraTelefone(input) {
@@ -206,9 +233,8 @@ const DEFAULT_VAGA_IMG = "img/default-banner.png";
 
 function resolveImage(src) {
   if (!src || typeof src !== "string" || !src.trim()) return DEFAULT_VAGA_IMG;
-  // normaliza base uploads
   if (src.startsWith("/uploads/") || src.startsWith("uploads/")) return src.startsWith("/") ? src : `/${src}`;
-  return src; // absoluta (http...) ou relativa válida
+  return src;
 }
 
 function statusLabel(s){
@@ -381,7 +407,7 @@ $("#formEdicao")?.addEventListener("submit", async (e) => {
   };
 
   try {
-    const resp = await fetch(`/api/empresas/${loggedId}`, {
+    const resp = await fetch(`/api/empresas/${empresaId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify(body)
@@ -419,7 +445,7 @@ async function uploadImagem(tipo) {
     const fd = new FormData();
     fd.append("imagem", arq);
     try {
-      const resp = await fetch(`/api/empresas/${loggedId}/upload/${tipo}`, {
+      const resp = await fetch(`/api/empresas/${empresaId}/upload/${tipo}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: fd

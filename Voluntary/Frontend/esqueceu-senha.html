@@ -13,6 +13,7 @@
 </head>
 
 <body>
+  <a id="btnVoltar" class="btn-voltar" aria-label="Voltar">← Voltar</a>
   <div class="registro-container">
     <div class="registro-panel">
       <header class="logo-area">
@@ -41,6 +42,39 @@
     </div>
   </div>
 
+  <script>
+(function(){
+  const params = new URLSearchParams(location.search);
+  // prioridade: ?tipo=... -> ?from=... -> lastLoginType -> 'usuario'
+  const tipo = (params.get('tipo') || params.get('from') || localStorage.getItem('lastLoginType') || 'usuario').toLowerCase();
+  const backUrl = (tipo === 'empresa') ? 'login_empresa.html' : 'login.html';
+
+  const btn = document.getElementById('btnVoltar');
+  if (btn) {
+    // opcional: deixar semântico
+    btn.setAttribute('data-target', backUrl);
+    btn.title = 'Voltar para ' + (tipo === 'empresa' ? 'login da empresa' : 'login do usuário');
+
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      // Se veio da mesma origem e há histórico, volta. Senão, vai pro login correto.
+      try {
+        const ref = document.referrer ? new URL(document.referrer) : null;
+        const sameOrigin = ref && ref.origin === location.origin;
+        if (sameOrigin && history.length > 1) {
+          history.back();
+          return;
+        }
+      } catch(_) {}
+      location.href = backUrl;
+    });
+  }
+
+  // se tiver um link “Voltar ao login” no corpo do formulário:
+  const linkLogin = document.getElementById('linkLogin'); // <a id="linkLogin">Voltar ao login</a>
+  if (linkLogin) linkLogin.href = backUrl;
+})();
+</script>
   <script>
     const emailForm = document.getElementById("emailForm");
     const codigoForm = document.getElementById("codigoForm");

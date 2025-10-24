@@ -38,7 +38,7 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  // 🔐 criptografa senha com AES
+  // 🔐 criptografa senha com AES (deve bater com EMPRESA_AES_KEY no backend)
   const senhaCriptografada = CryptoJS.AES.encrypt(senha, EMPRESA_AES_KEY).toString();
 
   try {
@@ -49,15 +49,30 @@ form.addEventListener("submit", async (e) => {
     });
 
     const ct = resp.headers.get("content-type") || "";
-    const data = ct.includes("application/json") ? await resp.json() : { error: await resp.text() };
+    const data = ct.includes("application/json")
+      ? await resp.json()
+      : { error: await resp.text() };
 
-    if (!resp.ok) throw new Error(data.error || "Falha no login.");
+    if (!resp.ok) {
+      // resposta 403 específica do seu controller (conta não verificada)
+      if (resp.status === 403 && data?.error) {
+        alert(data.error);
+        return;
+      }
+      throw new Error(data.error || "Falha no login.");
+    }
 
+    // ✅ Guarda sessão padronizada (o resto do front usa isso)
     localStorage.setItem("token", data.token || "");
-    localStorage.setItem("userId", data.empresa?.id || "");
-    localStorage.setItem("tipoUsuario", "empresa");
+    localStorage.setItem("tipoConta", "empresa");
+    localStorage.setItem("role", "empresa");
+    localStorage.setItem("empresaId", data.empresa?.id || "");
     localStorage.setItem("empresa_nome", data.empresa?.razao_social || "");
 
+    // evita confusão com páginas que checam userId
+    localStorage.removeItem("userId");
+
+    // redireciona
     location.href = `perfil-empresa.html?id=${encodeURIComponent(data.empresa.id)}`;
   } catch (err) {
     console.error("Erro no login:", err);

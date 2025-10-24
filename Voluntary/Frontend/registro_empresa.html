@@ -21,6 +21,7 @@
   </style>
 </head>
 <body>
+  <a id="btnVoltar" class="btn-voltar" aria-label="Voltar">← Voltar</a>
   <div class="registro-container">
     <div class="registro-panel">
 
@@ -93,6 +94,21 @@
     <div class="decorative-panel"></div>
   </div>
 
+      <script>
+(function () {
+  const btn = document.getElementById('btnVoltar');
+  if (!btn) return;
+
+  btn.addEventListener('click', function (e) {
+    e.preventDefault();
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      location.href = 'login_empresa.html';
+    }
+  });
+})();
+</script>
   <script src="scripts/cadastro_empresa.js"></script>
 </body>
 </html>

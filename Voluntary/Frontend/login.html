@@ -11,6 +11,7 @@
 </head>
 <body>
     <div class="login-container">
+        <a id="btnVoltar" class="btn-voltar" aria-label="Voltar">← Voltar</a>
         <div class="login-panel">
             <header class="logo-area">
                 <h1>Voluntary</h1>
@@ -27,11 +28,26 @@
                 </div>
                 <button type="submit">ENTRAR</button>
                 <a href="registro.html" class="cadastro">Cadastre-se</a>
-                <a href="esqueceu-senha.html" class="esqueceu">Esqueceu a senha?</a>
+                <a href="esqueceu-senha.html?tipo=usuario" class="esqueceu">Esqueceu a senha?</a>
             </form>
         </div>
         <div class="decorative-panel"></div>
     </div>
+    <script>
+(function () {
+  const btn = document.getElementById('btnVoltar');
+  if (!btn) return;
+
+  btn.addEventListener('click', function (e) {
+    e.preventDefault();
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      location.href = 'inicial.html';
+    }
+  });
+})();
+</script>
     <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>
     <script src="scripts/login.js"></script>
 </body>

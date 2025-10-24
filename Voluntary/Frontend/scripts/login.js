@@ -1,9 +1,10 @@
-
 const formLogin = document.querySelector(".login-form");
 
+// A MESMA chave AES usada pelo backend (process.env.FLE_MASTER_KEY)
+// Troque aqui se for diferente:
 const SECRET_KEY = "chaveSeguraDe32Caracteres1234567890";
 
-const LOGIN_URL = "/api/users/login"; 
+const LOGIN_URL = "/api/users/login";
 
 formLogin.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -16,7 +17,6 @@ formLogin.addEventListener("submit", async (e) => {
     return;
   }
 
-  // Criptografa a senha (AES) — o backend descriptografa com a mesma SECRET_KEY
   const senhaCriptografada = CryptoJS.AES.encrypt(senha, SECRET_KEY).toString();
 
   try {
@@ -26,21 +26,27 @@ formLogin.addEventListener("submit", async (e) => {
       body: JSON.stringify({ email, senha: senhaCriptografada }),
     });
 
-    // Evita "Unexpected token '<' ..." se o backend devolver HTML por engano
     const ct = resp.headers.get("content-type") || "";
-    const payload = ct.includes("application/json") ? await resp.json() : { error: await resp.text() };
+    const payload = ct.includes("application/json")
+      ? await resp.json()
+      : { error: await resp.text() };
 
     if (!resp.ok) {
       throw new Error(payload.error || "Falha no login.");
     }
 
-    // Guarda sessão
     localStorage.setItem("token", payload.token || "");
+    localStorage.setItem("tipoConta", "usuario");
+    localStorage.setItem("role", "usuario");
     localStorage.setItem("userId", payload.usuario?.id || "");
-    localStorage.setItem("tipoUsuario", "usuario");
+    localStorage.removeItem("empresaId");
 
-    // Redireciona para o perfil do usuário
-    window.location.href = "perfil-usuario.html";
+    if (payload.usuario?.email) localStorage.setItem("email", payload.usuario.email);
+    if (payload.usuario?.nome)  localStorage.setItem("nome", payload.usuario.nome);
+
+    // Redireciona com o id do usuário
+    const uid = payload.usuario?.id || "";
+    window.location.href = `perfil-usuario.html?id=${encodeURIComponent(uid)}`;
   } catch (err) {
     console.error("Erro no login:", err);
     alert(err.message || "Erro ao conectar com o servidor.");

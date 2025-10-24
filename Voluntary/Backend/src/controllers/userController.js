@@ -6,11 +6,9 @@ const { sendVerificationEmail } = require("../utils/sendEmail");
 const { generateToken } = require("../utils/generateToken");
 
 const prisma = new PrismaClient();
-const SECRET_KEY = process.env.FLE_MASTER_KEY; // 🔐 chave AES do .env
+const SECRET_KEY = process.env.FLE_MASTER_KEY; 
 
-// ------------------------------
 // Cadastro de usuário
-// ------------------------------
 async function registrarUsuario(req, res, next) {
   try {
     const { nome, usuario, email, cpf, senha } = req.body;
@@ -58,9 +56,7 @@ async function registrarUsuario(req, res, next) {
   }
 }
 
-// ------------------------------
 // Verificação de e-mail
-// ------------------------------
 async function verificarEmail(req, res, next) {
   try {
     const { token } = req.query;
@@ -90,28 +86,22 @@ async function loginUsuario(req, res, next) {
     if (!email || !senha)
       return res.status(400).json({ error: "Email e senha são obrigatórios." });
 
-    // 1️⃣ Busca usuário
     const usuario = await prisma.usuario.findUnique({ where: { email } });
     if (!usuario) return res.status(401).json({ error: "Email não encontrado." });
 
-    // 2️⃣ Descriptografa a senha enviada do frontend
     const senhaDescriptografada = CryptoJS.AES.decrypt(senha, SECRET_KEY).toString(CryptoJS.enc.Utf8);
 
     if (!senhaDescriptografada)
       return res.status(400).json({ error: "Erro ao descriptografar a senha." });
 
-    // 3️⃣ Compara a senha descriptografada com o hash do BD
     const isPasswordValid = await bcrypt.compare(senhaDescriptografada, usuario.senha);
     if (!isPasswordValid) return res.status(401).json({ error: "Senha incorreta." });
 
-    // 4️⃣ Verifica se o e-mail já foi validado
     if (!usuario.validacao)
       return res.status(401).json({ error: "E-mail não verificado." });
 
-    // 5️⃣ Gera token JWT
     const token = generateToken({ id: usuario.id, email: usuario.email });
 
-    // 6️⃣ Remove o campo senha do retorno
     const { senha: _, ...usuarioSeguro } = usuario;
 
     res.status(200).json({

@@ -4,12 +4,10 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const CryptoJS = require("crypto-js");
 const { sendVerificationEmail } = require("../utils/sendEmail");
-
-// === NOVO: utilitários para banner ===
 const path = require("path");
 const fs = require("fs/promises");
 const sharp = require("sharp");
-// Base para montar URL absoluta quando necessário
+
 const BASE = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
 
 const prisma = new PrismaClient();

@@ -1,4 +1,5 @@
-const $ = (s)=>document.querySelector(s);
+// ===== helpers / refs =====
+const $ = (s) => document.querySelector(s);
 
 const el = {
   nome: $("#nomeProjeto"),
@@ -12,34 +13,36 @@ const el = {
   fotoInput: $("#fotoInput"),
   salvar: $("#salvarBtn"),
   previewFrame: document.getElementById("vagaPreviewFrame"),
-
-  // 👇 NOVO: contêiner de miniaturas
   thumbs: document.getElementById("thumbs"),
 };
 
-const MAX_FOTOS = 8; // 👈 NOVO
+const qs = new URLSearchParams(location.search);
+const IS_EDIT = qs.get("modo") === "editar";
+const VAGA_ID = qs.get("id");
 
-// --- TURNOS (checkboxes) ---
-function getTurnos(){
-  return [...document.querySelectorAll('input[name="turno[]"]:checked')]
-    .map(cb => cb.value);
+const MAX_FOTOS = 8;
+
+// ===== turnos =====
+function getTurnos() {
+  return [...document.querySelectorAll('input[name="turno[]"]:checked')].map(cb => cb.value);
 }
 
-/* ---------- TEXTAREA AUTOSIZE ---------- */
-function autosizeTextArea(ta){
+// ===== textarea autosize =====
+function autosizeTextArea(ta) {
   const resize = () => {
     ta.style.height = "auto";
     ta.style.height = ta.scrollHeight + "px";
   };
-  ["input","change"].forEach(ev => ta.addEventListener(ev, resize));
+  ["input", "change"].forEach(ev => ta.addEventListener(ev, resize));
   resize();
 }
 if (el.desc) autosizeTextArea(el.desc);
 
-// ======== FOTOS (preview local + miniaturas removíveis) ========
-let fotosSelecionadas = []; // estado fonte-da-verdade
+// ===== imagens (estado) =====
+let fotosSelecionadas = [];   // Files novos
+let imagensExistentes = [];   // URLs que já estavam salvas
 
-// helper: lê arquivos como DataURL (base64)
+// file -> dataURL
 function fileToDataURL(file){
   return new Promise((resolve,reject)=>{
     const fr = new FileReader();
@@ -49,44 +52,55 @@ function fileToDataURL(file){
   });
 }
 
-// 👇 NOVO: evita duplicadas e respeita limite
+// evita duplicadas + limite
 function dedupePush(files) {
-  const set = new Set(fotosSelecionadas.map(f => `${f.name}|${f.size}|${f.lastModified}`));
+  const key = f => `${f.name}|${f.size}|${f.lastModified}`;
+  const set = new Set(fotosSelecionadas.map(key));
   for (const f of files) {
-    const k = `${f.name}|${f.size}|${f.lastModified}`;
+    const k = key(f);
     if (!set.has(k)) { fotosSelecionadas.push(f); set.add(k); }
     if (fotosSelecionadas.length >= MAX_FOTOS) break;
   }
 }
 
-// 👇 NOVO: renderiza miniaturas com botão X
+// miniaturas (mistura existentes + novas)
 function renderThumbs() {
   if (!el.thumbs) return;
 
-  // remove qualquer item inválido
-  fotosSelecionadas = fotosSelecionadas.filter(
-    f => f && f instanceof File && /^image\//.test(f.type)
-  );
-
+  fotosSelecionadas = fotosSelecionadas.filter(f => f && f instanceof File && /^image\//.test(f.type));
   el.thumbs.innerHTML = "";
-  if (!fotosSelecionadas.length) return;     // ⬅️ não cria nada se o array estiver vazio
 
-  fotosSelecionadas.forEach((file, idx) => {
-    const url = URL.createObjectURL(file);
+  // existentes (URL)
+  imagensExistentes.forEach((url, idx) => {
     const card = document.createElement("div");
     card.className = "thumb";
     card.innerHTML = `
-      <img src="${url}" alt="foto ${idx+1}">
-      <button type="button" class="rm" aria-label="Remover imagem" data-idx="${idx}">×</button>
+      <img src="${url}" alt="imagem existente ${idx+1}">
+      <button type="button" class="rm" data-type="remote" data-idx="${idx}" aria-label="Remover imagem existente">×</button>
     `;
-    card.querySelector("img").addEventListener("load", () => URL.revokeObjectURL(url));
     el.thumbs.appendChild(card);
   });
 
-  el.thumbs.querySelectorAll(".rm").forEach(btn=>{
-    btn.addEventListener("click", (e)=>{
+  // novas (File)
+  fotosSelecionadas.forEach((file, idx) => {
+    const blobUrl = URL.createObjectURL(file);
+    const card = document.createElement("div");
+    card.className = "thumb";
+    card.innerHTML = `
+      <img src="${blobUrl}" alt="imagem nova ${idx+1}">
+      <button type="button" class="rm" data-type="local" data-idx="${idx}" aria-label="Remover imagem nova">×</button>
+    `;
+    card.querySelector("img").addEventListener("load", () => URL.revokeObjectURL(blobUrl));
+    el.thumbs.appendChild(card);
+  });
+
+  // remover
+  el.thumbs.querySelectorAll(".rm").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const type = e.currentTarget.dataset.type;
       const i = Number(e.currentTarget.dataset.idx);
-      fotosSelecionadas.splice(i, 1);
+      if (type === "remote") imagensExistentes.splice(i, 1);
+      else fotosSelecionadas.splice(i, 1);
       renderThumbs();
       postPreview();
     });
@@ -94,26 +108,22 @@ function renderThumbs() {
 }
 
 // abrir seletor
-el.fotoBtn.addEventListener("click", ()=> el.fotoInput.click());
-el.fotoInput.addEventListener("change", (e)=>{
+el.fotoBtn?.addEventListener("click", ()=> el.fotoInput?.click());
+el.fotoInput?.addEventListener("change", (e)=>{
   const novos = Array.from(e.target.files || []).filter(f => f && f.type.startsWith("image/"));
-  if (!novos.length) return;                 // ⬅️ evita criar thumb “vazia” se cancelar o diálogo
+  if (!novos.length) return;
   const resto = MAX_FOTOS - fotosSelecionadas.length;
   dedupePush(novos.slice(0, resto));
-  el.fotoInput.value = "";                   // permite escolher o mesmo arquivo depois
+  el.fotoInput.value = "";
   renderThumbs();
   postPreview();
 });
 
-
-// (opcional) drag & drop no botão “+”
-["dragenter","dragover"].forEach(ev=>{
-  el.fotoBtn.addEventListener(ev, (e)=>{ e.preventDefault(); e.stopPropagation(); });
+// drag & drop
+["dragenter","dragover","dragleave","drop"].forEach(ev=>{
+  el.fotoBtn?.addEventListener(ev, (e)=>{ e.preventDefault(); e.stopPropagation(); });
 });
-["dragleave","drop"].forEach(ev=>{
-  el.fotoBtn.addEventListener(ev, (e)=>{ e.preventDefault(); e.stopPropagation(); });
-});
-el.fotoBtn.addEventListener("drop", (e)=>{
+el.fotoBtn?.addEventListener("drop", (e)=>{
   const files = Array.from(e.dataTransfer.files || []).filter(f=>f.type.startsWith("image/"));
   const resto = MAX_FOTOS - fotosSelecionadas.length;
   dedupePush(files.slice(0, resto));
@@ -121,21 +131,21 @@ el.fotoBtn.addEventListener("drop", (e)=>{
   postPreview();
 });
 
-// --- monta payload e envia ao iframe (descricao_vaga.html?live=1)
+// ===== preview (envia para descricao_vagas.html?live=1) =====
 async function buildPreviewPayload(){
-  // 👇 usa o estado fotosSelecionadas (e não el.fotoInput.files)
-  const imagens = await Promise.all(fotosSelecionadas.map(fileToDataURL));
+  const novas = await Promise.all(fotosSelecionadas.map(fileToDataURL));
+  const imagens = [...imagensExistentes, ...novas];
 
   return {
-    titulo: el.nome.value.trim() || "Nome do projeto",
+    titulo: el.nome?.value?.trim() || "Nome do projeto",
     empresa: localStorage.getItem("empresa_nome") || "Minha empresa",
-    descricao: el.desc.value.trim(),
-    tags: (el.tags.value||"").split(",").map(s=>s.trim()).filter(Boolean),
-    local: el.local.value.trim(),
+    descricao: el.desc?.value?.trim() || "",
+    tags: (el.tags?.value||"").split(",").map(s=>s.trim()).filter(Boolean),
+    local: el.local?.value?.trim() || "",
     turno: getTurnos().join(", "),
-    dataInicio: el.dataInicio.value || null,
-    dataFim: el.dataFim.value || null,
-    status: el.status.value,
+    dataInicio: el.dataInicio?.value || null,
+    dataFim: el.dataFim?.value || null,
+    status: el.status?.value || "ABERTA",
     imagens
   };
 }
@@ -146,65 +156,129 @@ async function postPreview(){
   el.previewFrame.contentWindow.postMessage({ type:"VAGA_PREVIEW", payload }, "*");
 }
 
+// listeners para atualizar preview
 ["input","change","keyup"].forEach(ev=>{
   [el.nome, el.desc, el.tags, el.local, el.dataInicio, el.dataFim, el.status]
     .forEach(cmp => cmp && cmp.addEventListener(ev, postPreview));
 });
-document.querySelectorAll('input[name="turno[]"]').forEach(cb => {
-  cb.addEventListener("change", postPreview);
-});
-
+document.querySelectorAll('input[name="turno[]"]').forEach(cb => cb.addEventListener("change", postPreview));
 el.previewFrame?.addEventListener("load", postPreview);
-renderThumbs(); // 👈 inicial
-postPreview();
 
-/* ---------- salvar no backend ---------- */
-el.salvar.addEventListener("click", async (e) => {
+// ===== carregar dados da vaga (modo edição) =====
+async function loadVagaParaEdicao(){
+  if (!IS_EDIT || !VAGA_ID) { renderThumbs(); postPreview(); return; }
+
+  try{
+    const resp = await fetch(`/api/vagas/${encodeURIComponent(VAGA_ID)}`);
+    if (!resp.ok) throw new Error("Não foi possível carregar a vaga.");
+    const v = await resp.json();
+
+    // campos
+    if (el.nome)  el.nome.value  = v.titulo || "";
+    if (el.desc)  el.desc.value  = v.descricao || "";
+    if (el.local) el.local.value = v.local || "";
+    if (el.status) el.status.value = v.status || "ABERTA";
+
+    // turnos (array ou string)
+    const turnos = Array.isArray(v.turno) ? v.turno :
+                   (v.turno ? String(v.turno).split(",").map(s=>s.trim()) : []);
+    document.querySelectorAll('input[name="turno[]"]').forEach(cb => {
+      cb.checked = turnos.includes(cb.value);
+    });
+
+    // datas
+    if (el.dataInicio && v.dataInicio){
+      el.dataInicio.value = new Date(v.dataInicio).toISOString().slice(0,10);
+    }
+    if (el.dataFim && v.dataFim){
+      el.dataFim.value = new Date(v.dataFim).toISOString().slice(0,10);
+    }
+
+    // tags
+    const tags = Array.isArray(v.tags) ? v.tags :
+                 (v.tags ? String(v.tags).split(",").map(s=>s.trim()) : []);
+    if (el.tags) el.tags.value = tags.join(", ");
+
+    // imagens existentes normalizadas
+    let imgs = [];
+    if (Array.isArray(v.imagens)) imgs = v.imagens;
+    else if (typeof v.imagens === "string") {
+      try { const p = JSON.parse(v.imagens); imgs = Array.isArray(p) ? p : (p ? [p] : []); }
+      catch { imgs = v.imagens ? [v.imagens] : []; }
+    }
+    if (v.capaUrl && !imgs.length) imgs = [v.capaUrl];
+
+    imagensExistentes = imgs.filter(Boolean);
+
+    renderThumbs();
+    postPreview();
+  }catch(err){
+    console.error(err);
+    alert(err.message || "Erro ao carregar dados da vaga.");
+    renderThumbs();
+    postPreview();
+  }
+}
+
+renderThumbs();
+postPreview();
+loadVagaParaEdicao();
+
+// ===== salvar (POST novo / PUT editar) =====
+el.salvar?.addEventListener("click", async (e) => {
   e.preventDefault();
 
   const token = localStorage.getItem("token");
   const empresaId = localStorage.getItem("userId");
 
-  // monta FormData para suportar texto + arquivos
   const fd = new FormData();
-  fd.append("titulo", el.nome.value.trim());
-  fd.append("descricao", el.desc.value.trim());
+  fd.append("titulo", el.nome?.value?.trim() || "");
+  fd.append("descricao", el.desc?.value?.trim() || "");
 
-  // tags/turnos como array (chave repetida)
-  const tagsArr = (el.tags.value || "")
-      .split(",").map(s => s.trim()).filter(Boolean);
-  tagsArr.forEach(t => fd.append("tags", t));
+  (el.tags?.value || "")
+    .split(",").map(s=>s.trim()).filter(Boolean)
+    .forEach(t => fd.append("tags", t));
+
   getTurnos().forEach(t => fd.append("turno", t));
 
-  if (el.local.value)      fd.append("local", el.local.value.trim());
-  if (el.dataInicio.value) fd.append("dataInicio", new Date(el.dataInicio.value).toISOString());
-  if (el.dataFim.value)    fd.append("dataFim", new Date(el.dataFim.value).toISOString());
-  if (el.status.value)     fd.append("status", el.status.value);
+  if (el.local?.value)      fd.append("local", el.local.value.trim());
+  if (el.dataInicio?.value) fd.append("dataInicio", new Date(el.dataInicio.value).toISOString());
+  if (el.dataFim?.value)    fd.append("dataFim", new Date(el.dataFim.value).toISOString());
+  if (el.status?.value)     fd.append("status", el.status.value);
 
-  // 👇 usa o mesmo estado (respeita remoções feitas no X)
-  fotosSelecionadas.forEach(file => fd.append("imagens", file)); // nome da chave: "imagens"
+  // novas (Files)
+  fotosSelecionadas.forEach(file => fd.append("imagens", file));
+
+  // existentes mantidas (URLs)
+  imagensExistentes.forEach(u => fd.append("imagens_existentes", u));
 
   try {
-    const resp = await fetch(`/api/empresas/${empresaId}/vagas`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` }, // não setar Content-Type
+    const url = IS_EDIT && VAGA_ID
+      ? `/api/vagas/${encodeURIComponent(VAGA_ID)}`
+      : `/api/empresas/${empresaId}/vagas`;
+
+    const method = IS_EDIT && VAGA_ID ? "PUT" : "POST";
+
+    const resp = await fetch(url, {
+      method,
+      headers: { Authorization: `Bearer ${token}` }, // não setar Content-Type com FormData
       body: fd,
     });
 
-    const json = await resp.json();
-
+    const json = await resp.json().catch(()=> ({}));
     if (!resp.ok) {
       if (resp.status === 403 && json?.error) {
         alert(`❌ ${json.error}${typeof json.progressoAtual === "number" ? ` (progresso: ${json.progressoAtual}%)` : ""}`);
         return;
       }
-      throw new Error(json.error || "Erro ao criar vaga.");
+      throw new Error(json?.error || `Erro ao ${IS_EDIT ? "atualizar" : "criar"} vaga.`);
     }
 
-    alert("✅ Vaga criada!");
-    location.href = `perfil-empresa.html?id=${empresaId}`;
+    alert(`✅ Vaga ${IS_EDIT ? "atualizada" : "criada"}!`);
+    const idFinal = IS_EDIT ? VAGA_ID : (json?.id || json?._id);
+    location.href = `descricao_vagas.html?id=${encodeURIComponent(idFinal)}`;
   } catch (err) {
     console.error(err);
-    alert("❌ Falha ao salvar a vaga.");
+    alert("❌ " + (err.message || "Falha ao salvar a vaga."));
   }
 });
