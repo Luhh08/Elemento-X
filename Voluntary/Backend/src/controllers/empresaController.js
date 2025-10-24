@@ -5,6 +5,13 @@ const jwt = require("jsonwebtoken");
 const CryptoJS = require("crypto-js");
 const { sendVerificationEmail } = require("../utils/sendEmail");
 
+// === NOVO: utilitários para banner ===
+const path = require("path");
+const fs = require("fs/promises");
+const sharp = require("sharp");
+// Base para montar URL absoluta quando necessário
+const BASE = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+
 const prisma = new PrismaClient();
 
 // use a MESMA chave que o frontend (ideal: vir do .env)
@@ -39,6 +46,11 @@ function calcProgresso(e = {}) {
   if (e.endereco && e.cep) pontos++;
 
   return Math.round((pontos / total) * 100);
+}
+
+// remove arquivo salvo caso inválido
+async function safeUnlink(absPath) {
+  try { await fs.unlink(absPath); } catch { /* ignore */ }
 }
 
 // ================================
@@ -415,18 +427,50 @@ async function updateEmpresa(req, res, next) {
 }
 
 // ================================
-// Upload de logo/banner
+// Upload de logo/banner  (com validação de banner 3:2)
 // ================================
 async function uploadImagem(req, res, next) {
   try {
     const { id, tipo } = req.params; // logo | banner
     if (!req.file) return res.status(400).json({ error: "Arquivo ausente" });
 
+    // caminho absoluto do arquivo salvo pelo Multer
+    const absPath = path.join(__dirname, "..", "..", "uploads", req.file.filename);
+
+    // validação específica para banner: proporção mínima 3:2 e tamanho recomendado 1200x800
+    if (tipo === "banner") {
+      try {
+        const meta = await sharp(absPath).metadata();
+        const { width, height } = meta || {};
+        if (!width || !height) {
+          await safeUnlink(absPath);
+          return res.status(400).json({ error: "Não foi possível ler as dimensões do banner." });
+        }
+        const ratio = width / height;
+        const MIN_W = 1200, MIN_H = 800; // recomendado
+        const sizeOk = width >= MIN_W && height >= MIN_H;
+
+        if (ratio < 1.5 || !sizeOk) {
+          await safeUnlink(absPath);
+          return res.status(400).json({
+            error: "O banner deve ter proporção mínima 3:2 (ex.: 1200×800) ou maior (mais horizontal)."
+          });
+        }
+      } catch (e) {
+        await safeUnlink(absPath);
+        return res.status(400).json({ error: "Falha ao validar o banner enviado." });
+      }
+    }
+
+    // mantém padrão atual do seu código: salvar URL RELATIVA
     const url = `/uploads/${req.file.filename}`;
     const data = {};
     if (tipo === "logo") data.logoUrl = url;
     else if (tipo === "banner") data.bannerUrl = url;
-    else return res.status(400).json({ error: "tipo inválido" });
+    else {
+      await safeUnlink(absPath);
+      return res.status(400).json({ error: "tipo inválido" });
+    }
 
     const empresa = await prisma.empresa.update({ where: { id }, data });
     const progresso = calcProgresso(empresa);
@@ -450,6 +494,7 @@ async function listarVagasDaEmpresa(req, res, next) {
   } catch (e) { next(e); }
 }
 
+// === ALTERADO: agora aceita req.files (imagens) e junta com URLs do body ===
 async function criarVagaParaEmpresa(req, res, next) {
   try {
     const { id } = req.params; // empresaId
@@ -475,21 +520,39 @@ async function criarVagaParaEmpresa(req, res, next) {
       dataInicio,
       dataFim,
       status,
-      imagens,
+      imagens, // pode vir como array de URLs ou CSV
     } = req.body;
+
+    // 1) URLs vindas no body (opcional)
+    let bodyUrls = [];
+    if (Array.isArray(imagens)) {
+      bodyUrls = imagens.filter(Boolean);
+    } else if (typeof imagens === "string" && imagens.trim()) {
+      bodyUrls = imagens.split(",").map(s => s.trim()).filter(Boolean);
+    }
+
+    // 2) URLs geradas pelos arquivos enviados (req.files)
+    // manteremos coerente com upload de empresa: URL RELATIVA
+    const fileUrls = (req.files || []).map(f => `/uploads/${f.filename}`);
+
+    const todasAsImagens = [...bodyUrls, ...fileUrls];
 
     const vaga = await prisma.vaga.create({
       data: {
         empresaId: id,
         titulo,
         descricao,
-        tags: Array.isArray(tags) ? tags : [],
+        tags: Array.isArray(tags)
+          ? tags
+          : (typeof tags === "string" ? tags.split(",").map(s=>s.trim()).filter(Boolean) : []),
         local,
-        turno: Array.isArray(turno) ? turno : [],
+        turno: Array.isArray(turno)
+          ? turno
+          : (typeof turno === "string" ? turno.split(",").map(s=>s.trim()).filter(Boolean) : []),
         status,
         dataInicio: dataInicio ? new Date(dataInicio) : null,
         dataFim: dataFim ? new Date(dataFim) : null,
-        imagens: Array.isArray(imagens) ? imagens : [],
+        imagens: todasAsImagens, // usa seu campo existente (String[])
       },
     });
 

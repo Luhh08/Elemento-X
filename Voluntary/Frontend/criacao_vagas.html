@@ -53,13 +53,15 @@
   </div>
 
   <!-- Fotos -->
-  <label class="foto-label">Adicionar fotos:</label>
-  <div class="foto-container" id="fotoContainer">
-    <button type="button" class="foto" id="fotoPlaceholder" title="Adicionar fotos">
-      <i class="ri-add-line"></i>
-    </button>
-    <input type="file" id="fotoInput" accept="image/*" multiple hidden />
-  </div>
+<label class="foto-label">Adicionar fotos:</label>
+<div class="foto-container" id="fotoContainer">
+  <button type="button" class="foto" id="fotoPlaceholder" title="Adicionar fotos">
+    <i class="ri-add-line"></i>
+  </button>
+
+  <input type="file" id="fotoInput" accept="image/*" multiple hidden />
+  <div id="thumbs" class="thumbs"></div>
+</div>
 
   <button type="button" id="salvarBtn" class="chip big btn-salvar">Salvar</button>
 </form>

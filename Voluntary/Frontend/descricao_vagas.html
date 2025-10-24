@@ -108,10 +108,13 @@
   <script>
 (function () {
   const DEFAULT_VAGA_IMG = "img/default-banner.png";
+
+  // Use um nome novo para evitar conflito com algo já declarado em outro ponto
+  const API_PREFIX = (typeof window !== "undefined" && window.API_BASE) ? window.API_BASE : "/api";
+
   const qs = new URLSearchParams(location.search);
   const live = qs.get("live") === "1";
   const vagaId = qs.get("id");
-
   if (live) document.body.classList.add("live");
 
   const el = {
@@ -130,10 +133,22 @@
   };
 
   function resolveImage(src) {
-    if (!src || typeof src !== "string" || !src.trim()) return DEFAULT_VAGA_IMG;
-    if (src.startsWith("/uploads/") || src.startsWith("uploads/")) return src.startsWith("/") ? src : `/${src}`;
-    return src;
+    const FALLBACK = DEFAULT_VAGA_IMG;
+    if (!src) return FALLBACK;
+    src = String(src).trim().replace(/\\/g, "/");
+    if (/^(https?:|data:)/i.test(src)) return src;
+    try { src = new URL(src, location.origin).pathname; } catch {}
+    src = src.replace(/\/?backend\/(?=uploads\/)/i, "/");
+    const p = src.toLowerCase().indexOf("/uploads/");
+    if (p !== -1) {
+      const rel = src.slice(p);          
+      return `${API_PREFIX}${rel}`;       
+    }
+    if (/^uploads\//i.test(src)) return `${API_PREFIX}/${src}`;
+    return src || FALLBACK;
   }
+
+  const ensureArray = (x) => Array.isArray(x) ? x : (x ? [x] : []);
 
   function mapStatus(s){
     switch(s){
@@ -144,41 +159,58 @@
       default:                       return {label:"—",                      cls:""};
     }
   }
+
   function fmtBR(d){
     if (!d) return "—";
     const dt = new Date(d);
-    if (isNaN(dt)) return "—";
-    return dt.toLocaleDateString("pt-BR");
+    return isNaN(dt) ? "—" : dt.toLocaleDateString("pt-BR");
   }
-  function ensureArray(x){ return Array.isArray(x) ? x : (x ? [x] : []); }
 
   function mountCarousel(images){
-    el.track.innerHTML = "";
-    const imgs = (images && images.length) ? images : [DEFAULT_VAGA_IMG];
-    imgs.forEach(src=>{
-      const img = document.createElement("img");
-      img.src = resolveImage(src) || DEFAULT_VAGA_IMG;
-      img.alt = "foto";
-      img.addEventListener("error", () => { img.src = DEFAULT_VAGA_IMG; });
-      el.track.appendChild(img);
-    });
-    el.track.style.transform = "translateX(0)";
-    const many = imgs.length > 1;
-    if (el.prev && el.next) {
-      el.prev.style.display = many ? "" : "none";
-      el.next.style.display = many ? "" : "none";
-    }
-    // navegação simples
-    let idx = 0;
-    const go = (dir)=> {
-      const total = el.track.children.length;
-      if (!total) return;
-      idx = (idx + dir + total) % total;
-      el.track.style.transform = `translateX(-${idx * 100}%)`;
-    };
-    el.prev?.addEventListener("click", () => go(-1));
-    el.next?.addEventListener("click", () => go(+1));
+  // normaliza e remove vazios/duplicados
+  let imgs = (Array.isArray(images) ? images : (images ? [images] : []))
+    .map(resolveImage)
+    .filter(u => typeof u === "string" && u.trim());
+
+  imgs = [...new Set(imgs)];
+
+  // se não sobrou nada, usa apenas o placeholder
+  if (!imgs.length) imgs = [DEFAULT_VAGA_IMG];
+
+  // zera DOM e listeners
+  el.track.innerHTML = "";
+  if (el.prev) el.prev.onclick = null;
+  if (el.next) el.next.onclick = null;
+
+  // cria os slides que restaram (1 ou mais)
+  for (const src of imgs){
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = "Imagem da vaga";
+    img.loading = "lazy";
+    img.onerror = () => { img.src = DEFAULT_VAGA_IMG; };
+    el.track.appendChild(img);
   }
+
+  // navegação (só se houver >1)
+  let idx = 0;
+  const total = el.track.children.length;
+  el.track.style.transform = "translateX(0)";
+
+  const many = total > 1;
+  if (el.prev && el.next) {
+    el.prev.style.display = many ? "" : "none";
+    el.next.style.display = many ? "" : "none";
+    if (many) {
+      const go = (dir) => {
+        idx = (idx + dir + total) % total;
+        el.track.style.transform = `translateX(-${idx * 100}%)`;
+      };
+      el.prev.onclick = () => go(-1);
+      el.next.onclick = () => go(+1);
+    }
+  }
+}
 
   function applyPreview(p){
     if (!p) return;
@@ -186,12 +218,9 @@
     el.company.textContent = p.empresa || p.empresaNome || "Empresa";
     el.desc.textContent    = p.descricao || "—";
     el.loc.textContent     = p.local || "—";
-
-    const turnos = ensureArray(p.turno);
-    el.turno.textContent = turnos.length ? turnos.join(", ") : "—";
-
-    el.ini.textContent = fmtBR(p.dataInicio);
-    el.fim.textContent = fmtBR(p.dataFim);
+    el.turno.textContent   = ensureArray(p.turno).join(", ") || "—";
+    el.ini.textContent     = fmtBR(p.dataInicio);
+    el.fim.textContent     = fmtBR(p.dataFim);
 
     const s = mapStatus(p.status);
     el.status.textContent = s.label;
@@ -208,23 +237,12 @@
     mountCarousel(p.imagens);
   }
 
-  // PREVIEW VIVO
+  // Preview ao vivo (iframe)
   window.addEventListener("message", (ev)=>{
-    if (!ev.data || ev.data.type !== "VAGA_PREVIEW") return;
-    applyPreview(ev.data.payload);
-  }, false);
+    if (ev?.data?.type === "VAGA_PREVIEW") applyPreview(ev.data.payload);
+  });
 
-  // Modo live: esconda ações
-  if (live) {
-    const applyBtn = document.getElementById("applyBtn");
-    const reportBtn = document.getElementById("reportBtn");
-    const note = document.querySelector(".apply-note");
-    if (applyBtn) applyBtn.style.display = "none";
-    if (reportBtn) reportBtn.style.display = "none";
-    if (note) note.style.display = "none";
-  }
-
-  // CARREGAR VAGA REAL quando houver ?id=...
+  // Carregar vaga real
   async function loadVagaReal() {
     if (!vagaId || live) return;
     try {
@@ -232,12 +250,15 @@
       if (!resp.ok) throw new Error("vaga não encontrada");
       const v = await resp.json();
 
-      // imagens podem vir como array, string JSON ou string única
       let imgs = [];
       if (Array.isArray(v.imagens)) imgs = v.imagens;
       else if (typeof v.imagens === "string") {
-        try { const parsed = JSON.parse(v.imagens); if (Array.isArray(parsed)) imgs = parsed; else if (parsed) imgs = [parsed]; }
-        catch { imgs = v.imagens ? [v.imagens] : []; }
+        try {
+          const parsed = JSON.parse(v.imagens);
+          imgs = Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
+        } catch {
+          imgs = v.imagens ? [v.imagens] : [];
+        }
       }
       if (v.capaUrl && !imgs.length) imgs = [v.capaUrl];
 
@@ -261,6 +282,6 @@
 
   loadVagaReal();
 })();
-  </script>
+</script>
 </body>
 </html>

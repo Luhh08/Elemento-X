@@ -19,10 +19,21 @@ const vagaRoutes = require("./src/routes/vagaRoutes");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+/* -------- Middlewares globais -------- */
 app.use(cors({ origin: process.env.FRONTEND_URL || true }));
 app.use(express.json());
 app.use(morgan("dev"));
 
+//* -------- Arquivos estáticos --------
+const uploadsAbs = path.join(__dirname, "uploads");
+app.use("/uploads", express.static(uploadsAbs));
+app.use("/api/uploads", express.static(uploadsAbs));
+
+
+// sirva também o frontend (opcional se você usa Vite/LiveServer no front)
+app.use(express.static(path.join(__dirname, "../Frontend")));
+
+/* -------- Rotas /api -------- */
 app.use("/api", mainRoutes);
 app.use("/api", userRoutes);
 app.use("/api", verifyRoutes);
@@ -31,19 +42,15 @@ app.use("/api", userProfileRoutes);
 app.use("/api", empresaRoutes);
 app.use("/api", vagaRoutes);
 
+/* 404 só para /api (depois de todas as rotas /api) */
 app.use("/api", (_req, res) => res.status(404).json({ error: "Rota não encontrada" }));
 
-app.use(express.static(path.join(__dirname, "../Frontend")));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// --- Rotas da Aplicação ---
+/* -------- Rota raiz (entrega sua página inicial do front) -------- */
 app.get("/", (_req, res) => {
   res.sendFile(path.resolve(__dirname, "../Frontend/inicial.html"));
 });
 
-app.use(mainRoutes);
-
-// --- Middleware de Erro (sempre por último) ---
+/* -------- Middleware de Erro (sempre por último) -------- */
 app.use(errorHandler);
 
 if (require.main === module) {
