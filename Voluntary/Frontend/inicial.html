@@ -1,53 +1,62 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elemento X - Volunteer Portal</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Cal+Sans&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/inicial.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Voluntary — Tela de Entrada</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/inicial.css" />
 </head>
 <body>
-    <div class="overlay">
-        <header>
-            <p class="slogan">Sua vontade de ajudar encontra quem mais precisa.</p>
-        </header>
-
-        <main class="content">
-            <div class="logo-section">
-                <img src="img/logo.png" alt="Logo Elemento X" class="logo"> 
-                <h1><span class="highlight">ELEMENTO</span> X</h1>
-                <p class="subtitle">VOLUNTEER PORTAL</p>
-            </div>
-
-            <div class="buttons">
-                <button class="btn volunteer">Entrar como Voluntário</button>
-                <button class="btn company">Entrar como Empresa</button>
-            </div>
-        </main>
+  <main class="screen">
+    <!-- Background image -->
+    <div class="bg">
+      <img src="https://www.figma.com/api/mcp/asset/2bbf2ced-4469-4318-b87a-18c5bc4f2580" alt="" />
     </div>
 
-    <div class="container">
-        <footer>
-            <p>© 2025 Voluntary – Todos os direitos reservados</p>
-        </footer>
-    </div>
+    <!-- Color overlays -->
+    <div class="overlay overlay-teal"></div>
+    <div class="overlay overlay-gradient"></div>
 
-     <script>
-        // Seleciona os botões
-        const btnVolunteer = document.querySelector('.btn.volunteer');
-        const btnCompany = document.querySelector('.btn.company');
+    <!-- Content -->
+    <header class="header">
+  <span class="brand-wordmark">Voluntary</span>
+</header>
 
-        // Adiciona evento de clique
-        btnVolunteer.addEventListener('click', () => {
-            window.location.href = 'login.html';
-        });
+<section class="content">
+  <div class="cta-col">
+    <a class="cta cta-volunteer" href="../login.html">
+      <img class="cta-icon" src="https://www.figma.com/api/mcp/asset/a22e195b-6f82-4f49-99dc-c8f842cb32db" alt="" />
+      <span class="cta-text">
+        <strong>Entrar como</strong>
+        <em>Voluntário</em>
+      </span>
+    </a>
 
-        btnCompany.addEventListener('click', () => {
-            window.location.href = 'login_empresa.html';
-        });
-    </script>
+    <a class="cta cta-company" href="../login_empresa.html">
+      <img class="cta-icon" src="https://www.figma.com/api/mcp/asset/46a407de-f186-476b-aa36-d6eb785c287f" alt="" />
+      <span class="cta-text">
+        <strong>Entrar como</strong>
+        <em>Empresa</em>
+      </span>
+    </a>
+  </div>
+
+      <div class="hero-copy">
+        <p>
+          O Voluntary conecta pessoas a oportunidades de voluntariado criadas por empresas, ONGs e pequenos empreendimentos.
+          Encontre causas que combinam com você e faça a diferença.
+        </p>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>© 2025 Voluntary – Todos os direitos reservados</p>
+    </footer>
+  </main>
 </body>
 </html>

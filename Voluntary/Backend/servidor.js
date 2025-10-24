@@ -28,9 +28,6 @@ app.use(morgan("dev"));
 const uploadsAbs = path.join(__dirname, "uploads");
 app.use("/uploads", express.static(uploadsAbs));
 app.use("/api/uploads", express.static(uploadsAbs));
-
-
-// sirva também o frontend (opcional se você usa Vite/LiveServer no front)
 app.use(express.static(path.join(__dirname, "../Frontend")));
 
 /* -------- Rotas /api -------- */
