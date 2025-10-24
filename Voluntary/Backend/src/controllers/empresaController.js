@@ -1,33 +1,95 @@
 const { PrismaClient } = require("@prisma/client");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const CryptoJS = require("crypto-js");
 const { sendVerificationEmail } = require("../utils/sendEmail");
 
 const prisma = new PrismaClient();
 
+// use a MESMA chave que o frontend (ideal: vir do .env)
+const EMPRESA_AES_KEY =
+  process.env.EMPRESA_AES_KEY || "chaveSeguraDe32Caracteres1234567890";
+
 // ================================
-// Registrar empresa + representante no mesmo endpoint
+// Helpers
+// ================================
+const onlyDigits = (s) => String(s || "").replace(/\D/g, "");
+const formatCNPJMask = (d14) => {
+  const d = onlyDigits(d14).padEnd(14, "0").slice(0, 14);
+  return d
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d)/, "$1-$2");
+};
+
+// calcula % de perfil preenchido
+function calcProgresso(e = {}) {
+  let pontos = 0;
+  const total = 8;
+
+  if (e.razao_social) pontos++;
+  if (e.usuario) pontos++;
+  if (e.descricao) pontos++;
+  if (Array.isArray(e.tags) && e.tags.length) pontos++;
+  if (e.logoUrl) pontos++;
+  if (e.bannerUrl) pontos++;
+  if (e.telefonecontato || e.telefone_empresa) pontos++;
+  if (e.endereco && e.cep) pontos++;
+
+  return Math.round((pontos / total) * 100);
+}
+
+// ================================
+// Registrar empresa + representante
 // ================================
 async function registrarEmpresa(req, res) {
   try {
     const { empresa, representante } = req.body;
 
     if (!empresa || !representante) {
-      return res.status(400).json({ error: "Dados de empresa e representante são obrigatórios." });
+      return res
+        .status(400)
+        .json({ error: "Dados de empresa e representante são obrigatórios." });
     }
 
-    const { razao_social, email, senha, cnpj, telefone_empresa, endereco, cep } = empresa;
-    const { nome, cpf, cargo, email_representante, telefone_representante } = representante;
+    const {
+      razao_social,
+      email,
+      senha,
+      cnpj,
+      telefone_empresa,
+      endereco,
+      cep,
+    } = empresa;
+    const {
+      nome,
+      cpf,
+      cargo,
+      email_representante,
+      telefone_representante,
+    } = representante;
 
-    // --- validações ---
-    if (!razao_social || !email || !senha || !cnpj || !telefone_empresa || !endereco || !cep) {
-      return res.status(400).json({ error: "Preencha todos os campos da empresa." });
+    if (
+      !razao_social ||
+      !email ||
+      !senha ||
+      !cnpj ||
+      !telefone_empresa ||
+      !endereco ||
+      !cep
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Preencha todos os campos da empresa." });
     }
     if (!nome || !cpf || !cargo || !email_representante || !telefone_representante) {
-      return res.status(400).json({ error: "Preencha todos os campos do representante." });
+      return res
+        .status(400)
+        .json({ error: "Preencha todos os campos do representante." });
     }
 
-    // --- criação da empresa ---
     const hashed = await bcrypt.hash(senha, 10);
     const token = crypto.randomBytes(24).toString("hex");
 
@@ -36,7 +98,7 @@ async function registrarEmpresa(req, res) {
         razao_social,
         email,
         senha: hashed,
-        cnpj,
+        cnpj, // pode ser com máscara; login aceita ambos
         telefone_empresa,
         endereco,
         cep,
@@ -44,7 +106,6 @@ async function registrarEmpresa(req, res) {
       },
     });
 
-    // --- cria representante vinculado ---
     await prisma.representanteLegal.create({
       data: {
         nome,
@@ -56,14 +117,17 @@ async function registrarEmpresa(req, res) {
       },
     });
 
-    // --- envia e-mail de verificação ---
     await sendVerificationEmail(email, token);
 
-    return res.status(201).json({ message: "Empresa e representante cadastrados. Verifique seu e-mail." });
+    return res.status(201).json({
+      message: "Empresa e representante cadastrados. Verifique seu e-mail.",
+    });
   } catch (err) {
     console.error("registrarEmpresa error:", err);
     if (err.code === "P2002") {
-      return res.status(409).json({ error: "E-mail, CPF ou CNPJ já cadastrado." });
+      return res
+        .status(409)
+        .json({ error: "E-mail, CPF ou CNPJ já cadastrado." });
     }
     return res.status(500).json({ error: "Erro interno do servidor." });
   }
@@ -77,8 +141,11 @@ async function verificarEmail(req, res) {
     const { token } = req.query;
     if (!token) return res.status(400).send("Token ausente");
 
-    const empresa = await prisma.empresa.findFirst({ where: { validacaoToken: token } });
-    if (!empresa) return res.status(404).send("Token inválido ou empresa não encontrada");
+    const empresa = await prisma.empresa.findFirst({
+      where: { validacaoToken: token },
+    });
+    if (!empresa)
+      return res.status(404).send("Token inválido ou empresa não encontrada");
 
     await prisma.empresa.update({
       where: { id: empresa.id },
@@ -139,17 +206,90 @@ async function solicitarRedefinicao(req, res) {
 }
 
 // ================================
+// Login da empresa
+// ================================
+async function loginEmpresa(req, res) {
+  try {
+    const cnpjDigits = String(req.body.cnpj || "").replace(/\D/g, "");
+    const senhaCriptografada = String(req.body.senha || "");
+
+    if (!cnpjDigits || !senhaCriptografada) {
+      return res.status(400).json({ error: "CNPJ e senha são obrigatórios." });
+    }
+
+    // 🔓 descriptografar senha (AES)
+    let senhaDescriptografada = "";
+    try {
+      const bytes = CryptoJS.AES.decrypt(senhaCriptografada, EMPRESA_AES_KEY);
+      senhaDescriptografada = bytes.toString(CryptoJS.enc.Utf8);
+    } catch (_e) { /* cai no check abaixo */ }
+
+    if (!senhaDescriptografada) {
+      return res.status(400).json({ error: "Falha ao descriptografar a senha." });
+    }
+
+    // procura empresa por CNPJ com/sem máscara
+    const formatCNPJ = (d14) => d14
+      .replace(/\D/g,"").slice(0,14)
+      .replace(/^(\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+
+    let empresa = await prisma.empresa.findUnique({ where: { cnpj: cnpjDigits } });
+    if (!empresa) empresa = await prisma.empresa.findUnique({ where: { cnpj: formatCNPJ(cnpjDigits) } });
+    if (!empresa) return res.status(401).json({ error: "CNPJ não encontrado." });
+
+    const ok = await bcrypt.compare(senhaDescriptografada, empresa.senha);
+    if (!ok) return res.status(401).json({ error: "Senha incorreta." });
+
+    if (!empresa.validacao) {
+      return res.status(403).json({ error: "Conta não verificada. Verifique seu e-mail." });
+    }
+
+    const token = jwt.sign(
+      { sub: empresa.id, typ: "empresa" },
+      process.env.JWT_SECRET || "dev-secret",
+      { expiresIn: "7d" }
+    );
+
+    const progresso = calcProgresso(empresa);
+    return res.json({
+      message: "Login realizado com sucesso!",
+      token,
+      empresa: {
+        id: empresa.id,
+        razao_social: empresa.razao_social,
+        email: empresa.email,
+        cnpj: empresa.cnpj,
+        usuario: empresa.usuario || null,
+        logoUrl: empresa.logoUrl || null,
+        bannerUrl: empresa.bannerUrl || null,
+        progresso,
+      },
+    });
+  } catch (error) {
+    console.error("loginEmpresa error:", error);
+    return res.status(500).json({ error: "Erro ao realizar login." });
+  }
+}
+
+// ================================
 // Redefinir senha com token
 // ================================
 async function redefinirSenha(req, res) {
   try {
     const { token, senha } = req.body;
-    if (!token || !senha) return res.status(400).json({ error: "Token e nova senha são obrigatórios" });
+    if (!token || !senha)
+      return res
+        .status(400)
+        .json({ error: "Token e nova senha são obrigatórios" });
 
     const empresa = await prisma.empresa.findFirst({
       where: { resetToken: token, resetTokenExpires: { gt: new Date() } },
     });
-    if (!empresa) return res.status(400).json({ error: "Token inválido ou expirado" });
+    if (!empresa)
+      return res.status(400).json({ error: "Token inválido ou expirado" });
 
     const hashed = await bcrypt.hash(senha, 10);
     await prisma.empresa.update({
@@ -174,20 +314,188 @@ async function obterPerfilPorId(req, res) {
       select: {
         id: true,
         razao_social: true,
+        usuario: true,
         email: true,
         telefone_empresa: true,
+        emailcontato: true,
+        telefonecontato: true,
         endereco: true,
         cep: true,
         validacao: true,
         criadoEm: true,
         representantes: true,
+        descricao: true,
+        tags: true,
+        logoUrl: true,
+        bannerUrl: true,
       },
     });
+
     if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
-    return res.json(empresa);
+
+    const progresso = calcProgresso(empresa);
+    return res.json({ ...empresa, progresso });
   } catch (err) {
     console.error("obterPerfilPorId error:", err);
     return res.status(500).json({ error: "Erro ao buscar perfil" });
+  }
+}
+
+// ================================
+// Perfil + progresso (completo)
+// ================================
+async function getEmpresa(req, res, next) {
+  try {
+    const { id } = req.params;
+    const empresa = await prisma.empresa.findUnique({ where: { id } });
+    if (!empresa) return res.status(404).json({ error: 'Empresa não encontrada' });
+    const progresso = calcProgresso(empresa);
+    res.json({ ...empresa, progresso });
+  } catch (e) { next(e); }
+}
+
+// ================================
+// Atualiza perfil
+// ================================
+async function updateEmpresa(req, res, next) {
+  try {
+    const { id } = req.params;
+    const {
+      razao_social, descricao, tags,
+      telefone_empresa,
+      emailcontato,
+      telefonecontato,
+      cep, endereco, bannerUrl, logoUrl,
+      usuario,
+    } = req.body;
+
+    // normalização robusta do usuario
+    let usuarioNorm = undefined;
+    if (typeof usuario === "string") {
+      const raw = usuario.trim();
+      const cleaned = raw.replace(/^@+/, "")
+                         .toLowerCase()
+                         .replace(/\s+/g, "")
+                         .replace(/[^a-z0-9._-]/g, "");
+      if (cleaned) usuarioNorm = cleaned;
+    }
+
+    const empresa = await prisma.empresa.update({
+      where: { id },
+      data: {
+        razao_social,
+        descricao,
+        tags: Array.isArray(tags)
+          ? tags
+          : (tags ? String(tags).split(",").map(s => s.trim()).filter(Boolean) : []),
+        telefone_empresa,
+        emailcontato:     emailcontato ?? undefined,
+        telefonecontato: (telefonecontato ? String(telefonecontato).replace(/\D/g, "") : undefined),
+        cep,
+        endereco,
+        bannerUrl,
+        logoUrl,
+        usuario: usuarioNorm, // se undefined, Prisma ignora; se string válida, atualiza
+      }
+    });
+
+    const progresso = calcProgresso(empresa);
+    res.json({ ...empresa, progresso });
+  } catch (e) {
+    if (e?.code === "P2002") {
+      const t = Array.isArray(e.meta?.target) ? e.meta.target.join(",") : String(e.meta?.target || "");
+      if (t.includes("usuario")) {
+        return res.status(409).json({ error: "Este usuário já está em uso." });
+      }
+      return res.status(409).json({ error: "Valor duplicado em campo único." });
+    }
+    console.error("updateEmpresa error:", e);
+    return res.status(500).json({ error: "Erro ao atualizar perfil." });
+  }
+}
+
+// ================================
+// Upload de logo/banner
+// ================================
+async function uploadImagem(req, res, next) {
+  try {
+    const { id, tipo } = req.params; // logo | banner
+    if (!req.file) return res.status(400).json({ error: "Arquivo ausente" });
+
+    const url = `/uploads/${req.file.filename}`;
+    const data = {};
+    if (tipo === "logo") data.logoUrl = url;
+    else if (tipo === "banner") data.bannerUrl = url;
+    else return res.status(400).json({ error: "tipo inválido" });
+
+    const empresa = await prisma.empresa.update({ where: { id }, data });
+    const progresso = calcProgresso(empresa);
+    res.json({ empresa: { ...empresa, progresso } });
+  } catch (e) {
+    next(e);
+  }
+}
+
+// ================================
+// Vagas
+// ================================
+async function listarVagasDaEmpresa(req, res, next) {
+  try {
+    const { id } = req.params;
+    const vagas = await prisma.vaga.findMany({
+      where: { empresaId: id },
+      orderBy: { id: 'desc' }
+    });
+    res.json(vagas);
+  } catch (e) { next(e); }
+}
+
+async function criarVagaParaEmpresa(req, res, next) {
+  try {
+    const { id } = req.params; // empresaId
+
+    // BLOQUEIO: exige 100% do perfil
+    const empresa = await prisma.empresa.findUnique({ where: { id } });
+    if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+
+    const progresso = calcProgresso(empresa);
+    if (progresso < 100) {
+      return res.status(403).json({
+        error: "Complete 100% do perfil da empresa para publicar uma vaga.",
+        progressoAtual: progresso
+      });
+    }
+
+    const {
+      titulo,
+      descricao,
+      tags,
+      local,
+      turno,
+      dataInicio,
+      dataFim,
+      status,
+      imagens,
+    } = req.body;
+
+    const vaga = await prisma.vaga.create({
+      data: {
+        empresaId: id,
+        titulo,
+        descricao,
+        tags: Array.isArray(tags) ? tags : [],
+        local,
+        turno: Array.isArray(turno) ? turno : [],
+        status,
+        dataInicio: dataInicio ? new Date(dataInicio) : null,
+        dataFim: dataFim ? new Date(dataFim) : null,
+        imagens: Array.isArray(imagens) ? imagens : [],
+      },
+    });
+
+    res.status(201).json(vaga);
+  } catch (e) {
+    next(e);
   }
 }
 
@@ -197,4 +505,10 @@ module.exports = {
   solicitarRedefinicao,
   redefinirSenha,
   obterPerfilPorId,
+  getEmpresa,
+  updateEmpresa,
+  uploadImagem,
+  listarVagasDaEmpresa,
+  criarVagaParaEmpresa,
+  loginEmpresa,
 };

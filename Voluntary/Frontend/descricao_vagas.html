@@ -5,68 +5,63 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Voluntary — Detalhes da Vaga</title>
   <link rel="stylesheet" href="css/descricao_vagas.css" />
-   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* reforço para cobrir a área toda do carrossel */
+    .carousel{position:relative;overflow:hidden;height:300px;display:flex;align-items:center;background:#000}
+    @media (max-width: 900px){ .carousel{height:220px} }
+    .carousel-track{display:flex;transition:transform .35s ease;height:100%}
+    .carousel img{width:100%;height:100%;object-fit:cover;flex:0 0 100%;display:block}
+  </style>
 </head>
 <body>
   <header class="site-header">
     <div class="brand">Voluntary</div>
     <div class="header-actions">
       <button id="notifBtn" class="icon-btn" title="Notificações"><i class="fa-solid fa-bell"></i></button>
-      <div class="avatar"><a href="perfil-usuario.html"a><img src="img/foto-perfil.png" width="35px" height="35px"></a></div>
+      <div class="avatar"><a href="perfil-usuario.html"><img src="img/foto-perfil.png" width="35" height="35" alt="perfil"></a></div>
     </div>
   </header>
 
   <main class="page">
     <article class="job-card">
-      <!-- Gallery / imagem principal -->
       <section class="gallery">
         <div class="carousel" id="carousel">
           <button class="carousel-btn left" id="prevBtn">‹</button>
-          <div class="carousel-track" id="carouselTrack">
-            <img src="https://images.unsplash.com/photo-1520975912609-0b8a06a2a1b7?w=1400&q=80&auto=format&fit=crop" alt="foto 1">
-            <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1400&q=80&auto=format&fit=crop" alt="foto 2">
-            <img src="https://images.unsplash.com/photo-1526318472351-c75fcf0702c8?w=1400&q=80&auto=format&fit=crop" alt="foto 3">
-          </div>
+          <div class="carousel-track" id="carouselTrack"></div>
           <button class="carousel-btn right" id="nextBtn">›</button>
         </div>
       </section>
 
-      <!-- Conteúdo principal da vaga -->
       <section class="content">
         <div class="content-header">
-          <h1 class="job-title">Vaga</h1>
-          <div class="company">Nome_empresa</div>
+          <h1 id="jobTitle" class="job-title">Vaga</h1>
+          <div id="companyName" class="company">Nome_empresa</div>
+          <span id="statusBadge" class="status-badge">Aberto para inscrição</span>
           <button id="reportBtn" class="report-btn">Denunciar</button>
         </div>
 
-        <p class="job-desc" id="jobDesc">
-          Descrição_vaga Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer massa tortor, laoreet nec mauris sit amet, tristique ornare lorem. Maecenas purus ipsum, varius eget justo sed, viverra blandit urna.
-        </p>
+        <p class="job-desc" id="jobDesc">Descrição_vaga</p>
 
         <div class="meta-row">
           <div class="left-meta">
             <h3>Tags</h3>
-            <div class="tags" id="tagsList">
-              <button class="tag">Culinária</button>
-              <button class="tag">Educação</button>
-              <button class="tag">Limpeza</button>
-              <button class="tag">Programação</button>
-            </div>
+            <div class="tags" id="tagsList"></div>
 
             <div class="info-block">
               <div class="info-item">
                 <div class="icon"><i class="fa-solid fa-clock"></i></div>
                 <div>
                   <div class="info-title">Horário</div>
-                  <div class="info-text">Turno da manhã<br>08:00 - 11:30</div>
+                  <div class="info-text"><span id="jobTurno">—</span></div>
                 </div>
               </div>
 
               <div class="info-item">
                 <div class="icon"><i class="fa-solid fa-calendar"></i></div>
                 <div>
-                  <div class="info-title">Data</div>
-                  <div class="info-text" id="jobDate">10/11/2025</div>
+                  <div class="info-title">Período</div>
+                  <div class="info-text"><span id="jobDateInicio">—</span> – <span id="jobDateFim">—</span></div>
                 </div>
               </div>
 
@@ -74,17 +69,14 @@
                 <div class="icon"><i class="fa-solid fa-map"></i></div>
                 <div>
                   <div class="info-title">Localização</div>
-                  <div class="info-text">Endereço / Bairro</div>
+                  <div class="info-text" id="jobLocal">—</div>
                 </div>
               </div>
             </div>
           </div>
 
           <div class="right-meta">
-            <label for="applyMessage">Explique o porquê quer ajudar nessa causa:</label>
-            <textarea id="applyMessage" placeholder="Escreva sua motivação..." rows="10"></textarea>
             <div class="apply-note">Ao clicar no botão de aplicar vaga, os seus dados serão enviados para a empresa</div>
-
             <div class="apply-row">
               <div id="applicationsCount" class="applications-count">Aplicações: 0</div>
               <button id="applyBtn" class="apply-btn">Aplicar para a vaga</button>
@@ -94,7 +86,6 @@
       </section>
     </article>
 
-    <!-- Lista de candidaturas (visível opcionalmente) -->
     <aside class="applications" id="applicationsPanel" aria-hidden="true">
       <h4>Candidaturas</h4>
       <ul id="applicationsList"></ul>
@@ -102,10 +93,174 @@
     </aside>
   </main>
 
-  <!-- modal simples para denunciar -->
   <div id="reportModal" class="modal" aria-hidden="true">
     <div class="modal-content">
       <h3>Denunciar vaga</h3>
       <p>Explique o motivo da denúncia (opcional):</p>
       <textarea id="reportText" rows="5" placeholder="Motivo..."></textarea>
-      <div class="mod
+      <div class="modal-actions">
+        <button class="small-btn" data-close>Cancelar</button>
+        <button class="small-btn primary">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  const DEFAULT_VAGA_IMG = "img/default-banner.png";
+  const qs = new URLSearchParams(location.search);
+  const live = qs.get("live") === "1";
+  const vagaId = qs.get("id");
+
+  if (live) document.body.classList.add("live");
+
+  const el = {
+    title:  document.getElementById("jobTitle"),
+    company:document.getElementById("companyName"),
+    desc:   document.getElementById("jobDesc"),
+    tags:   document.getElementById("tagsList"),
+    turno:  document.getElementById("jobTurno"),
+    loc:    document.getElementById("jobLocal"),
+    ini:    document.getElementById("jobDateInicio"),
+    fim:    document.getElementById("jobDateFim"),
+    status: document.getElementById("statusBadge"),
+    track:  document.getElementById("carouselTrack"),
+    prev:   document.getElementById("prevBtn"),
+    next:   document.getElementById("nextBtn"),
+  };
+
+  function resolveImage(src) {
+    if (!src || typeof src !== "string" || !src.trim()) return DEFAULT_VAGA_IMG;
+    if (src.startsWith("/uploads/") || src.startsWith("uploads/")) return src.startsWith("/") ? src : `/${src}`;
+    return src;
+  }
+
+  function mapStatus(s){
+    switch(s){
+      case "ABERTA":                 return {label:"Aberto para inscrição",  cls:"sb-open"};
+      case "INSCRICOES_FINALIZADAS": return {label:"Inscrições finalizadas", cls:"sb-inscfin"};
+      case "ANDAMENTO":              return {label:"Em andamento",           cls:"sb-run"};
+      case "FINALIZADA":             return {label:"Finalizado",             cls:"sb-done"};
+      default:                       return {label:"—",                      cls:""};
+    }
+  }
+  function fmtBR(d){
+    if (!d) return "—";
+    const dt = new Date(d);
+    if (isNaN(dt)) return "—";
+    return dt.toLocaleDateString("pt-BR");
+  }
+  function ensureArray(x){ return Array.isArray(x) ? x : (x ? [x] : []); }
+
+  function mountCarousel(images){
+    el.track.innerHTML = "";
+    const imgs = (images && images.length) ? images : [DEFAULT_VAGA_IMG];
+    imgs.forEach(src=>{
+      const img = document.createElement("img");
+      img.src = resolveImage(src) || DEFAULT_VAGA_IMG;
+      img.alt = "foto";
+      img.addEventListener("error", () => { img.src = DEFAULT_VAGA_IMG; });
+      el.track.appendChild(img);
+    });
+    el.track.style.transform = "translateX(0)";
+    const many = imgs.length > 1;
+    if (el.prev && el.next) {
+      el.prev.style.display = many ? "" : "none";
+      el.next.style.display = many ? "" : "none";
+    }
+    // navegação simples
+    let idx = 0;
+    const go = (dir)=> {
+      const total = el.track.children.length;
+      if (!total) return;
+      idx = (idx + dir + total) % total;
+      el.track.style.transform = `translateX(-${idx * 100}%)`;
+    };
+    el.prev?.addEventListener("click", () => go(-1));
+    el.next?.addEventListener("click", () => go(+1));
+  }
+
+  function applyPreview(p){
+    if (!p) return;
+    el.title.textContent   = p.titulo || "Vaga";
+    el.company.textContent = p.empresa || p.empresaNome || "Empresa";
+    el.desc.textContent    = p.descricao || "—";
+    el.loc.textContent     = p.local || "—";
+
+    const turnos = ensureArray(p.turno);
+    el.turno.textContent = turnos.length ? turnos.join(", ") : "—";
+
+    el.ini.textContent = fmtBR(p.dataInicio);
+    el.fim.textContent = fmtBR(p.dataFim);
+
+    const s = mapStatus(p.status);
+    el.status.textContent = s.label;
+    el.status.className = "status-badge " + s.cls;
+
+    el.tags.innerHTML = "";
+    (p.tags || []).forEach(t=>{
+      const b = document.createElement("button");
+      b.className = "tag";
+      b.textContent = t;
+      el.tags.appendChild(b);
+    });
+
+    mountCarousel(p.imagens);
+  }
+
+  // PREVIEW VIVO
+  window.addEventListener("message", (ev)=>{
+    if (!ev.data || ev.data.type !== "VAGA_PREVIEW") return;
+    applyPreview(ev.data.payload);
+  }, false);
+
+  // Modo live: esconda ações
+  if (live) {
+    const applyBtn = document.getElementById("applyBtn");
+    const reportBtn = document.getElementById("reportBtn");
+    const note = document.querySelector(".apply-note");
+    if (applyBtn) applyBtn.style.display = "none";
+    if (reportBtn) reportBtn.style.display = "none";
+    if (note) note.style.display = "none";
+  }
+
+  // CARREGAR VAGA REAL quando houver ?id=...
+  async function loadVagaReal() {
+    if (!vagaId || live) return;
+    try {
+      const resp = await fetch(`/api/vagas/${vagaId}`);
+      if (!resp.ok) throw new Error("vaga não encontrada");
+      const v = await resp.json();
+
+      // imagens podem vir como array, string JSON ou string única
+      let imgs = [];
+      if (Array.isArray(v.imagens)) imgs = v.imagens;
+      else if (typeof v.imagens === "string") {
+        try { const parsed = JSON.parse(v.imagens); if (Array.isArray(parsed)) imgs = parsed; else if (parsed) imgs = [parsed]; }
+        catch { imgs = v.imagens ? [v.imagens] : []; }
+      }
+      if (v.capaUrl && !imgs.length) imgs = [v.capaUrl];
+
+      applyPreview({
+        titulo: v.titulo,
+        empresa: v.empresa?.razao_social,
+        descricao: v.descricao,
+        tags: v.tags,
+        local: v.local,
+        turno: v.turno,
+        dataInicio: v.dataInicio,
+        dataFim: v.dataFim,
+        status: v.status,
+        imagens: imgs
+      });
+    } catch(e){
+      console.error(e);
+      applyPreview({ imagens: [DEFAULT_VAGA_IMG] });
+    }
+  }
+
+  loadVagaReal();
+})();
+  </script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Voluntary • Perfil da Empresa</title>
+  <link rel="stylesheet" href="css/perfil_empresa.css"/>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
+</head>
+<body>
+  <div class="page">
+
+    <aside class="sidebar">
+      <h1 class="brand">Voluntary</h1>
+      <nav class="menu">
+        <a class="pill" href="vagas.html"><i class="ri-search-line"></i> Procurar Vagas</a>
+        <a class="pill" href="#"><i class="ri-notification-3-line"></i> Notificações</a>
+        <a id="btnGerenciar" class="pill pill-accent" href="gerenciar_aplicacoes.html" hidden>
+          <i class="ri-key-2-line"></i> Aplicações
+        </a>
+      </nav>
+      <a class="pill pill-logout" href="#" id="logout"><i class="ri-logout-box-r-line"></i> Sair</a>
+    </aside>
+
+    <main class="content">
+      <section class="profile-header">
+  <img id="bannerEmpresa" class="banner" src="img/default-banner.png" alt="banner" />
+
+  <!-- Botões no canto superior direito -->
+  <div class="profile-actions">
+    <button id="btnDenunciar" class="chip danger" hidden>Denunciar</button>
+    <button id="btnEditar" class="chip" hidden>Editar Perfil</button>
+  </div>
+
+  <!-- Avatar + infos -->
+  <div class="profile-row">
+    <div class="avatar-wrap">
+      <img id="logoEmpresa" class="avatar" src="img/default-avatar.jpg" alt="logo da empresa" />
+    </div>
+
+    <div class="user-info">
+            <div class="progress-row">
+              <div class="progresso-container lg">
+                <div id="barraProgresso" class="progresso-barra"></div>
+              </div>
+              <span id="labelProgresso" class="progresso-label">0% completo</span>
+            </div>
+
+      <h2 id="razaoSocial" class="name">Nome da Empresa</h2>
+      <p id="empresaTag" class="username"></p>
+      <p id="descricaoEmpresa" class="desc"></p>
+    </div>
+  </div>
+</section>
+
+      <section class="columns">
+        <div class="card history">
+          <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
+            <h3>Minhas vagas</h3>
+  <a id="btnPublicar" class="chip" href="criacao_vagas.html" hidden>
+    Publicação de vaga
+  </a>
+          </div>
+          <div id="listaVagas"></div>
+        </div>
+        <aside class="right-col">
+          <div class="card skills">
+            <h3>Tags</h3>
+            <div id="listaTags" class="tags"></div>
+          </div>
+
+          <div class="card info">
+            <div class="icon-title"><i class="ri-user-3-line"></i><h4>Contatos</h4></div>
+            <p id="emailEmpresa">—</p>
+            <p id="telefoneEmpresa">—</p>
+          </div>
+
+          <div class="card info">
+            <div class="icon-title"><i class="ri-map-pin-line"></i><h4>Endereço</h4></div>
+            <p id="enderecoEmpresa">—</p>
+            <p id="cepEmpresa">—</p>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <!-- POPUP • Edição do perfil da empresa -->
+  <div id="popupEdicao" class="popup" aria-hidden="true">
+    <div class="popup-dialog">
+      <button class="close" data-close><i class="ri-close-line"></i></button>
+
+      <img id="bannerPreview" class="popup-banner" src="img/default-banner.png" alt="banner"/>
+      <div class="popup-banner-row">
+        <button class="chip" id="btnNovoBanner">Enviar Banner</button>
+      </div>
+
+      <div class="popup-body">
+        <div class="avatar-stack">
+          <div class="avatar-border">
+            <img id="logoPreview" class="avatar" src="img/default-avatar.jpg" alt="logo"/>
+          </div>
+          <button class="chip" id="btnNovaLogo">Enviar Logo</button>
+        </div>
+
+        <form id="formEdicao" class="form">
+          <label class="input">
+            <input id="editRazaoSocial" type="text" placeholder="Razão social" />
+          </label>
+
+          <label class="input">
+            <input id="editUsuario" type="text" placeholder="Usuário" />
+          </label>
+
+<label class="input tags-field">
+  <input id="editTags" type="text" placeholder="Tags (separe por vírgula ou Enter)" />
+</label>
+<div id="chipsTags" class="chips"></div>
+
+
+          <label class="input">
+            <input id="editEmailContato" type="email" placeholder="Email de contato" />
+          </label>
+
+          <label class="input">
+            <input id="editTelefoneContato" type="text" placeholder="Telefone de contato" />
+          </label>
+
+          <label class="textarea">
+            <textarea id="editDescricao" rows="6" placeholder="Descrição da empresa"></textarea>
+          </label>
+
+          <div class="form-actions">
+            <button type="submit" class="chip big">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP • Denúncia -->
+  <div id="popupDenuncia" class="popup" aria-hidden="true">
+    <div class="popup-dialog dialog-sm">
+      <button class="close" data-close><i class="ri-close-line"></i></button>
+      <form id="formDenuncia" class="form">
+        <label class="textarea">
+          <textarea id="motivoDenuncia" rows="6" placeholder="Motivo da denúncia"></textarea>
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="chip big">Enviar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- POPUP • Confirmação -->
+  <div id="popupDenunciaOk" class="popup" aria-hidden="true">
+    <div class="popup-dialog dialog-sm center-msg">
+      <button class="close" data-close><i class="ri-close-line"></i></button>
+      <h3>Vamos verificar sua denúncia</h3>
+    </div>
+  </div>
+
+
+  <script src="scripts/perfil_empresa.js"></script>
+</body>
+</html>

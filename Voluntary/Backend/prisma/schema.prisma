@@ -23,15 +23,15 @@ model Usuario {
   resetTokenExpires  DateTime?
 
   // Campos extras de perfil
-  descricao          String?         // descrição do usuário
-  competencias       String[]        // array de tags
-  preferenciaHorario String[]         // "Manhã", "Tarde", "Noite"
-  emailcontato       String?         // email alternativo ou contato público
-  telefonecontato    String?         // telefone de contato
+  descricao          String?         
+  competencias       String[]        
+  preferenciaHorario String[]        
+  emailcontato       String?         
+  telefonecontato    String?         
 
   // URLs de imagens
-  bannerUrl          String?   // URL da imagem de capa
-  fotoUrl            String?   // URL da foto de perfil
+  bannerUrl          String?   
+  fotoUrl            String?   
 
 }
 
@@ -53,6 +53,17 @@ model Empresa {
 
   // Relação com representantes
   representantes     RepresentanteLegal[]
+
+  // Perfil público
+  usuario          String?  @unique
+  descricao         String?                       
+  tags              String[] @default([])         
+  bannerUrl         String?                       
+  logoUrl           String?      
+  emailcontato      String?
+  telefonecontato   String?    
+  vaga              Vaga[]                              
+
 }
 
 model RepresentanteLegal {
@@ -67,9 +78,33 @@ model RepresentanteLegal {
 
 }
 
-
 model Administrador {
   id       String @id @default(auto()) @map("_id") @db.ObjectId
   usuario  String 
   senha    String
+}
+
+enum VagaStatus {
+  ABERTA
+  INSCRICOES_FINALIZADAS
+  ANDAMENTO
+  FINALIZADA
+}
+
+model Vaga{
+
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  empresaId   String     @db.ObjectId
+  titulo      String
+  descricao   String
+  tags        String[]
+  local       String
+  turno       String[]   
+  status      VagaStatus @default(ABERTA)
+  dataInicio  DateTime?
+  dataFim     DateTime?
+  imagens     String[]   
+  aplicacoes  Int        @default(0)
+  empresa    Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
 }

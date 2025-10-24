@@ -1,5 +1,4 @@
 const express = require("express");
-const router = express.Router();
 const {
   registrarUsuario,
   verificarEmail,
@@ -7,9 +6,11 @@ const {
   listarUsuarios,
 } = require("../controllers/userController");
 
-router.post("/users", registrarUsuario);
-router.get("/verify-email", verificarEmail);
-router.post("/login", loginUsuario);
-router.get("/users", listarUsuarios);
+const router = express.Router();
+
+router.post("/users", registrarUsuario);       
+router.post("/users/login", loginUsuario);      
+router.get("/users", listarUsuarios);           
+router.get("/users/verify", verificarEmail);    
 
 module.exports = router;

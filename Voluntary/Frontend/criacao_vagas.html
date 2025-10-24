@@ -5,40 +5,71 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Criação de Vagas</title>
   <link rel="stylesheet" href="css/criacao_vagas.css" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
 </head>
 <body>
   <div class="container">
+
     <!-- FORMULÁRIO -->
-    <section class="form-section">
+    <section class="form-section card">
       <h2>Criação de vagas</h2>
+
       <form id="vagaForm">
-        <input type="text" id="nomeProjeto" placeholder="Nome do projeto" />
-        <textarea id="descricao" placeholder="Descrição"></textarea>
-        <input type="text" id="tags" placeholder="Tags (separe por vírgula)" />
-        <input type="text" id="localizacao" placeholder="Localização" />
-        <input type="text" id="turno" placeholder="Adicionar turno" />
-        <input type="date" id="data" />
+  <label class="input"><input type="text" id="nomeProjeto" placeholder="Nome do projeto" required /></label>
 
-        <label class="foto-label">Adicionar fotos:</label>
-        <div class="foto-container" id="fotoContainer">
-          <div class="foto" id="fotoPlaceholder">+</div>
-          <input type="file" id="fotoInput" accept="image/*" multiple hidden />
-        </div>
+  <label class="textarea"><textarea id="descricao" placeholder="Descrição" rows="5"></textarea></label>
 
-        <button type="button" id="salvarBtn" class="btn-salvar">Salvar</button>
-      </form>
+  <label class="input"><input type="text" id="tags" placeholder="Tags (separe por vírgula)" /></label>
+
+  <label class="input"><input type="text" id="localizacao" placeholder="Localização" /></label>
+
+  <!-- Status -->
+  <label class="input">
+    <select id="status" required>
+      <option value="ABERTA">Aberto para inscrição</option>
+      <option value="INSCRICOES_FINALIZADAS">Inscrições finalizadas</option>
+      <option value="ANDAMENTO">Em andamento</option>
+      <option value="FINALIZADA">Finalizado</option>
+    </select>
+  </label>
+
+  <!-- Turno (checkboxes) -->
+  <div class="field-group">
+    <span class="field-label">Turno</span>
+    <div class="checks">
+      <label class="check"><input type="checkbox" name="turno[]" value="Manhã"> Manhã</label>
+      <label class="check"><input type="checkbox" name="turno[]" value="Tarde"> Tarde</label>
+      <label class="check"><input type="checkbox" name="turno[]" value="Noite"> Noite</label>
+    </div>
+  </div>
+
+  <!-- Período (datas) -->
+  <div class="field-group">
+    <span class="field-label">Período</span>
+    <div class="dates">
+      <label class="input"><input type="date" id="dataInicio" /></label>
+      <label class="input"><input type="date" id="dataFim" /></label>
+    </div>
+  </div>
+
+  <!-- Fotos -->
+  <label class="foto-label">Adicionar fotos:</label>
+  <div class="foto-container" id="fotoContainer">
+    <button type="button" class="foto" id="fotoPlaceholder" title="Adicionar fotos">
+      <i class="ri-add-line"></i>
+    </button>
+    <input type="file" id="fotoInput" accept="image/*" multiple hidden />
+  </div>
+
+  <button type="button" id="salvarBtn" class="chip big btn-salvar">Salvar</button>
+</form>
     </section>
 
-    <!-- PREVIEW -->
-    <section class="preview-section">
+    <!-- PREVIEW (usa a página de descrição como preview vivo) -->
+    <section class="preview-section card">
       <h3>Preview de Projeto</h3>
-      <div id="previewCard" class="preview-card">
-        <div class="preview-images" id="previewImages"></div>
-        <h4 id="previewTitulo">Nome do projeto...</h4>
-        <p id="previewDescricao">Descrição do projeto aparecerá aqui.</p>
-        <p id="previewLocalizacao"><strong>Localização:</strong> —</p>
-        <p id="previewTurnoData"><strong>Turno:</strong> — | <strong>Data:</strong> —</p>
-        <div id="previewTags"></div>
+      <div class="frame-wrap">
+        <iframe id="vagaPreviewFrame" class="preview-frame" src="descricao_vagas.html?live=1" loading="lazy"></iframe>
       </div>
     </section>
   </div>

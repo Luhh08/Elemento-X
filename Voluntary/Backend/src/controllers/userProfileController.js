@@ -33,10 +33,6 @@ function calcularProgresso(u) {
   return p;
 }
 
-/**
- * GET /api/usuario/:id
- * Retorna os dados do perfil + progresso (%)
- */
 exports.getUsuario = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -69,10 +65,6 @@ exports.getUsuario = async (req, res, next) => {
   }
 };
 
-/**
- * PUT /api/usuario/:id
- * Atualiza campos do perfil (inclui nome e @usuario)
- */
 exports.updateUsuario = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -133,10 +125,6 @@ exports.updateUsuario = async (req, res, next) => {
   }
 };
 
-/**
- * PUT /api/usuario/:id/banner
- * Atualiza a URL do banner
- */
 exports.updateBannerUrl = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -163,10 +151,6 @@ exports.updateBannerUrl = async (req, res, next) => {
   }
 };
 
-/**
- * PUT /api/usuario/:id/foto
- * Atualiza a URL da foto do perfil
- */
 exports.updateFotoUrl = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -193,10 +177,6 @@ exports.updateFotoUrl = async (req, res, next) => {
   }
 };
 
-/**
- * GET /api/usuario/:id/progresso
- * Retorna apenas a % de progresso
- */
 exports.getProgressoPerfil = async (req, res, next) => {
   try {
     const { id } = req.params;

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Voluntary • Perfil</title>
-  <link rel="stylesheet" href="css/perfil.css">
+  <link rel="stylesheet" href="../css/perfil.css"/>
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
 </head>
 <body>
@@ -32,27 +32,25 @@
           <button id="btnEditar" class="chip">Editar Perfil</button>
         </div>
 
+        <!-- FOTO + INFOS EM LINHA (barra ao lado da foto) -->
         <div class="profile-row">
-  <div class="avatar-wrap">
-    <img id="fotoUsuario" class="avatar" src="../img/default-avatar.jpg" alt="foto de perfil"/>
-  </div>
+          <div class="avatar-wrap">
+            <img id="fotoUsuario" class="avatar" src="../img/default-avatar.jpg" alt="foto de perfil"/>
+          </div>
 
-  <div class="user-info">
-    <!-- barra ao lado da foto -->
-    <div class="progress-row">
-      <div class="progresso-container lg">
-        <div id="barraProgresso" class="progresso-barra"></div>
-      </div>
-      <span id="labelProgresso" class="progresso-label">0% completo</span>
-    </div>
+          <div class="user-info">
+            <div class="progress-row">
+              <div class="progresso-container lg">
+                <div id="barraProgresso" class="progresso-barra"></div>
+              </div>
+              <span id="labelProgresso" class="progresso-label">0% completo</span>
+            </div>
 
-    <h2 id="nomeUsuario" class="name">Nome do Usuário</h2>
-    <p id="usuarioTag" class="username">@usuario</p>
-    <p id="descricaoUsuario" class="desc">Aqui vai a descrição do usuário.</p>
-  </div>
-</div>
-
-
+            <h2 id="nomeUsuario" class="name">Nome do Usuário</h2>
+            <p id="usuarioTag" class="username">@usuario</p>
+            <p id="descricaoUsuario" class="desc">Aqui vai a descrição do usuário.</p>
+          </div>
+        </div>
       </section>
 
       <!-- Histórico e Lateral -->
@@ -110,7 +108,7 @@
     <div class="popup-dialog">
       <button class="close" data-close><i class="ri-close-line"></i></button>
 
-      <img id="bannerPreview" class="popup-banner" src="../Frontend/img/banner.png" alt="banner"/>
+      <img id="bannerPreview" class="popup-banner" src="../img/banner.png" alt="banner"/>
       <div class="popup-banner-row">
         <button class="chip" id="btnNovoBanner">Enviar Banner</button>
       </div>
@@ -118,7 +116,7 @@
       <div class="popup-body">
         <div class="avatar-stack">
           <div class="avatar-border">
-            <img id="fotoPreview" class="avatar" src="../Frontend/img/foto-perfil.png" alt="perfil"/>
+            <img id="fotoPreview" class="avatar" src="../img/foto-perfil.png" alt="perfil"/>
           </div>
           <button class="chip" id="btnNovaFoto">Enviar Foto</button>
         </div>

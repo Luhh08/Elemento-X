@@ -1,41 +1,48 @@
-// scripts/login.js
 
-// Seleciona o formulário de login
 const formLogin = document.querySelector(".login-form");
 
-// 🧩 Chave secreta — deve ser a mesma usada no backend (.env)
 const SECRET_KEY = "chaveSeguraDe32Caracteres1234567890";
 
-formLogin.addEventListener("submit", async (e) => {
-  e.preventDefault(); // Evita recarregar a página
+const LOGIN_URL = "/api/users/login"; 
 
-  const email = document.getElementById("email").value;
+formLogin.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const email = document.getElementById("email").value.trim();
   const senha = document.getElementById("senha").value;
 
-  // 🔒 Criptografa a senha antes de enviar ao servidor
+  if (!email || !senha) {
+    alert("Informe e-mail e senha.");
+    return;
+  }
+
+  // Criptografa a senha (AES) — o backend descriptografa com a mesma SECRET_KEY
   const senhaCriptografada = CryptoJS.AES.encrypt(senha, SECRET_KEY).toString();
 
   try {
-    const response = await fetch("http://localhost:3000/login", {
+    const resp = await fetch(LOGIN_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, senha: senhaCriptografada }),
     });
 
-    const data = await response.json();
+    // Evita "Unexpected token '<' ..." se o backend devolver HTML por engano
+    const ct = resp.headers.get("content-type") || "";
+    const payload = ct.includes("application/json") ? await resp.json() : { error: await resp.text() };
 
-    if (response.ok) {
-      // ✅ Salva o token e o ID do usuário no navegador
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("userId", data.usuario.id); // <— importante!
-
-      alert(data.message);
-      window.location.href = "perfil-usuario.html";
-    } else {
-      alert(data.error || "Falha no login.");
+    if (!resp.ok) {
+      throw new Error(payload.error || "Falha no login.");
     }
+
+    // Guarda sessão
+    localStorage.setItem("token", payload.token || "");
+    localStorage.setItem("userId", payload.usuario?.id || "");
+    localStorage.setItem("tipoUsuario", "usuario");
+
+    // Redireciona para o perfil do usuário
+    window.location.href = "perfil-usuario.html";
   } catch (err) {
-    console.error("Erro na requisição:", err);
-    alert("Erro ao conectar com o servidor.");
+    console.error("Erro no login:", err);
+    alert(err.message || "Erro ao conectar com o servidor.");
   }
 });
