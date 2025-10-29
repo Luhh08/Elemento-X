@@ -6,6 +6,7 @@
   <title>Voluntary — Detalhes da Vaga</title>
   <link rel="stylesheet" href="css/descricao_vagas.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/notificacoes.css">
   <style>
     /* reforço para cobrir a área toda do carrossel quando o CSS externo ainda não carregou */
     .carousel{position:relative;overflow:hidden;height:300px;display:flex;align-items:center;background:#000}
@@ -18,8 +19,35 @@
   <header class="site-header">
     <div class="brand">Voluntary</div>
     <div class="header-actions">
-      <button id="notifBtn" class="icon-btn" title="Notificações"><i class="fa-solid fa-bell"></i></button>
-      <div class="avatar"><a href="perfil-usuario.html"><img src="img/foto-perfil.png" width="35" height="35" alt="perfil"></a></div>
+
+        <div class="notification-wrapper" id="notificationWrapper">
+  <button id="notifBtn" class="icon-btn" title="Notificações">
+    <i class="fa-solid fa-bell"></i>
+  </button>
+
+  <!-- Painel popup de notificações -->
+  <div class="notif-panel" id="notifPanel">
+    <div class="notif-header">Notificações</div>
+
+    <div class="notif-item">
+            <div class="notif-title">Nova mensagem recebida <i class="fa-solid fa-envelope"></i></div>
+            <div class="notif-time">Há 2 minutos</div>
+        </div>
+
+        <div class="notif-item">
+            <div class="notif-title">Seu cadastro foi aprovado <i class="fa-solid fa-check"></i></div>
+            <div class="notif-time">Há 15 minutos</div>
+        </div>
+
+        <div class="notif-item">
+            <div class="notif-title">Projeto “Verde Limpo” precisa de voluntários <i class="fa-solid fa-seedling"></i></div>
+            <div class="notif-time">Há 1 hora</div>
+        </div>
+  </div>
+</div>
+
+
+      <div class="avatar"><a href="perfil-usuario.html"><img src="img/default-avatar.jpg" width="22" height="22" alt="perfil"></a></div>
     </div>
   </header>
 
@@ -412,5 +440,6 @@ updateApplyVisibility();
   loadVagaReal();
 })();
   </script>
+  <script src="scripts/notificacoes.js"></script>
 </body>
 </html>
