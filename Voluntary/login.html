@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elemento X - Login</title>
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="login-container">
+        <a id="btnVoltar" class="btn-voltar" aria-label="Voltar">← Voltar</a>
+        <div class="login-panel">
+            <header class="logo-area">
+                <h1>Voluntary</h1>
+                <p>PORTAL DE VOLUNTARIADO</p>
+            </header>
+
+            <form class="login-form">
+                <h2>LOGIN</h2>
+                <div class="input-group">
+                    <input type="email" id="email" name="email" placeholder="Email" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="senha" name="senha" placeholder="Senha" required>
+                </div>
+                <button type="submit">ENTRAR</button>
+                <a href="registro.html" class="cadastro">Cadastre-se</a>
+                <a href="esqueceu-senha.html?tipo=usuario" class="esqueceu">Esqueceu a senha?</a>
+            </form>
+        </div>
+        <div class="decorative-panel"></div>
+    </div>
+    <script>
+(function () {
+  const btn = document.getElementById('btnVoltar');
+  if (!btn) return;
+
+  btn.addEventListener('click', function (e) {
+    e.preventDefault();
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      location.href = 'inicial.html';
+    }
+  });
+})();
+</script>
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>
+    <script src="scripts/login.js"></script>
+</body>
+</html>
