@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voluntary • Configurações</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/configuracoes.css">
+</head>
+<body>
+  <div class="page">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h1 class="brand">Voluntary</h1>
+      <nav class="menu">
+        <a class="pill" href="perfil-usuario.html"><i class="ri-user-3-line"></i> Perfil</a>
+        <a class="pill" href="vagas.html"><i class="ri-search-line"></i> Procurar Vagas</a>
+        <a class="pill pill-logout" href="login.html"><i class="ri-logout-box-r-line"></i> Sair</a>
+      </nav>
+    </aside>
+
+    <!-- Conteúdo principal -->
+    <main class="content">
+      <section class="settings-header">
+        <h1>Configurações</h1>
+        <p>Gerencie suas preferências e informações de conta</p>
+      </section>
+
+      <!-- Preferências de Notificação -->
+      <div class="card">
+        <h3>Preferências de Notificação</h3>
+        <div class="form-group">
+          <label>Receber notificações por email</label>
+          <label class="switch">
+            <input type="checkbox" id="notifEmail" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="form-group">
+          <label>Receber notificações no aplicativo</label>
+          <label class="switch">
+            <input type="checkbox" id="notifApp" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Configurações de Privacidade -->
+      <div class="card">
+        <h3>Privacidade</h3>
+        <div class="form-group">
+          <label>Conta pública</label>
+          <label class="switch">
+            <input type="checkbox" id="publicAccount">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Ações -->
+      <div class="actions">
+        <button class="btn btn-cancel" id="btnCancel">Cancelar</button>
+        <button class="btn btn-save" id="btnSave">Salvar Alterações</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="scripts/configuracoes.js"></script>
+</body>
+</html>
