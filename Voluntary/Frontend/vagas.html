@@ -13,38 +13,63 @@
     <link href="css/vagas.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/notificacoes.css">
+
   </head>
   <body>
 <header id="section-header" class="site-header">
-    <div class="container header-container">
-        <a href="#" class="logo-link">
-            <h1 class="logo">Voluntary</h1>
-        </a>
-        <nav class="main-navigation">
-        </nav>
-        <div class="header-actions">
-    <div class="notification-icon">
-        <img src="img/bell.png" alt="Notificações" class="icon-bell">
-        <span class="notification-count">3</span>
-    </div>
+  <div class="container header-container">
+    <a href="#" class="logo-link">
+      <h1 class="logo">Voluntary</h1>
+    </a>
 
-    <div class="user-menu">
-        <img src="img/foto-perfil.png" alt="Foto do usuário" class="user-avatar" id="userAvatar">
-        <div class="dropdown-menu" id="dropdownMenu">
-            <a href="../Frontend/perfil-usuario.html" class="dropdown-item">
-                <span class="icon"><i class="fa-solid fa-user"></i></span> Perfil
-            </a>
-            <a href="#" class="dropdown-item">
-                <span class="icon"><i class="fa-solid fa-gear"></i></span> Configurações
-            </a>
-            <a href="../Frontend/login.html" class="dropdown-item logout">
-                <span class="icon"><i class="fa-solid fa-arrow-right-from-bracket"></i></span> Sair
-            </a>
+    <nav class="main-navigation"></nav>
+
+    <div class="header-actions">
+      <!-- 🔔 Painel de notificações integrado -->
+      <div class="notification-wrapper" id="notificationWrapper">
+        <button id="notifBtn" class="icon-btn" title="Notificações">
+          <i class="fa-solid fa-bell"></i>
+          <span class="notification-count">3</span>
+        </button>
+
+        <div class="notif-panel" id="notifPanel">
+          <div class="notif-header">Notificações</div>
+
+          <div class="notif-item">
+            <div class="notif-title">Nova mensagem recebida <i class="fa-solid fa-envelope"></i></div>
+            <div class="notif-time">Há 2 minutos</div>
+          </div>
+
+          <div class="notif-item">
+            <div class="notif-title">Seu cadastro foi aprovado <i class="fa-solid fa-check"></i></div>
+            <div class="notif-time">Há 15 minutos</div>
+          </div>
+
+          <div class="notif-item">
+            <div class="notif-title">Projeto “Verde Limpo” precisa de voluntários <i class="fa-solid fa-seedling"></i></div>
+            <div class="notif-time">Há 1 hora</div>
+          </div>
         </div>
-    </div>
-</div>
+      </div>
 
+      <!-- 👤 Menu do usuário -->
+      <div class="user-menu">
+        <img src="img/default-avatar.jpg" alt="Foto do usuário" class="user-avatar" id="userAvatar">
+        <div class="dropdown-menu" id="dropdownMenu">
+          <a href="../Frontend/perfil-usuario.html" class="dropdown-item">
+            <span class="icon"><i class="fa-solid fa-user"></i></span> Perfil
+          </a>
+          <a href="#" class="dropdown-item">
+            <span class="icon"><i class="fa-solid fa-gear"></i></span> Configurações
+          </a>
+          <a href="../Frontend/login.html" class="dropdown-item logout">
+            <span class="icon"><i class="fa-solid fa-arrow-right-from-bracket"></i></span> Sair
+          </a>
+        </div>
+      </div>
     </div>
+  </div>
 </header>
 
 <section id="jobs" class="jobs-section">
@@ -341,6 +366,7 @@
         }
     });
 </script>
+<script src="scripts/notificacoes.js"></script>
 </body>
 </html>
 
