@@ -1,0 +1,71 @@
+/* === PAINEL DE NOTIFICAÇÕES === */
+.notification-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-icon {
+  position: relative;
+  display: inline-block;
+}
+
+.notif-panel {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  width: 320px;
+  max-height: 400px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  overflow-y: auto;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.25s ease;
+  visibility: hidden;
+  z-index: 9999; /* Aumentei para garantir que fique acima do header */
+}
+
+.notif-panel.active {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+}
+
+
+.notif-header {
+  background: #0896a8; /* azul padrão */
+  color: #fff;
+  padding: 12px;
+  font-weight: bold;
+  border-radius: 12px 12px 0 0;
+}
+
+.notif-item {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  transition: background 0.2s;
+}
+
+.notif-item:hover {
+  background: #f3f4f6;
+}
+
+.notif-title {
+  font-weight: 600;
+  color: #111827;
+}
+
+.notif-time {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* Rolagem suave */
+.notif-panel::-webkit-scrollbar {
+  width: 6px;
+}
+.notif-panel::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 8px;
+}
