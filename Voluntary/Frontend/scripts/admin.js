@@ -11,7 +11,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentSection = "usuarios";
   let currentActionRow = null;
 
-  // Dados simulados
   const dataUsuarios = [
     { id: 1, nome: "Ana Silva", email: "ana@gmail.com", cadastro: "01/10/2025", status: "Ativo" },
     { id: 2, nome: "Bruno Souza", email: "bruno@gmail.com", cadastro: "05/10/2025", status: "Pendente" },
@@ -28,7 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
     { id: 2, titulo: "Ação Comunitária", empresa: "VidaVerde ONG", postagem: "20/09/2025", candidaturas: 5, status: "Fechada" }
   ];
 
-  // Renderiza tabela conforme seção
   function renderTable(section, search = "") {
     const tableBody = document.getElementById(`${section}TableBody`);
     tableBody.innerHTML = "";
@@ -54,7 +52,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-  // Gera HTML da linha
   function generateRowHTML(section, item) {
     const statusClass = getStatusClass(item.status);
     let html = `<td><input type="checkbox"></td>`;
@@ -96,7 +93,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return html;
   }
 
-  // Define classe de status
   function getStatusClass(status) {
     const s = status.toLowerCase();
     if (s.includes("ativo") || s.includes("verificada") || s.includes("aberta")) return "status-ativo";
@@ -106,13 +102,31 @@ document.addEventListener("DOMContentLoaded", () => {
     return "";
   }
 
-  // Alterna visibilidade das seções
   function showSection(sectionId) {
-    sections.forEach(sec => sec.classList.remove("active"));
-    document.getElementById(sectionId).classList.add("active");
-  }
+  const activeSection = document.querySelector(".table-section.active");
+  const newSection = document.getElementById(sectionId);
 
-  // Troca de abas
+  if (activeSection === newSection) return;
+
+  if (activeSection) {
+    activeSection.classList.remove("active");
+    activeSection.classList.add("fade-out");
+
+    setTimeout(() => {
+      activeSection.classList.remove("fade-out");
+      activeSection.style.display = "none";
+
+      newSection.style.display = "block";
+      requestAnimationFrame(() => newSection.classList.add("active"));
+    }, 400); 
+  } else {
+    newSection.style.display = "block";
+    requestAnimationFrame(() => newSection.classList.add("active"));
+  }
+}
+
+
+
   tabs.forEach(tab => {
     tab.addEventListener("click", e => {
       e.preventDefault();
@@ -134,12 +148,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Busca em tempo real
   searchInput.addEventListener("input", () => {
     renderTable(currentSection, searchInput.value);
   });
 
-  // Ações dos botões
   document.addEventListener("click", e => {
     if (e.target.matches(".action-btn")) {
       const action = e.target.dataset.action;
@@ -172,7 +184,6 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => toast.classList.remove("show"), 2500);
   }
 
-  // Inicia mostrando apenas "Usuários"
   showSection(currentSection);
   renderTable(currentSection);
 });
