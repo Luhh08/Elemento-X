@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Voluntary • Administração</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="page">
+
+    <aside class="sidebar">
+      <h1 class="logo">Voluntary</h1>
+      <nav class="menu">
+        <a href="#" class="pill active" data-section="usuarios"><i class="fa-solid fa-user"></i> Gerenciar Usuários</a>
+        <a href="#" class="pill" data-section="empresas"><i class="fa-solid fa-building"></i> Gerenciar Empresas</a>
+        <a href="#" class="pill" data-section="vagas"><i class="fa-solid fa-briefcase"></i> Gerenciar Vagas</a>
+      </nav>
+      <a href="login_adm.html" class="pill pill-logout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sair</a>
+    </aside>
+
+    <main class="content">
+      <header class="content-header">
+  <h2><i class="fa-solid fa-gear"></i> <span id="sectionTitle">Painel de Gerenciamento</span></h2>
+  <div class="search-box">
+    <i class="fa fa-search"></i>
+    <input type="text" id="searchInput" placeholder="Buscar usuário, e-mail..." />
+  </div>
+</header>
+
+      <div class="filters" id="filtersContainer">
+      </div>
+
+      <div class="content-body">
+        <div id="usuarios" class="table-section active">
+          <div class="card table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th><input type="checkbox" id="selectAllUsuarios"></th>
+                  <th>ID</th>
+                  <th>Usuário</th>
+                  <th>E-mail</th>
+                  <th>Data de Cadastro</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="usuariosTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="empresas" class="table-section">
+          <div class="card table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th><input type="checkbox" id="selectAllEmpresas"></th>
+                  <th>ID</th>
+                  <th>Empresa</th>
+                  <th>E-mail</th>
+                  <th>Data de Cadastro</th>
+                  <th>Vagas Ativas</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="empresasTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="vagas" class="table-section">
+          <div class="card table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th><input type="checkbox" id="selectAllVagas"></th>
+                  <th>ID</th>
+                  <th>Título da Vaga</th>
+                  <th>Empresa</th>
+                  <th>Data de Postagem</th>
+                  <th>Candidaturas</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="vagasTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="modalConfirm" class="modal" aria-hidden="true">
+    <div class="modal-dialog">
+      <p id="modalText">Tem certeza?</p>
+      <div class="modal-actions">
+        <button id="confirmYes" class="btn btn-green">Sim</button>
+        <button id="confirmNo" class="btn btn-red">Não</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="scripts/admin.js"></script>
+</body>
+</html>
