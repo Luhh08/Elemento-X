@@ -191,22 +191,34 @@ tbody td {
   vertical-align: middle;
 }
 
+/* --- Animação profissional de transição entre seções --- */
 .table-section {
   display: none;
   opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.35s ease, transform 0.35s ease;
+  transform: translateX(30px) scale(0.98);
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
+/* Entrada */
 .table-section.active {
   display: block;
   opacity: 1;
-  transform: translateY(0);
+  transform: translateX(0) scale(1);
 }
 
+/* Saída */
+.table-section.fade-out {
+  opacity: 0;
+  transform: translateX(-30px) scale(0.98);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* Evita cliques durante a troca */
 .table-section:not(.active) {
   pointer-events: none;
 }
+
+
 
 
 #usuarios table th:nth-child(1),
