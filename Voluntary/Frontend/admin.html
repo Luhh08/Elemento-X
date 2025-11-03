@@ -16,23 +16,25 @@
         <a href="#" class="pill active" data-section="usuarios"><i class="fa-solid fa-user"></i> Gerenciar Usuários</a>
         <a href="#" class="pill" data-section="empresas"><i class="fa-solid fa-building"></i> Gerenciar Empresas</a>
         <a href="#" class="pill" data-section="vagas"><i class="fa-solid fa-briefcase"></i> Gerenciar Vagas</a>
+        <a href="#" class="pill" data-section="denuncias"><i class="fa-solid fa-triangle-exclamation"></i> Denúncias</a>
+        <a href="#" class="pill" data-section="feedback"><i class="fa-solid fa-comments"></i> Feedback de Vagas</a>
       </nav>
       <a href="login_adm.html" class="pill pill-logout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sair</a>
     </aside>
 
     <main class="content">
       <header class="content-header">
-  <h2><i class="fa-solid fa-gear"></i> <span id="sectionTitle">Painel de Gerenciamento</span></h2>
-  <div class="search-box">
-    <i class="fa fa-search"></i>
-    <input type="text" id="searchInput" placeholder="Buscar usuário, e-mail..." />
-  </div>
-</header>
+        <h2><i class="fa-solid fa-gear"></i> <span id="sectionTitle">Painel de Gerenciamento</span></h2>
+        <div class="search-box">
+          <i class="fa fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Buscar usuário, e-mail..." />
+        </div>
+      </header>
 
-      <div class="filters" id="filtersContainer">
-      </div>
+      <div class="filters" id="filtersContainer"></div>
 
       <div class="content-body">
+        <!-- Usuários -->
         <div id="usuarios" class="table-section active">
           <div class="card table-card">
             <table>
@@ -52,6 +54,7 @@
           </div>
         </div>
 
+        <!-- Empresas -->
         <div id="empresas" class="table-section">
           <div class="card table-card">
             <table>
@@ -72,6 +75,7 @@
           </div>
         </div>
 
+        <!-- Vagas -->
         <div id="vagas" class="table-section">
           <div class="card table-card">
             <table>
@@ -91,6 +95,47 @@
             </table>
           </div>
         </div>
+
+        <!-- Denúncias -->
+        <div id="denuncias" class="table-section">
+          <div class="card table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th><input type="checkbox" id="selectAllDenuncias"></th>
+                  <th>ID</th>
+                  <th>Usuário</th>
+                  <th>Motivo</th>
+                  <th>Data</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="denunciasTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Feedback -->
+        <div id="feedback" class="table-section">
+          <div class="card table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th><input type="checkbox" id="selectAllFeedback"></th>
+                  <th>ID</th>
+                  <th>Vaga</th>
+                  <th>Usuário</th>
+                  <th>Comentário</th>
+                  <th>Data</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="feedbackTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </main>
   </div>
