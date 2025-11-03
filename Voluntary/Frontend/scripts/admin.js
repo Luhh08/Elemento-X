@@ -7,6 +7,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalText = document.getElementById("modalText");
   const modalBtnConfirm = document.getElementById("confirmYes");
   const modalBtnCancel = document.getElementById("confirmNo");
+    const dataDenuncias = [
+  { id: 1, usuario: "João Mendes", motivo: "Conteúdo inadequado", data: "02/10/2025", status: "Pendente" },
+  { id: 2, usuario: "Maria Lopes", motivo: "Spam em vaga", data: "05/10/2025", status: "Resolvido" }
+];
+
+    const dataFeedback = [
+  { id: 1, vaga: "Mutirão Ambiental", usuario: "Ana Silva", comentario: "Excelente experiência!", data: "15/10/2025" },
+  { id: 2, vaga: "Ação Comunitária", usuario: "Bruno Souza", comentario: "Boa organização.", data: "18/10/2025" }
+];
 
   let currentSection = "usuarios";
   let currentActionRow = null;
@@ -30,6 +39,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderTable(section, search = "") {
     const tableBody = document.getElementById(`${section}TableBody`);
     tableBody.innerHTML = "";
+
+    if (section === "denuncias") data = dataDenuncias;
+    if (section === "feedback") data = dataFeedback;
+
 
     let data = [];
     if (section === "usuarios") data = dataUsuarios;
@@ -55,6 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function generateRowHTML(section, item) {
     const statusClass = getStatusClass(item.status);
     let html = `<td><input type="checkbox"></td>`;
+    
 
     if (section === "usuarios") {
       html += `
@@ -83,6 +97,23 @@ document.addEventListener("DOMContentLoaded", () => {
         <td><span class="status-badge ${statusClass}">${item.status}</span></td>
       `;
     }
+    else if (section === "denuncias") {
+  html += `
+    <td>${item.id}</td>
+    <td>${item.usuario}</td>
+    <td>${item.motivo}</td>
+    <td>${item.data}</td>
+    <td><span class="status-badge ${getStatusClass(item.status)}">${item.status}</span></td>
+  `;
+} else if (section === "feedback") {
+  html += `
+    <td>${item.id}</td>
+    <td>${item.vaga}</td>
+    <td>${item.usuario}</td>
+    <td>${item.comentario}</td>
+    <td>${item.data}</td>
+  `;
+}
 
     html += `
       <td>
@@ -140,11 +171,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const sectionTitle = document.getElementById("sectionTitle");
       sectionTitle.textContent =
-        target === "usuarios"
-          ? "Gerenciamento de Usuários"
-          : target === "empresas"
-          ? "Gerenciamento de Empresas"
-          : "Gerenciamento de Vagas";
+    target === "usuarios" ? "Gerenciamento de Usuários" :
+    target === "empresas" ? "Gerenciamento de Empresas" :
+    target === "vagas" ? "Gerenciamento de Vagas" :
+    target === "denuncias" ? "Gerenciamento de Denúncias" :
+    "Feedback de Vagas";
     });
   });
 
