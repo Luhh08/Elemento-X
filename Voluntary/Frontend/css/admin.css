@@ -213,9 +213,17 @@ tbody td {
 .table-section:not(.active) {
   pointer-events: none;
 }
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center}
+.modal.open{display:flex}
+.modal-dialog{background:#fff;border-radius:10px;padding:16px 18px;max-width:360px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:12px}
+.btn{border:0;border-radius:8px;padding:8px 12px;cursor:pointer}
+.btn-green{background:#16a34a;color:#fff}.btn-red{background:#ef4444;color:#fff}
 
-
-
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:8px;opacity:0;pointer-events:none;transition:.25s}
+.toast.show{opacity:1}
+.toast.ok{background:#16a34a}.toast.err{background:#ef4444}
+.table-section{display:none}.table-section.active{display:block}
 
 #usuarios table th:nth-child(1),
 #usuarios table td:nth-child(1) { width: 40px; }

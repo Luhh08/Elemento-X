@@ -33,112 +33,105 @@
 
       <div class="filters" id="filtersContainer"></div>
 
-      <div class="content-body">
-        <!-- Usuários -->
-        <div id="usuarios" class="table-section active">
-          <div class="card table-card">
-            <table>
-              <thead>
-                <tr>
-                  <th><input type="checkbox" id="selectAllUsuarios"></th>
-                  <th>ID</th>
-                  <th>Usuário</th>
-                  <th>E-mail</th>
-                  <th>Data de Cadastro</th>
-                  <th>Status</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody id="usuariosTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Empresas -->
-        <div id="empresas" class="table-section">
-          <div class="card table-card">
-            <table>
-              <thead>
-                <tr>
-                  <th><input type="checkbox" id="selectAllEmpresas"></th>
-                  <th>ID</th>
-                  <th>Empresa</th>
-                  <th>E-mail</th>
-                  <th>Data de Cadastro</th>
-                  <th>Vagas Ativas</th>
-                  <th>Status</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody id="empresasTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Vagas -->
-        <div id="vagas" class="table-section">
-          <div class="card table-card">
-            <table>
-              <thead>
-                <tr>
-                  <th><input type="checkbox" id="selectAllVagas"></th>
-                  <th>ID</th>
-                  <th>Título da Vaga</th>
-                  <th>Empresa</th>
-                  <th>Data de Postagem</th>
-                  <th>Candidaturas</th>
-                  <th>Status</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody id="vagasTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Denúncias -->
-        <div id="denuncias" class="table-section">
-          <div class="card table-card">
-            <table>
-              <thead>
-                <tr>
-                  <th><input type="checkbox" id="selectAllDenuncias"></th>
-                  <th>ID</th>
-                  <th>Usuário</th>
-                  <th>Motivo</th>
-                  <th>Data</th>
-                  <th>Status</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody id="denunciasTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Feedback -->
-        <div id="feedback" class="table-section">
-          <div class="card table-card">
-            <table>
-              <thead>
-                <tr>
-                  <th><input type="checkbox" id="selectAllFeedback"></th>
-                  <th>ID</th>
-                  <th>Vaga</th>
-                  <th>Usuário</th>
-                  <th>Comentário</th>
-                  <th>Data</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody id="feedbackTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
-    </main>
+<div class="content-body">
+  <!-- Usuários -->
+  <div id="usuarios" class="table-section active">
+    <div class="card table-card">
+      <table>
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAllUsuarios"></th>
+            <th>ID</th>
+            <th>Usuário</th>
+            <th>E-mail</th>
+            <th>Verificação</th><!-- 👈 trocado -->
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="usuariosTableBody"></tbody>
+      </table>
+    </div>
   </div>
+
+  <!-- Empresas -->
+  <div id="empresas" class="table-section">
+    <div class="card table-card">
+      <table>
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAllEmpresas"></th>
+            <th>ID</th>
+            <th>Empresa</th>
+            <th>E-mail</th>
+            <th>Vagas Ativas</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="empresasTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Vagas -->
+  <div id="vagas" class="table-section">
+    <div class="card table-card">
+      <table>
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAllVagas"></th>
+            <th>ID</th>
+            <th>Título da Vaga</th>
+            <th>Empresa</th>
+            <th>Candidaturas</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="vagasTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Denúncias -->
+  <div id="denuncias" class="table-section">
+    <div class="card table-card">
+      <table>
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAllDenuncias"></th>
+            <th>ID</th>
+            <th>Usuário</th>
+            <th>Motivo</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="denunciasTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Feedback -->
+  <div id="feedback" class="table-section">
+    <div class="card table-card">
+      <table>
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAllFeedback"></th>
+            <th>ID</th>
+            <th>Vaga</th>
+            <th>Usuário</th>
+            <th>Comentário</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="feedbackTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 
   <div id="modalConfirm" class="modal" aria-hidden="true">
     <div class="modal-dialog">

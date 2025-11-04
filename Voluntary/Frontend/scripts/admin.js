@@ -1,220 +1,245 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const tabs = document.querySelectorAll(".pill[data-section]");
-  const sections = document.querySelectorAll(".table-section");
-  const searchInput = document.getElementById("searchInput");
-  const toast = document.getElementById("toast");
-  const modal = document.getElementById("modalConfirm");
-  const modalText = document.getElementById("modalText");
-  const modalBtnConfirm = document.getElementById("confirmYes");
-  const modalBtnCancel = document.getElementById("confirmNo");
-    const dataDenuncias = [
-  { id: 1, usuario: "João Mendes", motivo: "Conteúdo inadequado", data: "02/10/2025", status: "Pendente" },
-  { id: 2, usuario: "Maria Lopes", motivo: "Spam em vaga", data: "05/10/2025", status: "Resolvido" }
-];
+(function () {
+  // --------- Config ---------
+  const SAME_ORIGIN = location.origin.includes(':3000'); // backend
+  const API_BASE = SAME_ORIGIN ? '/api/admin' : 'http://localhost:3000/api/admin';
 
-    const dataFeedback = [
-  { id: 1, vaga: "Mutirão Ambiental", usuario: "Ana Silva", comentario: "Excelente experiência!", data: "15/10/2025" },
-  { id: 2, vaga: "Ação Comunitária", usuario: "Bruno Souza", comentario: "Boa organização.", data: "18/10/2025" }
-];
+  const token = localStorage.getItem('adminToken');
+  if (!token) return location.replace('login_adm.html');
 
-  let currentSection = "usuarios";
-  let currentActionRow = null;
+  // --------- DOM refs ---------
+  const sectionTitle = document.getElementById('sectionTitle');
+  const searchInput  = document.getElementById('searchInput');
 
-  const dataUsuarios = [
-    { id: 1, nome: "Ana Silva", email: "ana@gmail.com", cadastro: "01/10/2025", status: "Ativo" },
-    { id: 2, nome: "Bruno Souza", email: "bruno@gmail.com", cadastro: "05/10/2025", status: "Pendente" },
-    { id: 3, nome: "Carlos Lima", email: "carlos@gmail.com", cadastro: "08/10/2025", status: "Inativo" }
-  ];
+  const tbUsuarios   = document.getElementById('usuariosTableBody');
+  const tbEmpresas   = document.getElementById('empresasTableBody');
+  const tbVagas      = document.getElementById('vagasTableBody');
+  const tbDenuncias  = document.getElementById('denunciasTableBody');
+  const tbFeedback   = document.getElementById('feedbackTableBody');
 
-  const dataEmpresas = [
-    { id: 1, nome: "EcoBrasil", email: "contato@ecobrasil.com", cadastro: "10/09/2025", vagas: 5, status: "Verificada" },
-    { id: 2, nome: "VidaVerde ONG", email: "info@vidaverde.org", cadastro: "12/09/2025", vagas: 2, status: "Pendente" }
-  ];
+  const modal        = document.getElementById('modalConfirm');
+  const modalText    = document.getElementById('modalText');
+  const btnYes       = document.getElementById('confirmYes');
+  const btnNo        = document.getElementById('confirmNo');
+  const toast        = document.getElementById('toast');
 
-  const dataVagas = [
-    { id: 1, titulo: "Mutirão Ambiental", empresa: "EcoBrasil", postagem: "15/09/2025", candidaturas: 12, status: "Aberta" },
-    { id: 2, titulo: "Ação Comunitária", empresa: "VidaVerde ONG", postagem: "20/09/2025", candidaturas: 5, status: "Fechada" }
-  ];
+  const sections     = document.querySelectorAll('.table-section');
+  const menuLinks    = document.querySelectorAll('.menu .pill');
 
-  function renderTable(section, search = "") {
-    const tableBody = document.getElementById(`${section}TableBody`);
-    tableBody.innerHTML = "";
+  // --------- Estado ---------
+  const state = {
+    raw:      { usuarios: [], empresas: [], vagas: [], denuncias: [], feedback: [] },
+    filtered: { usuarios: [], empresas: [], vagas: [], denuncias: [], feedback: [] },
+    current: 'usuarios',
+    pendingBan: null // { tipo, id }
+  };
 
-    if (section === "denuncias") data = dataDenuncias;
-    if (section === "feedback") data = dataFeedback;
+  // --------- Utils ---------
+  const headers = () => ({ Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' });
 
+  function showToast(text, ok = true) {
+    toast.textContent = text;
+    toast.className = 'toast ' + (ok ? 'ok' : 'err') + ' show';
+    setTimeout(() => toast.classList.remove('show'), 2200);
+  }
 
-    let data = [];
-    if (section === "usuarios") data = dataUsuarios;
-    if (section === "empresas") data = dataEmpresas;
-    if (section === "vagas") data = dataVagas;
+  function openModal(text, payload) {
+    state.pendingBan = payload;
+    modalText.textContent = text;
+    modal.setAttribute('aria-hidden', 'false');
+    modal.classList.add('open');
+  }
+  function closeModal() {
+    state.pendingBan = null;
+    modal.setAttribute('aria-hidden', 'true');
+    modal.classList.remove('open');
+  }
 
-    data
-      .filter(item => {
-        if (search) {
-          return Object.values(item).some(val =>
-            String(val).toLowerCase().includes(search.toLowerCase())
-          );
-        }
-        return true;
-      })
-      .forEach(item => {
-        const row = document.createElement("tr");
-        row.innerHTML = generateRowHTML(section, item);
-        tableBody.appendChild(row);
+  // --------- Getters tolerantes ---------
+  const getId   = (x) => x.id || x._id || x.idUsuario || x.idEmpresa || x.idVaga;
+  const getNome = (x) => x.nome || x.username || x.usuario || x.razaoSocial || x.fantasia || x.titulo || '—';
+  const getEmail= (x) => x.email || x.contatoEmail || x.emailEmpresa || '—';
+  const getStatus = (x) => x.status || x.ativo || x.aprovado || x.situacao || '—';
+  const getEmpresaNomeFromVaga = (v) =>
+    (v.empresa && (v.empresa.nome || v.empresa.razaoSocial || v.empresa.fantasia)) || v.empresaNome || '—';
+  const getTituloVaga = (v) => v.titulo || v.nome || v.nomeVaga || '—';
+  const getCandidaturas = (v) => (Array.isArray(v.candidaturas) ? v.candidaturas.length : (v.qtdCandidaturas ?? v.aplicacoes ?? 0));
+  const getMotivoDenuncia = (d) => d.motivo || d.reason || d.tipo || '—';
+  const getComentario = (f) => f.comentario || f.texto || f.mensagem || '—';
+
+  // Verificação específica para usuário (sem números)
+  const getVerificacaoUser = (x) => {
+    const s = (x.status || '').toString().toLowerCase();
+    const verificado = s === 'ativo' || s === 'verificado' || x.validacao === true;
+    return verificado ? 'Verificado' : 'Pendente';
+  };
+
+  // --------- Render ---------
+  function renderRows(list, tipo) {
+    return list.map(item => {
+      const id = getId(item);
+      let cols = '';
+
+      if (tipo === 'usuarios') {
+        // 6 colunas: checkbox | ID | Usuário | E-mail | Verificação | Ações
+        cols = `
+          <td><input type="checkbox" data-id="${id}"></td>
+          <td>${id}</td>
+          <td>${getNome(item)}</td>
+          <td>${getEmail(item)}</td>
+          <td>${getVerificacaoUser(item)}</td>
+          <td><button class="ban" data-tipo="usuario" data-id="${id}">Banir</button></td>`;
+      } else if (tipo === 'empresas') {
+        // 7 colunas: checkbox | ID | Empresa | E-mail | Vagas Ativas | Status | Ações
+        cols = `
+          <td><input type="checkbox" data-id="${id}"></td>
+          <td>${id}</td>
+          <td>${getNome(item)}</td>
+          <td>${getEmail(item)}</td>
+          <td>${item.vagasAtivas ?? item.qtdVagasAtivas ?? 0}</td>
+          <td>${getStatus(item)}</td>
+          <td><button class="ban" data-tipo="empresa" data-id="${id}">Banir</button></td>`;
+      } else if (tipo === 'vagas') {
+        // 7 colunas: checkbox | ID | Título | Empresa | Candidaturas | Status | Ações
+        cols = `
+          <td><input type="checkbox" data-id="${id}"></td>
+          <td>${id}</td>
+          <td>${getTituloVaga(item)}</td>
+          <td>${getEmpresaNomeFromVaga(item)}</td>
+          <td>${getCandidaturas(item)}</td>
+          <td>${getStatus(item)}</td>
+          <td><button class="ban" data-tipo="vaga" data-id="${id}">Banir</button></td>`;
+      } else if (tipo === 'denuncias') {
+        // 6 colunas: checkbox | ID | Usuário | Motivo | Status | Ações
+        cols = `
+          <td><input type="checkbox" data-id="${id}"></td>
+          <td>${id}</td>
+          <td>${getNome(item.usuario || item.autor || {})}</td>
+          <td>${getMotivoDenuncia(item)}</td>
+          <td>${getStatus(item)}</td>
+          <td><button class="ban" data-tipo="denuncia" data-id="${id}">Remover</button></td>`;
+      } else if (tipo === 'feedback') {
+        // 6 colunas: checkbox | ID | Vaga | Usuário | Comentário | Ações
+        cols = `
+          <td><input type="checkbox" data-id="${id}"></td>
+          <td>${id}</td>
+          <td>${getTituloVaga(item.vaga || {})}</td>
+          <td>${getNome(item.usuario || {})}</td>
+          <td>${getComentario(item)}</td>
+          <td><button class="ban" data-tipo="feedback" data-id="${id}">Remover</button></td>`;
+      }
+
+      return `<tr>${cols}</tr>`;
+    }).join('');
+  }
+
+  function applySearch() {
+    const q = (searchInput.value || '').toLowerCase().trim();
+    const cur = state.current;
+    const base = state.raw[cur] || [];
+    state.filtered[cur] = !q ? base : base.filter(x => {
+      const blob = [
+        getId(x), getNome(x), getEmail(x),
+        getTituloVaga(x), getEmpresaNomeFromVaga(x),
+        getMotivoDenuncia(x), getComentario(x),
+        getStatus(x), (x.validacao ? 'verificado' : 'pendente')
+      ].join(' ').toLowerCase();
+      return blob.includes(q);
+    });
+    paint(cur);
+  }
+
+  function paint(section) {
+    if (section === 'usuarios')   tbUsuarios.innerHTML  = renderRows(state.filtered.usuarios, 'usuarios');
+    if (section === 'empresas')   tbEmpresas.innerHTML  = renderRows(state.filtered.empresas, 'empresas');
+    if (section === 'vagas')      tbVagas.innerHTML     = renderRows(state.filtered.vagas, 'vagas');
+    if (section === 'denuncias')  tbDenuncias.innerHTML = renderRows(state.filtered.denuncias, 'denuncias');
+    if (section === 'feedback')   tbFeedback.innerHTML  = renderRows(state.filtered.feedback, 'feedback');
+
+    // bind botões Banir da seção atual
+    document.querySelectorAll(`#${section} .ban`).forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tipo = btn.dataset.tipo;
+        const id = btn.dataset.id;
+        openModal(`Tem certeza que deseja banir/remover este ${tipo}?`, { tipo, id });
       });
+    });
   }
 
-  function generateRowHTML(section, item) {
-    const statusClass = getStatusClass(item.status);
-    let html = `<td><input type="checkbox"></td>`;
-    
-
-    if (section === "usuarios") {
-      html += `
-        <td>${item.id}</td>
-        <td>${item.nome}</td>
-        <td>${item.email}</td>
-        <td>${item.cadastro}</td>
-        <td><span class="status-badge ${statusClass}">${item.status}</span></td>
-      `;
-    } else if (section === "empresas") {
-      html += `
-        <td>${item.id}</td>
-        <td>${item.nome}</td>
-        <td>${item.email}</td>
-        <td>${item.cadastro}</td>
-        <td>${item.vagas}</td>
-        <td><span class="status-badge ${statusClass}">${item.status}</span></td>
-      `;
-    } else if (section === "vagas") {
-      html += `
-        <td>${item.id}</td>
-        <td>${item.titulo}</td>
-        <td>${item.empresa}</td>
-        <td>${item.postagem}</td>
-        <td>${item.candidaturas}</td>
-        <td><span class="status-badge ${statusClass}">${item.status}</span></td>
-      `;
-    }
-    else if (section === "denuncias") {
-  html += `
-    <td>${item.id}</td>
-    <td>${item.usuario}</td>
-    <td>${item.motivo}</td>
-    <td>${item.data}</td>
-    <td><span class="status-badge ${getStatusClass(item.status)}">${item.status}</span></td>
-  `;
-} else if (section === "feedback") {
-  html += `
-    <td>${item.id}</td>
-    <td>${item.vaga}</td>
-    <td>${item.usuario}</td>
-    <td>${item.comentario}</td>
-    <td>${item.data}</td>
-  `;
-}
-
-    html += `
-      <td>
-        <button class="action-btn action-green" data-action="aprovar">Aprovar</button>
-        <button class="action-btn action-red" data-action="excluir">Excluir</button>
-      </td>
-    `;
-    return html;
-  }
-
-  function getStatusClass(status) {
-    const s = status.toLowerCase();
-    if (s.includes("ativo") || s.includes("verificada") || s.includes("aberta")) return "status-ativo";
-    if (s.includes("inativo") || s.includes("fechada")) return "status-inativo";
-    if (s.includes("pendente")) return "status-pendente";
-    if (s.includes("rejeitada")) return "status-rejeitada";
-    return "";
-  }
-
-  function showSection(sectionId) {
-  const activeSection = document.querySelector(".table-section.active");
-  const newSection = document.getElementById(sectionId);
-
-  if (activeSection === newSection) return;
-
-  if (activeSection) {
-    activeSection.classList.remove("active");
-    activeSection.classList.add("fade-out");
-
-    setTimeout(() => {
-      activeSection.classList.remove("fade-out");
-      activeSection.style.display = "none";
-
-      newSection.style.display = "block";
-      requestAnimationFrame(() => newSection.classList.add("active"));
-    }, 400); 
-  } else {
-    newSection.style.display = "block";
-    requestAnimationFrame(() => newSection.classList.add("active"));
-  }
-}
-
-
-
-  tabs.forEach(tab => {
-    tab.addEventListener("click", e => {
+  // --------- Navegação lateral ---------
+  menuLinks.forEach(a => {
+    a.addEventListener('click', (e) => {
       e.preventDefault();
-      tabs.forEach(t => t.classList.remove("active"));
-      tab.classList.add("active");
+      menuLinks.forEach(x => x.classList.remove('active'));
+      a.classList.add('active');
 
-      const target = tab.dataset.section;
-      currentSection = target;
-      showSection(target);
-      renderTable(target, searchInput.value);
+      const section = a.dataset.section;
+      state.current = section;
+      sectionTitle.textContent = `Gerenciar ${section[0].toUpperCase() + section.slice(1)}`;
 
-      const sectionTitle = document.getElementById("sectionTitle");
-      sectionTitle.textContent =
-    target === "usuarios" ? "Gerenciamento de Usuários" :
-    target === "empresas" ? "Gerenciamento de Empresas" :
-    target === "vagas" ? "Gerenciamento de Vagas" :
-    target === "denuncias" ? "Gerenciamento de Denúncias" :
-    "Feedback de Vagas";
+      sections.forEach(s => s.classList.remove('active'));
+      document.getElementById(section).classList.add('active');
+
+      applySearch();
     });
   });
 
-  searchInput.addEventListener("input", () => {
-    renderTable(currentSection, searchInput.value);
-  });
-
-  document.addEventListener("click", e => {
-    if (e.target.matches(".action-btn")) {
-      const action = e.target.dataset.action;
-      currentActionRow = e.target.closest("tr");
-
-      if (action === "excluir") {
-        modalText.textContent = "Tem certeza que deseja excluir este item?";
-        modal.setAttribute("aria-hidden", "false");
-      } else if (action === "aprovar") {
-        showToast("Item aprovado com sucesso!");
+  // --------- Modal ---------
+  btnNo.addEventListener('click', closeModal);
+  btnYes.addEventListener('click', async () => {
+    const p = state.pendingBan;
+    if (!p) return closeModal();
+    try {
+      const resp = await fetch(`${API_BASE}/banir/${p.tipo}/${p.id}`, {
+        method: 'DELETE',
+        headers: headers()
+      });
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        showToast(data.error || 'Falha ao banir.', false);
+      } else {
+        showToast('Item banido/removido com sucesso!');
+        await loadAll();
+        applySearch();
       }
+    } catch (err) {
+      console.error(err);
+      showToast('Erro de rede ao banir.', false);
+    } finally {
+      closeModal();
     }
   });
 
-  modalBtnConfirm.addEventListener("click", () => {
-    if (currentActionRow) {
-      currentActionRow.remove();
-      showToast("Item excluído com sucesso!");
+  // --------- Busca ---------
+  searchInput.addEventListener('input', applySearch);
+
+  // --------- Load inicial ---------
+  async function loadAll() {
+    try {
+      const r = await fetch(`${API_BASE}/dados`, { headers: headers() });
+      if (r.status === 401 || r.status === 403) {
+        localStorage.removeItem('adminToken');
+        return location.replace('login_adm.html');
+      }
+      const data = await r.json();
+
+      state.raw.usuarios   = data.usuarios   || [];
+      state.raw.empresas   = data.empresas   || [];
+      state.raw.vagas      = data.vagas      || [];
+      state.raw.denuncias  = data.denuncias  || [];
+      state.raw.feedback   = data.feedback   || [];
+
+      state.filtered.usuarios  = state.raw.usuarios.slice();
+      state.filtered.empresas  = state.raw.empresas.slice();
+      state.filtered.vagas     = state.raw.vagas.slice();
+      state.filtered.denuncias = state.raw.denuncias.slice();
+      state.filtered.feedback  = state.raw.feedback.slice();
+
+      paint(state.current);
+    } catch (e) {
+      console.error(e);
+      showToast('Erro ao carregar dados do painel.', false);
     }
-    modal.setAttribute("aria-hidden", "true");
-  });
-
-  modalBtnCancel.addEventListener("click", () => {
-    modal.setAttribute("aria-hidden", "true");
-  });
-
-  function showToast(msg) {
-    toast.textContent = msg;
-    toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), 2500);
   }
 
-  showSection(currentSection);
-  renderTable(currentSection);
-});
+  loadAll();
+})();
