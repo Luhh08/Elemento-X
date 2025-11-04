@@ -152,6 +152,12 @@
 
   <div id="toast" class="toast"></div>
 
+<script>
+fetch('/api/admin/painel', {
+  headers: { Authorization: 'Bearer ' + localStorage.getItem('adminToken') }
+})
+  .then(r => r.ok ? console.log('Admin autenticado!') : location.replace('login_adm.html'));
+</script>
   <script src="scripts/admin.js"></script>
 </body>
 </html>

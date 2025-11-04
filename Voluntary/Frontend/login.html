@@ -40,11 +40,8 @@
 
   btn.addEventListener('click', function (e) {
     e.preventDefault();
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      location.href = 'inicial.html';
-    }
+
+    location.replace('inicial.html');
   });
 })();
 </script>

@@ -43,44 +43,57 @@
   </div>
 
   <script>
-(function(){
-  const params = new URLSearchParams(location.search);
-  // prioridade: ?tipo=... -> ?from=... -> lastLoginType -> 'usuario'
-  const tipo = (params.get('tipo') || params.get('from') || localStorage.getItem('lastLoginType') || 'usuario').toLowerCase();
-  const backUrl = (tipo === 'empresa') ? 'login_empresa.html' : 'login.html';
-
+document.addEventListener('DOMContentLoaded', function () {
   const btn = document.getElementById('btnVoltar');
-  if (btn) {
-    // opcional: deixar semântico
-    btn.setAttribute('data-target', backUrl);
-    btn.title = 'Voltar para ' + (tipo === 'empresa' ? 'login da empresa' : 'login do usuário');
+  if (!btn) return;
 
-    btn.addEventListener('click', function(e){
-      e.preventDefault();
-      // Se veio da mesma origem e há histórico, volta. Senão, vai pro login correto.
-      try {
-        const ref = document.referrer ? new URL(document.referrer) : null;
-        const sameOrigin = ref && ref.origin === location.origin;
-        if (sameOrigin && history.length > 1) {
-          history.back();
-          return;
-        }
-      } catch(_) {}
-      location.href = backUrl;
-    });
-  }
+  // 1) Descobrir o tipo (ordem de prioridade)
+  const params = new URLSearchParams(location.search);
+  const rawTipo =
+    params.get('tipo') ||
+    params.get('from') ||
+    localStorage.getItem('lastLoginType') ||
+    btn.dataset.tipo ||
+    'usuario';
 
-  // se tiver um link “Voltar ao login” no corpo do formulário:
-  const linkLogin = document.getElementById('linkLogin'); // <a id="linkLogin">Voltar ao login</a>
-  if (linkLogin) linkLogin.href = backUrl;
-})();
+  const tipo = String(rawTipo).trim().toLowerCase();
+
+  // 2) Defina destinos padronizados (use caminhos absolutos para evitar diretório errado)
+  const DESTINOS = {
+    empresa: '/login_empresa.html',
+    usuario: '/login.html',
+  };
+  const targetPath = DESTINOS[tipo] || DESTINOS.usuario;
+
+  // 3) Constrói URL absoluta (seguro em qualquer subpasta)
+  const targetURL = new URL(targetPath, location.origin).toString();
+
+  // 4) Diagnóstico no console
+  console.info('[Voltar]', { tipo, targetPath, targetURL });
+
+  // 5) Click handler robusto
+  btn.addEventListener('click', function (e) {
+    e.preventDefault();
+    try {
+      // Tenta substituir no histórico
+      location.replace(targetURL);
+      // Fallback imediato (caso algum bloqueio impeça o replace)
+      setTimeout(() => { if (location.href !== targetURL) location.href = targetURL; }, 0);
+    } catch (err) {
+      console.error('[Voltar] Erro no redirect:', err);
+      location.href = targetURL; // último recurso
+    }
+  });
+
+  // (opcional) lembrar último tipo
+  localStorage.setItem('lastLoginType', tipo);
+});
 </script>
   <script>
     const emailForm = document.getElementById("emailForm");
     const codigoForm = document.getElementById("codigoForm");
     const mensagem = document.getElementById("mensagem");
 
-    // === Cria mensagens mais elegantes abaixo dos inputs ===
     function mostrarMensagem(tipo, texto) {
       mensagem.innerHTML = `
         <i class="ri-${tipo === "sucesso" ? "check-line" : "error-warning-line"}"></i>

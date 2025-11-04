@@ -80,8 +80,8 @@ model RepresentanteLegal {
 
 model Administrador {
   id       String @id @default(auto()) @map("_id") @db.ObjectId
-  usuario  String 
-  senha    String
+  usuario  String @unique
+  senhaHash String
 }
 
 enum VagaStatus {

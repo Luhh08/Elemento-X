@@ -15,6 +15,8 @@ const passwordRoutes = require("./src/routes/passwordRoutes");
 const userProfileRoutes = require("./src/routes/userProfileRoutes");
 const empresaRoutes = require("./src/routes/empresaRoutes");
 const vagaRoutes = require("./src/routes/vagaRoutes");
+const authAdmin = require('./src/middlewares/authAdmin');
+const adminRoutes = require('./src/routes/adminRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -38,6 +40,8 @@ app.use("/api", passwordRoutes);
 app.use("/api", userProfileRoutes);
 app.use("/api", empresaRoutes);
 app.use("/api", vagaRoutes);
+app.use('/api/admin', adminRoutes);
+app.get('/api/admin/painel', authAdmin, (req,res)=>res.json({ok:true}));
 
 /* 404 só para /api (depois de todas as rotas /api) */
 app.use("/api", (_req, res) => res.status(404).json({ error: "Rota não encontrada" }));

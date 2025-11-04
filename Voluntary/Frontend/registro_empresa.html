@@ -101,11 +101,8 @@
 
   btn.addEventListener('click', function (e) {
     e.preventDefault();
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      location.href = 'login_empresa.html';
-    }
+
+    location.replace('login_empresa.html');
   });
 })();
 </script>
