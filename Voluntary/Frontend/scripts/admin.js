@@ -40,14 +40,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const tableBody = document.getElementById(`${section}TableBody`);
     tableBody.innerHTML = "";
 
-    if (section === "denuncias") data = dataDenuncias;
-    if (section === "feedback") data = dataFeedback;
-
 
     let data = [];
     if (section === "usuarios") data = dataUsuarios;
     if (section === "empresas") data = dataEmpresas;
     if (section === "vagas") data = dataVagas;
+    if (section === "denuncias") data = dataDenuncias;
+    if (section === "feedback") data = dataFeedback;
 
     data
       .filter(item => {
@@ -130,6 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (s.includes("inativo") || s.includes("fechada")) return "status-inativo";
     if (s.includes("pendente")) return "status-pendente";
     if (s.includes("rejeitada")) return "status-rejeitada";
+    if (s.includes ("resolvido")) return "status-resolvido";
     return "";
   }
 

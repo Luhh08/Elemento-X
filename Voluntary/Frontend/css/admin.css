@@ -89,6 +89,7 @@ tbody tr:hover { background:#f9f9f9; }
 .status-rejeitada { background:#e57373; color:#a00; }
 .status-aberta { background:#34a853; color:#fff; }
 .status-fechada { background:#e0e0e0; color:#555; }
+.status-resolvido { background:#a7dcb5; color:#136e1a; }
 
 .action-btn {
   padding:6px 12px; border-radius:999px; border:none; font-weight:600; cursor:pointer; margin-right:4px;
