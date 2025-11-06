@@ -4,6 +4,9 @@ const $ = (s) => document.querySelector(s);
 // MESMA CHAVE do backend (.env EMPRESA_AES_KEY)
 const EMPRESA_AES_KEY = "chaveSeguraDe32Caracteres1234567890";
 
+// Helpers
+const isValidObjectId = (s) => typeof s === "string" && /^[0-9a-fA-F]{24}$/.test(s);
+
 function aplicarMascaraCNPJ(input) {
   if (!input) return;
   const format = (v) => {
@@ -25,7 +28,7 @@ aplicarMascaraCNPJ(cnpjInput);
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const cnpjDigits = cnpjInput.value.replace(/\D/g, "");
+  const cnpjDigits = (cnpjInput.value || "").replace(/\D/g, "");
   const senha = $("#senha").value;
 
   if (cnpjDigits.length !== 14) {
@@ -38,7 +41,7 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  // 🔐 criptografa senha com AES (deve bater com EMPRESA_AES_KEY no backend)
+  // 🔐 Criptografa senha com AES (chave deve ser igual ao backend)
   const senhaCriptografada = CryptoJS.AES.encrypt(senha, EMPRESA_AES_KEY).toString();
 
   try {
@@ -49,31 +52,48 @@ form.addEventListener("submit", async (e) => {
     });
 
     const ct = resp.headers.get("content-type") || "";
-    const data = ct.includes("application/json")
-      ? await resp.json()
-      : { error: await resp.text() };
+    const data = ct.includes("application/json") ? await resp.json() : { error: await resp.text() };
 
     if (!resp.ok) {
-      // resposta 403 específica do seu controller (conta não verificada)
       if (resp.status === 403 && data?.error) {
-        alert(data.error);
+        alert(data.error); // conta não verificada, por ex.
         return;
       }
-      throw new Error(data.error || "Falha no login.");
+      throw new Error(data?.error || "Falha no login.");
     }
 
-    // ✅ Guarda sessão padronizada (o resto do front usa isso)
+    // ===== Guarda sessão padronizada =====
     localStorage.setItem("token", data.token || "");
     localStorage.setItem("tipoConta", "empresa");
     localStorage.setItem("role", "empresa");
-    localStorage.setItem("empresaId", data.empresa?.id || "");
-    localStorage.setItem("empresa_nome", data.empresa?.razao_social || "");
 
-    // evita confusão com páginas que checam userId
-    localStorage.removeItem("userId");
+    // Extrai ID de forma robusta (objeto empresa ou fallback no JWT.sub)
+    let id = data?.empresa?.id || data?.empresa?._id || "";
+    if ((!id || id === "null" || id === "undefined") && data?.token && data.token.split(".").length === 3) {
+      try {
+        const payload = JSON.parse(atob(data.token.split(".")[1]));
+        if (payload?.sub) id = String(payload.sub);
+      } catch {}
+    }
 
-    // redireciona
-    location.href = `perfil-empresa.html?id=${encodeURIComponent(data.empresa.id)}`;
+    // Valida o ID
+    if (!isValidObjectId(id)) {
+      console.error("[LOGIN EMPRESA] id inválido recebido:", id, "payload:", data);
+      alert("Falha ao obter o ID da empresa. Tente logar novamente.");
+      localStorage.removeItem("empresaId");
+      localStorage.removeItem("userId");
+      return;
+    }
+
+    // Salva chaves esperadas pelo restante do front
+    localStorage.setItem("empresaId", id);
+    localStorage.setItem("userId", id); // compat com telas antigas
+    localStorage.setItem("empresa_nome", data?.empresa?.razao_social || "");
+
+    console.log("[LOGIN EMPRESA] ok • empresaId =", id);
+
+    // Redireciona para o perfil da empresa
+    location.href = `perfil-empresa.html?id=${encodeURIComponent(id)}`;
   } catch (err) {
     console.error("Erro no login:", err);
     alert(err.message || "Erro ao realizar login.");

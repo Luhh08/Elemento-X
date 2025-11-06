@@ -8,7 +8,7 @@ const {
   verificarEmail,
   solicitarRedefinicao,
   redefinirSenha,
-  obterPerfilPorId,  
+  obterPerfilPorId,
   getEmpresa,
   updateEmpresa,
   uploadImagem,
@@ -19,18 +19,18 @@ const {
 
 const router = express.Router();
 
-router.post("/empresas", registrarEmpresa);                  
-router.post("/empresas/login", loginEmpresa);               
-router.get("/empresas/verify", verificarEmail);             
-router.post("/empresas/forgot-password", solicitarRedefinicao); 
-router.post("/empresas/reset-password", redefinirSenha);    
+/* ================= Empresa: auth e perfil ================= */
+router.post("/empresas", registrarEmpresa);
+router.post("/empresas/login", loginEmpresa);
+router.get("/empresas/verify", verificarEmail);
+router.post("/empresas/forgot-password", solicitarRedefinicao);
+router.post("/empresas/reset-password", redefinirSenha);
 
-router.get("/empresas/:id", getEmpresa);                    
-router.put("/empresas/:id", updateEmpresa);                
+router.get("/empresas/:id", getEmpresa);                 
+router.put("/empresas/:id", updateEmpresa);
+router.get("/empresas/perfil/:id", obterPerfilPorId);   
 
-router.get("/empresas/perfil/:id", obterPerfilPorId);       
-
-// === Multer (já existe aqui) ===
+/* ================= Uploads (logo/banner) ================== */
 const uploadsDir = path.join(__dirname, "..", "..", "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
@@ -44,19 +44,17 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-
 router.post(
-  "/empresas/:id/upload/:tipo",            
+  "/empresas/:id/upload/:tipo",
   upload.single("imagem"),
   uploadImagem
 );
-
 
 router.get("/empresas/:id/vagas", listarVagasDaEmpresa);
 
 router.post(
   "/empresas/:id/vagas",
-  upload.array("imagens", 8),             
+  upload.array("imagens", 8),
   criarVagaParaEmpresa
 );
 
