@@ -7,7 +7,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Cal+Sans&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/dashboard.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="css/vagas.css" rel="stylesheet">
@@ -74,90 +73,17 @@
 
 <section id="jobs" class="jobs-section">
     <div class="container jobs-container">
-        <aside class="filters-sidebar">
-            <div class="filter-group">
-  <h2 class="filter-title">Tags</h2>
-  <form class="filter-search-form">
-    <input type="search" placeholder="Pesquisar" id="pesquisar_tags" class="filter-search-input">
-    <img src="img/lupa.png" alt="Search Icon" class="search-icon">
-  </form>
-  <div class="tags-list"> 
-    <div class="tag-container">
-      <div class="tag">
-        <span>Saúde</span>
-        <div class="plus" onclick="toggleOptions(this)">+</div>
-      </div>
-      <div class="options">
-        <label class="option">
-          <input type="checkbox" class="add"> Adicionar
-        </label>
-        <label class="option">
-          <input type="checkbox" class="remove"> Remover
-        </label>
-      </div>
-    </div>
+<aside class="filters-sidebar">
+  <div class="filter-group">
+<h2 class="filter-title">Tags</h2>
+<form class="filter-search-form">
+  <input type="search" placeholder="Pesquisar" id="pesquisar_tags" class="filter-search-input" autocomplete="off">
+  <img src="img/lupa.png" alt="Search Icon" class="search-icon">
+</form>
 
-    <div class="tag-container">
-      <div class="tag">
-        <span>Educação</span><br>
-        <div class="plus" onclick="toggleOptions(this)">+</div>
-      </div>
-      <div class="options">
-        <label class="option">
-          <input type="checkbox" class="add"> Adicionar
-        </label>
-        <label class="option">
-          <input type="checkbox" class="remove"> Remover
-        </label>
-      </div>
-    </div>
+<div id="tagActiveBar" class="chips-bar"></div>
 
-    <div class="tag-container">
-      <div class="tag">
-        <span>Arrecadação</span>
-        <div class="plus" onclick="toggleOptions(this)">+</div>
-      </div>
-      <div class="options">
-        <label class="option">
-          <input type="checkbox" class="add"> Adicionar
-        </label>
-        <label class="option">
-          <input type="checkbox" class="remove"> Remover
-        </label>
-      </div>
-    </div>
-
-    <div class="tag-container">
-      <div class="tag">
-        <span>Meio Ambiente</span>
-        <div class="plus" onclick="toggleOptions(this)">+</div>
-      </div>
-      <div class="options">
-        <label class="option">
-          <input type="checkbox" class="add"> Adicionar
-        </label>
-        <label class="option">
-          <input type="checkbox" class="remove"> Remover
-        </label>
-      </div>
-    </div>
-
-    <div class="tag-container">
-      <div class="tag">
-        <span>Limpeza</span>
-        <div class="plus" onclick="toggleOptions(this)">+</div>
-      </div>
-      <div class="options">
-        <label class="option">
-          <input type="checkbox" class="add"> Adicionar
-        </label>
-        <label class="option">
-          <input type="checkbox" class="remove"> Remover
-        </label>
-      </div>
-    </div>
-  </div>
-</div>
+<div id="tagResults" class="tags-results" hidden></div>
 
 <div class="filter-group">
   <h2 class="filter-title">Horário</h2>
@@ -173,7 +99,7 @@
       Tarde
     </label>
     <label class="checkbox-label">
-      <input type="checkbox" name="horario" value="noite" checked>
+      <input type="checkbox" name="horario" value="noite">
       <span class="custom-checkbox"></span>
       Noturno
     </label>
@@ -193,7 +119,7 @@
       Remoto
     </label>
     <label class="checkbox-label">
-      <input type="checkbox" name="modalidade" value="hibrido" checked>
+      <input type="checkbox" name="modalidade" value="hibrido">
       <span class="custom-checkbox"></span>
       Híbrido
     </label>
@@ -298,7 +224,7 @@
                 </article>
                
             <nav class="pagination">
-                <a href="#" class="pagination-link prev-link disabled">
+                <a href="#" class="pagination-link prev-link">
                     <img src="img/arrowleft.png" alt="Previous">
                     Previous
                 </a>
@@ -312,59 +238,90 @@
                 </div>
                 <a href="#" class="pagination-link next-link">
                     Next
-                    <img src="img/arrowright.png" alt="Next">
+                    <img src="../img/arrowright.png" alt="Next">
                 </a>
             </nav>
         </main>
     </div>
 </section>
 <script>
-  function toggleOptions(el) {
-    const container = el.closest('.tag-container');
-    container.classList.toggle('active');
+(() => {
+  // ————— estado —————
+  const active = new Set();     // tags ativas
+  const ALL_TAGS = [
+    "Animais","Arrecadação","Crianças","Cultura","Educação","Híbrido",
+    "Idosos","Limpeza","Manhã","Meio Ambiente","Noite","Noturno",
+    "Presencial","Remoto","Tecnologia","Saúde"
+  ];
+
+  // ————— refs —————
+  const $ = (s)=>document.querySelector(s);
+  const resultsBox = $("#tagResults");
+  const activeBar  = $("#tagActiveBar");
+  const searchIn   = $("#pesquisar_tags");
+
+  // ————— render chips ativos —————
+  function renderActive(){
+    activeBar.innerHTML = "";
+    active.forEach(tag => {
+      const chip = document.createElement("span");
+      chip.className = "filter-chip";
+      chip.innerHTML = `${tag} <span class="chip-x" aria-label="Remover ${tag}"></span>`;
+      chip.querySelector(".chip-x").addEventListener("click", () => {
+        active.delete(tag);
+        renderActive();
+        renderResults();
+        applyFilters();
+      });
+      activeBar.appendChild(chip);
+    });
   }
 
-  // Função genérica para TODAS as tags
-  document.querySelectorAll('.tag-container').forEach(container => {
-    const tag = container.querySelector('.tag');
-    const add = container.querySelector('.add');
-    const remove = container.querySelector('.remove');
+  // ————— render resultados (aparecem só quando há texto) —————
+  function renderResults(){
+    const q = (searchIn.value || "").trim().toLowerCase();
+    const matches = !q ? [] : ALL_TAGS.filter(t => t.toLowerCase().includes(q) && !active.has(t));
+    resultsBox.innerHTML = "";
+    resultsBox.hidden = matches.length === 0;
 
-    add.addEventListener('change', () => {
-      if (add.checked) {
-        remove.checked = false;
-        tag.classList.add('added');
-        tag.classList.remove('removed');
-      } else {
-        tag.classList.remove('added');
-      }
-    });
-
-    remove.addEventListener('change', () => {
-      if (remove.checked) {
-        add.checked = false;
-        tag.classList.add('removed');
-        tag.classList.remove('added');
-      } else {
-        tag.classList.remove('removed');
-      }
-    });
-  });
-</script>
-<script>
-    const avatar = document.getElementById('userAvatar');
-    const dropdown = document.getElementById('dropdownMenu');
-
-    avatar.addEventListener('click', () => {
-        dropdown.classList.toggle('active');
-    });
-
-    // Fechar o menu ao clicar fora
-    window.addEventListener('click', function(e) {
-        if (!avatar.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.classList.remove('active');
+    matches.forEach(tag => {
+      const pill = document.createElement("label");
+      pill.className = "tag-pill";
+      pill.innerHTML = `
+        <input type="checkbox" aria-label="Filtrar por ${tag}">
+        <span>${tag}</span>
+      `;
+      const cb = pill.querySelector("input");
+      cb.addEventListener("change", () => {
+        if (cb.checked){
+          active.add(tag);         // vira filtro ativo
+          cb.checked = false;      // limpa visual
+          renderActive();          // mostra em cima
+          renderResults();         // some da lista de resultados
+          applyFilters();
         }
+      });
+      resultsBox.appendChild(pill);
     });
+  }
+
+  // ————— aplica filtros nos cards (título/descrição/tags) —————
+  function applyFilters(){
+    const want = Array.from(active).map(s => s.toLowerCase());
+    document.querySelectorAll(".job-card").forEach(card => {
+      const tags = Array.from(card.querySelectorAll(".tag-vaga")).map(e => e.textContent.trim().toLowerCase());
+      const ok = want.every(t => tags.includes(t)); // todas as ativas devem estar no card
+      card.hidden = !ok && want.length > 0 ? true : false;
+    });
+  }
+
+  // ————— eventos —————
+  searchIn.addEventListener("input", renderResults);
+
+  // start
+  renderActive();
+  renderResults();
+})();
 </script>
 <script src="scripts/notificacoes.js"></script>
 </body>
