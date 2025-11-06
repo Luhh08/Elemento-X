@@ -85,7 +85,7 @@ confirmar.addEventListener('input', function() {
 
 // === Envio do formulário final ===
 const form = document.getElementById("form2");
-const API_URL = "http://localhost:3000/api"; // ✅ backend unificado
+const API_URL = "http://localhost:3000/api"; 
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();

@@ -48,23 +48,25 @@ form.addEventListener("submit", async (e) => {
   // 🔒 Criptografa a senha ANTES de enviar
   const senhaCriptografada = CryptoJS.AES.encrypt(senha, SECRET_KEY).toString();
 
-  const dadosUsuario = { nome, usuario, email, cpf, senha: senhaCriptografada };
+const dadosUsuario = { nome, usuario, email, cpf, senha: senhaCriptografada };
+  const SAME_ORIGIN = location.origin.includes(":3000");
+  const API_URL = SAME_ORIGIN ? "/api" : "http://localhost:3000/api";
 
   try {
-    const response = await fetch("http://localhost:3000/users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(dadosUsuario)
-    });
+const response = await fetch(`${API_URL}/users`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(dadosUsuario)
+});
 
     if (response.ok) {
       const usuarioCriado = await response.json();
-      alert("Usuário criado com sucesso! ID: " + usuarioCriado.id);
+      alert("Usuario cadastrado com sucesso!");
       form.reset();
       window.location.href = "login.html";
     } else {
       const erro = await response.json();
-      alert("Erro ao criar usuário: " + erro.error);
+      alert("Erro ao cadastrar");
     }
   } catch (err) {
     console.error("Erro na requisição:", err);
