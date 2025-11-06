@@ -33,6 +33,8 @@ model Usuario {
   bannerUrl          String?   
   fotoUrl            String?   
 
+  isBanned        Boolean   @default(false)
+  banReason       String?
 }
 
 model Empresa {
@@ -62,8 +64,10 @@ model Empresa {
   logoUrl           String?      
   emailcontato      String?
   telefonecontato   String?    
-  vaga              Vaga[]                              
+  vaga              Vaga[]
 
+  isBanned        Boolean   @default(false)
+  banReason       String?                              
 }
 
 model RepresentanteLegal {

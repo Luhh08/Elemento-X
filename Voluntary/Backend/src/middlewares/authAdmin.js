@@ -15,7 +15,7 @@ function authAdmin(req, res, next) {
       return res.status(403).json({ error: 'Acesso negado. Não é administrador.' });
     }
 
-    req.admin = payload;
+    req.admin = payload; // disponível nas rotas se precisar
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Token inválido ou expirado.' });

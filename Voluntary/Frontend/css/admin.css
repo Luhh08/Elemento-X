@@ -240,3 +240,88 @@ tbody td {
 #usuarios table td:nth-child(6) { width: 120px; }
 #usuarios table th:nth-child(7),
 #usuarios table td:nth-child(7) { width: 160px; }
+
+button.ban{
+  appearance:none;
+  border:0;
+  padding:8px 16px;
+  border-radius:9999px;        
+  background:#e57373;          
+  color:#fff;
+  font-weight:700;
+  font-size:14px;
+  line-height:1;
+  cursor:pointer;
+
+  box-shadow:
+    inset 0 -2px 0 rgba(0,0,0,.06),
+    0 2px 6px rgba(229,115,115,.35);
+  transition: filter .2s ease, box-shadow .2s ease, transform .02s ease;
+}
+
+button.ban:hover{
+  filter: brightness(.96);
+  box-shadow:
+    inset 0 -2px 0 rgba(0,0,0,.08),
+    0 4px 10px rgba(229,115,115,.45);
+}
+
+button.ban:active{
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 -1px 0 rgba(0,0,0,.08),
+    0 2px 6px rgba(229,115,115,.35);
+}
+
+button.ban:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+  filter: grayscale(.2);
+}
+.status-banido{ background:#f1b0b7; color:#7a1f2b; }
+
+.badge{
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+  display:inline-block;
+  letter-spacing:.2px;
+}
+
+.status-pendente{ background:#f9e090; color:#8b6b00; }
+.status-verificado{ background:#a7dcb5; color:#136e1a; }
+/* Você já tinha .status-banido no final; mantive e reforço aqui */
+.status-banido{ background:#f1b0b7; color:#7a1f2b; }
+
+button.unban{
+  appearance:none;
+  border:0;
+  padding:8px 16px;
+  border-radius:9999px;
+  background:#34a853;      /* verde */
+  color:#fff;
+  font-weight:700;
+  font-size:14px;
+  line-height:1;
+  cursor:pointer;
+  box-shadow:
+    inset 0 -2px 0 rgba(0,0,0,.06),
+    0 2px 6px rgba(52,168,83,.35);
+  transition: filter .2s ease, box-shadow .2s ease, transform .02s ease;
+}
+button.unban:hover{
+  filter: brightness(.96);
+  box-shadow:
+    inset 0 -2px 0 rgba(0,0,0,.08),
+    0 4px 10px rgba(52,168,83,.45);
+}
+button.unban:active{
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 -1px 0 rgba(0,0,0,.08),
+    0 2px 6px rgba(52,168,83,.35);
+}
+button.unban:disabled{
+  opacity:.6; cursor:not-allowed; filter: grayscale(.2);
+}

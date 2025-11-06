@@ -13,24 +13,32 @@ async function registrarUsuario(req, res, next) {
   try {
     const { nome, usuario, email, cpf, senha } = req.body;
 
-    // 1️⃣ Verificação de e-mail duplicado
+const usuarioBanido = await prisma.usuario.findFirst({
+  where: {
+    OR: [{ email }, { cpf }],
+    isBanned: true,
+  },
+});
+
+if (usuarioBanido) {
+  return res.status(403).json({
+    error: "Cadastro bloqueado. Este e-mail ou CPF está banido do sistema.",
+  });
+}
+
     const usuarioExistente = await prisma.usuario.findUnique({ where: { email } });
     if (usuarioExistente)
       return res.status(400).json({ error: "E-mail já cadastrado." });
 
-    // 2️⃣ Descriptografa a senha recebida do frontend (AES)
     const senhaDescriptografada = CryptoJS.AES.decrypt(senha, SECRET_KEY).toString(CryptoJS.enc.Utf8);
 
     if (!senhaDescriptografada)
       return res.status(400).json({ error: "Erro ao descriptografar a senha." });
 
-    // 3️⃣ Gera o hash seguro da senha
     const senhaHash = await bcrypt.hash(senhaDescriptografada, 12);
 
-    // 4️⃣ Cria token de validação
     const token = generateToken({ email }, "1h");
 
-    // 5️⃣ Salva o usuário no banco
     await prisma.usuario.create({
       data: {
         nome,
@@ -43,10 +51,8 @@ async function registrarUsuario(req, res, next) {
       },
     });
 
-    // 6️⃣ Responde imediatamente ao cliente
     res.status(201).json({ message: "Usuário criado! Verifique seu e-mail." });
 
-    // 7️⃣ Envia o e-mail de verificação em segundo plano
     sendVerificationEmail(email, token).catch((error) => {
       console.error("Erro ao enviar email de verificação:", error);
     });
@@ -76,9 +82,7 @@ async function verificarEmail(req, res, next) {
   }
 }
 
-// ------------------------------
 // Login do usuário
-// ------------------------------
 async function loginUsuario(req, res, next) {
   try {
     const { email, senha } = req.body;
@@ -88,6 +92,12 @@ async function loginUsuario(req, res, next) {
 
     const usuario = await prisma.usuario.findUnique({ where: { email } });
     if (!usuario) return res.status(401).json({ error: "Email não encontrado." });
+
+if (usuario.isBanned) {
+  return res.status(403).json({
+    error: `Conta banida. Motivo: ${usuario.banReason || "Violação das regras."}`,
+  });
+}
 
     const senhaDescriptografada = CryptoJS.AES.decrypt(senha, SECRET_KEY).toString(CryptoJS.enc.Utf8);
 

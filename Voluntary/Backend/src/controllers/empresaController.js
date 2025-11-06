@@ -8,6 +8,7 @@ const path = require("path");
 const fs = require("fs/promises");
 const sharp = require("sharp");
 
+
 const BASE = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
 
 const prisma = new PrismaClient();
@@ -63,6 +64,19 @@ async function registrarEmpresa(req, res) {
         .status(400)
         .json({ error: "Dados de empresa e representante são obrigatórios." });
     }
+
+const empresaBanida = await prisma.empresa.findFirst({
+  where: {
+    OR: [{ email }, { cnpj }],
+    isBanned: true,
+  },
+});
+
+if (empresaBanida) {
+  return res.status(403).json({
+    error: "Cadastro bloqueado. Este e-mail ou CNPJ está banido do sistema.",
+  });
+}
 
     const {
       razao_social,
@@ -249,6 +263,12 @@ async function loginEmpresa(req, res) {
     let empresa = await prisma.empresa.findUnique({ where: { cnpj: cnpjDigits } });
     if (!empresa) empresa = await prisma.empresa.findUnique({ where: { cnpj: formatCNPJ(cnpjDigits) } });
     if (!empresa) return res.status(401).json({ error: "CNPJ não encontrado." });
+
+if (empresa.isBanned) {
+  return res.status(403).json({
+    error: `Conta banida. Motivo: ${empresa.banReason || "Violação das regras."}`,
+  });
+}
 
     const ok = await bcrypt.compare(senhaDescriptografada, empresa.senha);
     if (!ok) return res.status(401).json({ error: "Senha incorreta." });

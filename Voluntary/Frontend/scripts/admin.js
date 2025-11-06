@@ -30,7 +30,7 @@
     raw:      { usuarios: [], empresas: [], vagas: [], denuncias: [], feedback: [] },
     filtered: { usuarios: [], empresas: [], vagas: [], denuncias: [], feedback: [] },
     current: 'usuarios',
-    pendingBan: null // { tipo, id }
+    pending: null // { tipo, id, acao }
   };
 
   // --------- Utils ---------
@@ -42,23 +42,52 @@
     setTimeout(() => toast.classList.remove('show'), 2200);
   }
 
-  function openModal(text, payload) {
-    state.pendingBan = payload;
-    modalText.textContent = text;
+  // cria/recupera o campo de motivo no modal
+  function ensureReasonField() {
+    let fld = modal.querySelector('#ban-reason');
+    if (!fld) {
+      const wrap = document.createElement('div');
+      wrap.style.marginTop = '10px';
+      wrap.innerHTML = `
+        <label for="ban-reason" style="display:block;font-size:13px;margin-bottom:6px;">Motivo do banimento (opcional)</label>
+        <textarea id="ban-reason" rows="3" style="width:100%;resize:vertical;"></textarea>
+      `;
+      modalText.insertAdjacentElement('afterend', wrap);
+      fld = wrap.querySelector('#ban-reason');
+    }
+    return fld;
+  }
+
+  function openModal(payload) {
+    // payload: { tipo, id, acao }
+    state.pending = payload;
+    const isBan = ['usuario','empresa','vaga'].includes(payload?.tipo) && payload?.acao === 'banir';
+    modalText.textContent = isBan
+      ? 'Tem certeza que deseja BANIR este registro? O acesso será bloqueado, mas os identificadores serão preservados.'
+      : (payload?.tipo === 'denuncia' || payload?.tipo === 'feedback')
+        ? `Confirmar remoção definitiva deste ${payload.tipo}?`
+        : 'Deseja DESBANIR este registro?';
+
+    // motivo só aparece no ban
+    const reasonField = ensureReasonField();
+    reasonField.parentElement.style.display = isBan ? 'block' : 'none';
+    if (isBan) reasonField.value = '';
+
     modal.setAttribute('aria-hidden', 'false');
     modal.classList.add('open');
   }
+
   function closeModal() {
-    state.pendingBan = null;
+    state.pending = null;
     modal.setAttribute('aria-hidden', 'true');
     modal.classList.remove('open');
   }
 
-  // --------- Getters tolerantes ---------
+  // --------- Getters ---------
   const getId   = (x) => x.id || x._id || x.idUsuario || x.idEmpresa || x.idVaga;
   const getNome = (x) => x.nome || x.username || x.usuario || x.razaoSocial || x.fantasia || x.titulo || '—';
   const getEmail= (x) => x.email || x.contatoEmail || x.emailEmpresa || '—';
-  const getStatus = (x) => x.status || x.ativo || x.aprovado || x.situacao || '—';
+  const getStatusText = (x) => x.status || x.ativo || x.aprovado || x.situacao || '—';
   const getEmpresaNomeFromVaga = (v) =>
     (v.empresa && (v.empresa.nome || v.empresa.razaoSocial || v.empresa.fantasia)) || v.empresaNome || '—';
   const getTituloVaga = (v) => v.titulo || v.nome || v.nomeVaga || '—';
@@ -66,12 +95,44 @@
   const getMotivoDenuncia = (d) => d.motivo || d.reason || d.tipo || '—';
   const getComentario = (f) => f.comentario || f.texto || f.mensagem || '—';
 
-  // Verificação específica para usuário (sem números)
-  const getVerificacaoUser = (x) => {
-    const s = (x.status || '').toString().toLowerCase();
-    const verificado = s === 'ativo' || s === 'verificado' || x.validacao === true;
-    return verificado ? 'Verificado' : 'Pendente';
-  };
+  // --------- Status visual (badge) ----------
+  function badge(label, cls) {
+    return `<span class="badge ${cls}">${label}</span>`;
+  }
+function statusBadgeForAccount(item) {
+  // 1) Banido sempre vence
+  if (item.isBanned) return badge('BANIDO', 'status-banido');
+
+  // 2) Usa 'validacao' (se veio) OU o campo 'status' enviado pelo backend
+  const raw = (item.validacao === true)
+    ? 'verificado'
+    : String(item.status || '').toLowerCase();
+
+  if (raw === 'ativo' || raw === 'verificado') {
+    return badge('VERIFICADO', 'status-verificado');
+  }
+  return badge('PENDENTE', 'status-pendente');
+}
+
+  function actionButtonHTML(item, tipo) {
+    // mostra Banir/Desbanir conforme isBanned (só para usuario/empresa/vaga)
+    if (['usuarios','empresas','vagas'].includes(tipo)) {
+      const banned = !!item.isBanned;
+      const label  = banned ? 'Desbanir' : 'Banir';
+      const acao   = banned ? 'desbanir' : 'banir';
+      const btnCls = banned ? 'unban' : 'ban';
+      return `<button class="${btnCls}" data-tipo="${tipo.slice(0,-1)}" data-acao="${acao}" data-id="${getId(item)}">${label}</button>`;
+    }
+    // denúncia/feedback => remoção
+    const id = getId(item);
+    if (tipo === 'denuncias') {
+      return `<button class="ban" data-tipo="denuncia" data-acao="remover" data-id="${id}">Remover</button>`;
+    }
+    if (tipo === 'feedback') {
+      return `<button class="ban" data-tipo="feedback" data-acao="remover" data-id="${id}">Remover</button>`;
+    }
+    return '';
+  }
 
   // --------- Render ---------
   function renderRows(list, tipo) {
@@ -80,73 +141,75 @@
       let cols = '';
 
       if (tipo === 'usuarios') {
-        // 6 colunas: checkbox | ID | Usuário | E-mail | Verificação | Ações
         cols = `
           <td><input type="checkbox" data-id="${id}"></td>
           <td>${id}</td>
           <td>${getNome(item)}</td>
           <td>${getEmail(item)}</td>
-          <td>${getVerificacaoUser(item)}</td>
-          <td><button class="ban" data-tipo="usuario" data-id="${id}">Banir</button></td>`;
+          <td>${statusBadgeForAccount(item)}</td>
+          <td>${actionButtonHTML(item, 'usuarios')}</td>`;
       } else if (tipo === 'empresas') {
-        // 7 colunas: checkbox | ID | Empresa | E-mail | Vagas Ativas | Status | Ações
         cols = `
           <td><input type="checkbox" data-id="${id}"></td>
           <td>${id}</td>
           <td>${getNome(item)}</td>
           <td>${getEmail(item)}</td>
           <td>${item.vagasAtivas ?? item.qtdVagasAtivas ?? 0}</td>
-          <td>${getStatus(item)}</td>
-          <td><button class="ban" data-tipo="empresa" data-id="${id}">Banir</button></td>`;
+          <td>${statusBadgeForAccount(item)}</td>
+          <td>${actionButtonHTML(item, 'empresas')}</td>`;
       } else if (tipo === 'vagas') {
-        // 7 colunas: checkbox | ID | Título | Empresa | Candidaturas | Status | Ações
+        const vagaStatus = (item.isBanned)
+          ? badge('BANIDA', 'status-banido')
+          : badge(getStatusText(item), 'status-vaga');
         cols = `
           <td><input type="checkbox" data-id="${id}"></td>
           <td>${id}</td>
           <td>${getTituloVaga(item)}</td>
           <td>${getEmpresaNomeFromVaga(item)}</td>
           <td>${getCandidaturas(item)}</td>
-          <td>${getStatus(item)}</td>
-          <td><button class="ban" data-tipo="vaga" data-id="${id}">Banir</button></td>`;
+          <td>${vagaStatus}</td>
+          <td>${actionButtonHTML(item, 'vagas')}</td>`;
       } else if (tipo === 'denuncias') {
-        // 6 colunas: checkbox | ID | Usuário | Motivo | Status | Ações
         cols = `
           <td><input type="checkbox" data-id="${id}"></td>
           <td>${id}</td>
           <td>${getNome(item.usuario || item.autor || {})}</td>
           <td>${getMotivoDenuncia(item)}</td>
-          <td>${getStatus(item)}</td>
-          <td><button class="ban" data-tipo="denuncia" data-id="${id}">Remover</button></td>`;
+          <td>${getStatusText(item)}</td>
+          <td>${actionButtonHTML(item, 'denuncias')}</td>`;
       } else if (tipo === 'feedback') {
-        // 6 colunas: checkbox | ID | Vaga | Usuário | Comentário | Ações
         cols = `
           <td><input type="checkbox" data-id="${id}"></td>
           <td>${id}</td>
           <td>${getTituloVaga(item.vaga || {})}</td>
           <td>${getNome(item.usuario || {})}</td>
           <td>${getComentario(item)}</td>
-          <td><button class="ban" data-tipo="feedback" data-id="${id}">Remover</button></td>`;
+          <td>${actionButtonHTML(item, 'feedback')}</td>`;
       }
 
       return `<tr>${cols}</tr>`;
     }).join('');
   }
 
-  function applySearch() {
-    const q = (searchInput.value || '').toLowerCase().trim();
-    const cur = state.current;
-    const base = state.raw[cur] || [];
-    state.filtered[cur] = !q ? base : base.filter(x => {
-      const blob = [
-        getId(x), getNome(x), getEmail(x),
-        getTituloVaga(x), getEmpresaNomeFromVaga(x),
-        getMotivoDenuncia(x), getComentario(x),
-        getStatus(x), (x.validacao ? 'verificado' : 'pendente')
-      ].join(' ').toLowerCase();
-      return blob.includes(q);
-    });
-    paint(cur);
-  }
+function applySearch() {
+  const q = (searchInput.value || '').toLowerCase().trim();
+  const cur = state.current;
+  const base = state.raw[cur] || [];
+  state.filtered[cur] = !q ? base : base.filter(x => {
+    const blob = [
+      getId(x), getNome(x), getEmail(x),
+      getTituloVaga(x), getEmpresaNomeFromVaga(x),
+      getMotivoDenuncia(x), getComentario(x),
+      getStatusText(x),
+      String(x.status || ''),         // 👈 acrescentado
+      (x.validacao ? 'verificado' : 'pendente'),
+      (x.isBanned ? 'banido' : ''),
+      (x.banReason || '')
+    ].join(' ').toLowerCase();
+    return blob.includes(q);
+  });
+  paint(cur);
+}
 
   function paint(section) {
     if (section === 'usuarios')   tbUsuarios.innerHTML  = renderRows(state.filtered.usuarios, 'usuarios');
@@ -155,12 +218,12 @@
     if (section === 'denuncias')  tbDenuncias.innerHTML = renderRows(state.filtered.denuncias, 'denuncias');
     if (section === 'feedback')   tbFeedback.innerHTML  = renderRows(state.filtered.feedback, 'feedback');
 
-    // bind botões Banir da seção atual
-    document.querySelectorAll(`#${section} .ban`).forEach(btn => {
+    document.querySelectorAll(`#${section} .ban, #${section} .unban`).forEach(btn => {
       btn.addEventListener('click', () => {
-        const tipo = btn.dataset.tipo;
-        const id = btn.dataset.id;
-        openModal(`Tem certeza que deseja banir/remover este ${tipo}?`, { tipo, id });
+        const tipo  = btn.dataset.tipo;      
+        const acao  = btn.dataset.acao || (btn.classList.contains('unban') ? 'desbanir' : 'banir');
+        const id    = btn.dataset.id;
+        openModal({ tipo, id, acao });
       });
     });
   }
@@ -186,24 +249,44 @@
   // --------- Modal ---------
   btnNo.addEventListener('click', closeModal);
   btnYes.addEventListener('click', async () => {
-    const p = state.pendingBan;
+    const p = state.pending; // { tipo, id, acao }
     if (!p) return closeModal();
+
     try {
-      const resp = await fetch(`${API_BASE}/banir/${p.tipo}/${p.id}`, {
-        method: 'DELETE',
-        headers: headers()
-      });
-      if (!resp.ok) {
-        const data = await resp.json().catch(() => ({}));
-        showToast(data.error || 'Falha ao banir.', false);
+      let url, opt;
+
+      if (['usuario','empresa','vaga'].includes(p.tipo)) {
+        if (p.acao === 'banir') {
+          const reasonField = modal.querySelector('#ban-reason');
+          const reason = reasonField ? reasonField.value.trim() : '';
+          url = `${API_BASE}/banir/${p.tipo}/${p.id}`;
+          opt = {
+            method: 'POST',
+            headers: headers(),
+            body: JSON.stringify({ reason: reason || 'Violação das regras' })
+          };
+        } else {
+          url = `${API_BASE}/desbanir/${p.tipo}/${p.id}`;
+          opt = { method: 'POST', headers: headers() };
+        }
       } else {
-        showToast('Item banido/removido com sucesso!');
+        url = `${API_BASE}/banir/${p.tipo}/${p.id}`;
+        opt = { method: 'DELETE', headers: headers() };
+      }
+
+      const resp = await fetch(url, opt);
+      const data = await resp.json().catch(() => ({}));
+
+      if (!resp.ok) {
+        showToast(data.error || 'Falha na operação.', false);
+      } else {
+        showToast(data.message || 'Operação concluída!');
         await loadAll();
         applySearch();
       }
     } catch (err) {
       console.error(err);
-      showToast('Erro de rede ao banir.', false);
+      showToast('Erro de rede.', false);
     } finally {
       closeModal();
     }
