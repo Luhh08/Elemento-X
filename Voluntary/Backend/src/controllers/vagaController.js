@@ -1,24 +1,51 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-// GET /api/vagas?status=ABERTA&tag=Saude&empresaId=...
 async function listarVagasPublicas(req, res, next) {
   try {
-    const { status, tag, empresaId } = req.query;
+    const page = Math.max(1, parseInt(req.query.page ?? '1', 10));
+    const pageSize = Math.max(1, parseInt(req.query.pageSize ?? '9', 10));
+    const { empresaId, tag, q } = req.query;
+
     const where = {};
-    if (status) where.status = String(status);
     if (empresaId) where.empresaId = String(empresaId);
     if (tag) where.tags = { has: String(tag) };
+    if (q) {
+      where.OR = [
+        { titulo: { contains: String(q), mode: 'insensitive' } },
+        { descricao: { contains: String(q), mode: 'insensitive' } },
+        { tags: { has: String(q) } },
+      ];
+    }
 
-    const vagas = await prisma.vaga.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-    });
-    res.json(vagas);
-  } catch (e) {
-    next(e);
+const [vagas, total] = await Promise.all([
+  prisma.vaga.findMany({
+    where,
+    orderBy: { id: 'desc' },
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+    include: {
+      empresa: {
+        select: { id: true, usuario: true, razao_social: true, logoUrl: true }
+      }
+    }
+  }),
+  prisma.vaga.count({ where }),
+]);
+
+
+const vagasComResumo = vagas.map(v => ({
+  ...v,
+  resumo: v.descricao?.length > 20 ? v.descricao.slice(0,20) + '…' : v.descricao
+}));
+res.json({ items: vagasComResumo, total, page, pageSize });
+
+  } catch (error) {
+    console.error("Erro ao listar vagas:", error);
+    res.status(500).json({ error: "Erro interno ao listar vagas." });
   }
 }
+
 
 async function getVaga(req, res, next) {
   try {
@@ -87,8 +114,48 @@ async function atualizarVaga(req, res, next) {
   }
 }
 
+async function listarTagsDoSistema(req, res) {
+  try {
+    const [vagaTagsDocs, vagaTurnosDocs, empresaTagsDocs] = await Promise.all([
+      prisma.vaga.findMany({ select: { tags: true } }),
+      prisma.vaga.findMany({ select: { turno: true } }),
+      prisma.empresa.findMany({ select: { tags: true } })
+    ]);
+
+    const lowerToOrig = new Map();
+
+    const addMany = (arr) => {
+      for (const v of arr || []) {
+        if (!v) continue;
+        const s = String(v).trim();
+        if (!s) continue;
+        const key = s.toLowerCase();
+        if (!lowerToOrig.has(key)) lowerToOrig.set(key, s);
+      }
+    };
+
+    vagaTagsDocs.forEach(d => addMany(d.tags));
+    vagaTurnosDocs.forEach(d => addMany(d.turno));
+    empresaTagsDocs.forEach(d => addMany(d.tags));
+
+    const all = Array.from(lowerToOrig.values())
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+
+    const TURNOS_CANON = new Set(['manhã','tarde','noite',]);
+    const turnos = all.filter(x => TURNOS_CANON.has(x.toLowerCase()));
+    const tags   = all.filter(x => !TURNOS_CANON.has(x.toLowerCase()));
+
+    res.json({ tags, turnos, all });
+  } catch (e) {
+    console.error('Erro ao listar tags:', e);
+    res.status(500).json({ error: 'Erro ao listar tags' });
+  }
+}
+
 module.exports = {
   listarVagasPublicas,
   getVaga,
   atualizarVaga, 
+  listarTagsDoSistema,
 };

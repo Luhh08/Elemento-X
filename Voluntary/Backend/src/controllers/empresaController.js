@@ -604,7 +604,105 @@ async function criarVagaParaEmpresa(req, res, next) {
   }
 }
 
+function isHex24(s) {
+  return typeof s === "string" && /^[a-f0-9]{24}$/i.test(s);
+}
 
+async function resolveEmpresaId(idOrHandle) {
+  // Se parecer um ObjectId, tenta direto
+  if (isHex24(idOrHandle)) {
+    const byId = await prisma.empresa.findUnique({
+      where: { id: String(idOrHandle) },
+      select: { id: true },
+    });
+    if (byId) return byId.id;
+  }
+  // Caso contrário (ou se não encontrou), tenta pelo @usuario
+  const handle = String(idOrHandle || "").replace(/^@+/, "").trim().toLowerCase();
+  if (handle) {
+    const byUser = await prisma.empresa.findFirst({
+      where: { usuario: handle },
+      select: { id: true },
+    });
+    if (byUser) return byUser.id;
+  }
+  return null;
+}
+
+function isHex24(s){ return typeof s==="string" && /^[a-f0-9]{24}$/i.test(s); }
+
+async function resolveEmpresaId(idOrHandle){
+  // 1) tenta por id de Empresa
+  if (isHex24(idOrHandle)) {
+    const e = await prisma.empresa.findUnique({
+      where: { id: String(idOrHandle) },
+      select: { id: true },
+    });
+    if (e) return e.id;
+  }
+
+  // 2) tenta por handle (@usuario)
+  const handle = String(idOrHandle||"").replace(/^@+/, "").trim().toLowerCase();
+  if (handle) {
+    const e = await prisma.empresa.findFirst({
+      where: { usuario: handle },
+      select: { id: true },
+    });
+    if (e) return e.id;
+  }
+
+  // 3) tenta como id de Vaga (pega empresaId)
+  if (isHex24(idOrHandle)) {
+    const v = await prisma.vaga.findUnique({
+      where: { id: String(idOrHandle) },
+      select: { empresaId: true },
+    });
+    if (v?.empresaId) return v.empresaId;
+  }
+
+  return null;
+}
+
+async function getEmpresaPublic(req, res){
+  try{
+    const empresaId = await resolveEmpresaId(req.params.idOrHandle);
+    if (!empresaId) return res.status(404).json({ error: "Empresa não encontrada" });
+
+    const empresa = await prisma.empresa.findUnique({
+      where: { id: empresaId },
+      select: {
+        id: true, razao_social: true, usuario: true, descricao: true, tags: true,
+        bannerUrl: true, logoUrl: true, emailcontato: true, telefonecontato: true,
+        endereco: true, cep: true
+      }
+    });
+    if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+    res.json(empresa);
+  }catch(e){
+    console.error(e);
+    res.status(500).json({ error: "Erro ao carregar empresa pública" });
+  }
+}
+
+async function listarVagasPublicasPorEmpresa(req, res){
+  try{
+    const empresaId = await resolveEmpresaId(req.params.idOrHandle);
+    if (!empresaId) return res.status(404).json({ error: "Empresa não encontrada" });
+
+    const vagas = await prisma.vaga.findMany({
+      where: { empresaId },
+      orderBy: { id: "desc" },
+      select: {
+        id: true, titulo: true, descricao: true, tags: true, turno: true,
+        local: true, status: true, dataInicio: true, dataFim: true, imagens: true
+      }
+    });
+    res.json(vagas);
+  }catch(e){
+    console.error(e);
+    res.status(500).json({ error: "Erro ao listar vagas públicas" });
+  }
+}
 
 module.exports = {
   registrarEmpresa,
@@ -618,4 +716,6 @@ module.exports = {
   listarVagasDaEmpresa,
   criarVagaParaEmpresa,
   loginEmpresa,
+  getEmpresaPublic,
+  listarVagasPublicasPorEmpresa,
 };

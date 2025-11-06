@@ -15,6 +15,8 @@ const {
   listarVagasDaEmpresa,
   criarVagaParaEmpresa,
   loginEmpresa,
+  getEmpresaPublic,
+  listarVagasPublicasPorEmpresa,
 } = require("../controllers/empresaController");
 
 const router = express.Router();
@@ -29,6 +31,8 @@ router.post("/empresas/reset-password", redefinirSenha);
 router.get("/empresas/:id", getEmpresa);                 
 router.put("/empresas/:id", updateEmpresa);
 router.get("/empresas/perfil/:id", obterPerfilPorId);   
+router.get("/:idOrHandle/public", getEmpresaPublic);
+router.get("/:idOrHandle/vagas/public", listarVagasPublicasPorEmpresa);
 
 /* ================= Uploads (logo/banner) ================== */
 const uploadsDir = path.join(__dirname, "..", "..", "uploads");

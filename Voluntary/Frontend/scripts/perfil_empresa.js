@@ -1,40 +1,39 @@
-// ----------------- helpers -----------------
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 
 const token = localStorage.getItem("token");
-
-// ids salvos pelo login da EMPRESA
 const empresaId = localStorage.getItem("empresaId") || localStorage.getItem("userId") || "";
 const tipoConta = (localStorage.getItem("tipoConta") || localStorage.getItem("role") || "").toLowerCase();
 
-// id do perfil na URL (?id=) ou o próprio id
 const qs = new URLSearchParams(location.search);
 const viewedId = qs.get("id") || empresaId;
+const modoPublico = qs.get("public") === "true";
 
-// sou o dono do perfil?
 const isSelf = viewedId && empresaId && String(viewedId) === String(empresaId);
 
-// se abriu sem ?id, coloca na URL
 if (!qs.get("id") && viewedId) {
-  history.replaceState(null, "", `${location.pathname}?id=${encodeURIComponent(viewedId)}`);
+  history.replaceState(null, "", `${location.pathname}?id=${encodeURIComponent(viewedId)}${modoPublico ? "&public=true" : ""}`);
 }
 
-// se não tem sessão válida de empresa, manda pro login
-if (!token || !empresaId || !tipoConta.includes("empresa")) {
+if (!modoPublico && (!token || !empresaId || !tipoConta.includes("empresa"))) {
   window.location.href = "login_empresa.html";
 }
 
-// mostra/oculta ações conforme o dono do perfil
 function toggleActions() {
   const show = (sel, state) => { const el = document.querySelector(sel); if (el) el.hidden = !state; };
+  if (modoPublico) {
+    show("#btnEditar", false);
+    show("#btnGerenciar", false);
+    show("#btnPublicar", false);
+    show("#btnDenunciar", false);
+    return;
+  }
   show("#btnEditar", isSelf);
   show("#btnDenunciar", !isSelf);
   show("#btnGerenciar", isSelf);
   show("#btnPublicar", isSelf);
 }
 
-// ----------------- scroll lock (popups) -----------------
 const popupEdicao = $("#popupEdicao");
 const popupDenuncia = $("#popupDenuncia");
 const popupDenunciaOk = $("#popupDenunciaOk");
@@ -42,9 +41,7 @@ const popupDenunciaOk = $("#popupDenunciaOk");
 let _lock = { y: 0, padRight: "" };
 
 function anyModalOpen() {
-  return [popupEdicao, popupDenuncia, popupDenunciaOk].some(
-    (p) => p && p.getAttribute("aria-hidden") === "false"
-  );
+  return [popupEdicao, popupDenuncia, popupDenunciaOk].some((p) => p && p.getAttribute("aria-hidden") === "false");
 }
 function lockScroll() {
   if (document.body.classList.contains("modal-open")) return;
@@ -76,7 +73,6 @@ $("#btnDenunciar")?.addEventListener("click", () => openPopup(popupDenuncia));
 $$("[data-close]").forEach((b) => b.addEventListener("click", closeAllPopups));
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && anyModalOpen()) closeAllPopups(); });
 
-// ----------------- logout -----------------
 $("#logout")?.addEventListener("click", (e) => {
   e.preventDefault();
   try {
@@ -85,7 +81,6 @@ $("#logout")?.addEventListener("click", (e) => {
     localStorage.removeItem("empresa_nome");
     localStorage.removeItem("tipoConta");
     localStorage.removeItem("role");
-    // se tiver resquício de login de usuário PF:
     localStorage.removeItem("userId");
     localStorage.removeItem("tipoUsuario");
   } finally {
@@ -93,7 +88,6 @@ $("#logout")?.addEventListener("click", (e) => {
   }
 });
 
-// ----------------- telefone -----------------
 function aplicarMascaraTelefone(input) {
   if (!input) return;
   const format = (v) => {
@@ -117,21 +111,17 @@ function formatTelefoneBR(v){
   return d.replace(/(\d{2})(\d{5})(\d{0,4})/,"($1) $2-$3").replace(/-$/,"");
 }
 
-// ----------------- chips de tags (no popup de edição) -----------------
 let _tagsInit = false;
 function initChipsTags() {
   if (_tagsInit) return;
   const input = $("#editTags");
   if (!input) return;
-
   const chips = document.createElement("div");
   chips.id = "chipsTags";
   chips.className = "chips";
   const field = input.closest(".input") || input.parentElement;
   field.insertAdjacentElement("afterend", chips);
-
   const set = new Set();
-
   const toggle = () => {
     if (set.size === 0) {
       chips.style.display = "none";
@@ -142,9 +132,7 @@ function initChipsTags() {
     }
   };
   toggle();
-
   function sync() { input.value = Array.from(set).join(", "); }
-
   function pill(text) {
     const el = document.createElement("span");
     el.className = "chip-pill";
@@ -152,7 +140,6 @@ function initChipsTags() {
     el.querySelector(".remove").addEventListener("click", () => remove(text));
     return el;
   }
-
   function add(t) {
     const tag = (t || "").trim();
     if (!tag || set.has(tag)) return;
@@ -161,7 +148,6 @@ function initChipsTags() {
     sync();
     toggle();
   }
-
   function remove(t) {
     if (!set.has(t)) return;
     set.delete(t);
@@ -172,14 +158,12 @@ function initChipsTags() {
     sync();
     toggle();
   }
-
   function commit() {
     const raw = input.value;
     if (!raw.trim()) return;
     raw.split(",").map((s) => s.trim()).filter(Boolean).forEach(add);
     input.value = "";
   }
-
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
       e.preventDefault();
@@ -189,15 +173,12 @@ function initChipsTags() {
     }
   });
   input.addEventListener("blur", commit);
-
   (input.value || "").split(",").map(s => s.trim()).filter(Boolean).forEach(add);
   toggle();
-
   input._chips = { get value(){ return Array.from(set); }, add, remove };
   _tagsInit = true;
 }
 
-// ----------------- progresso -----------------
 function setProgress(pct) {
   const p = Math.max(0, Math.min(100, Number(pct || 0)));
   if ($("#barraProgresso")) $("#barraProgresso").style.width = `${p}%`;
@@ -218,17 +199,15 @@ function calcProgressoEmpresaFront(e = {}) {
   return Math.round((pontos / total) * 100);
 }
 
-// bloquear publicação até 100%
 function travarPublicacaoVaga(pct) {
   const btn = document.getElementById("btnPublicar");
   if (!btn) return;
-  const ok = Number(pct) >= 100;
-  btn.hidden = !ok;              // se preferir, use: btn.disabled = !ok;
+  const ok = Number(pct) >= 100 && !modoPublico && isSelf;
+  btn.hidden = !ok;
   if (!ok) btn.title = "Complete 100% do perfil para publicar uma vaga";
   else btn.removeAttribute("title");
 }
 
-// ----------------- vagas -----------------
 const DEFAULT_VAGA_IMG = "img/default-banner.png";
 
 function resolveImage(src) {
@@ -258,17 +237,12 @@ function statusClass(s){
 function vagaCard(v){
   const art = document.createElement("article");
   art.className = "vaga-card clickable";
-
   const id = v.id ?? v._id ?? v.vagaId ?? v.uuid;
-  if (!id) console.warn("Vaga sem ID válido:", v);
-
   let capa = DEFAULT_VAGA_IMG;
   if (Array.isArray(v.imagens) && v.imagens.length) capa = resolveImage(v.imagens[0]);
   else if (v.capaUrl) capa = resolveImage(v.capaUrl);
-
   const viewHref = `/descricao_vagas.html?id=${encodeURIComponent(id || "")}`;
   const editHref = `/criacao_vagas.html?id=${encodeURIComponent(id || "")}`;
-
   art.innerHTML = `
     <div class="vaga-cover">
       <img src="${capa}" alt="vaga">
@@ -281,17 +255,16 @@ function vagaCard(v){
         <a class="chip edit-link" href="${editHref}" onclick="event.stopPropagation()">Editar vaga</a>
       </div>
     </div>`;
-
-  // fallback da imagem
   const img = art.querySelector("img");
   img.addEventListener("error", () => { img.src = DEFAULT_VAGA_IMG; });
-
-  // clique no card abre a descrição
   art.addEventListener("click", () => {
     if (!id) { alert("ID da vaga não encontrado."); return; }
     window.location.href = viewHref;
   });
-
+  if (modoPublico || !isSelf) {
+    const edit = art.querySelector(".edit-link");
+    if (edit) edit.remove();
+  }
   return art;
 }
 
@@ -306,24 +279,30 @@ function renderVagas(vagas){
   vagas.forEach(v => box.appendChild(vagaCard(v)));
 }
 
-// ----------------- carregar perfil -----------------
 const defaultAvatar = "img/default-avatar.jpg";
 const defaultBanner = "img/default-banner.png";
 
 async function carregarPerfilEmpresa(){
   toggleActions();
-  if(!token || !viewedId) return;
-
+  if(!viewedId) return;
   try{
-    const [perfilRes, vagasRes] = await Promise.all([
-      fetch(`/api/empresas/${viewedId}`, { headers:{ Authorization:`Bearer ${token}` } }),
-      fetch(`/api/empresas/${viewedId}/vagas`, { headers:{ Authorization:`Bearer ${token}` } })
-    ]);
+    let perfil, vagas;
+    if (modoPublico) {
+      const [perfilRes, vagasRes] = await Promise.all([
+        fetch(`/api/empresas/${viewedId}/public`),
+        fetch(`/api/empresas/${viewedId}/vagas/public`)
+      ]);
+      perfil = await perfilRes.json();
+      vagas = await vagasRes.json();
+    } else {
+      const [perfilRes, vagasRes] = await Promise.all([
+        fetch(`/api/empresas/${viewedId}`, { headers:{ Authorization:`Bearer ${token}` } }),
+        fetch(`/api/empresas/${viewedId}/vagas`, { headers:{ Authorization:`Bearer ${token}` } })
+      ]);
+      perfil = await perfilRes.json();
+      vagas = await vagasRes.json();
+    }
 
-    const perfil = await perfilRes.json();
-    const vagas = await vagasRes.json();
-
-    // header
     const nomeEl = $("#razaoSocial");
     if (nomeEl) nomeEl.textContent = perfil.razao_social || perfil.nome || "Empresa";
 
@@ -331,9 +310,7 @@ async function carregarPerfilEmpresa(){
     if (tagEl) {
       const handle = (perfil.usuario && perfil.usuario.trim())
         ? "@"+perfil.usuario.trim()
-        : "@"+ String(perfil.razao_social || "empresa")
-            .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-            .toLowerCase().replace(/\s+/g,"");
+        : "@"+ String(perfil.razao_social || "empresa").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g,"");
       tagEl.textContent = handle;
     }
 
@@ -341,20 +318,16 @@ async function carregarPerfilEmpresa(){
     const banner = $("#bannerEmpresa"); if (banner) banner.src = perfil.bannerUrl || defaultBanner;
     const logo = $("#logoEmpresa"); if (logo) logo.src = perfil.logoUrl || defaultAvatar;
 
-    // preview dos popups
     $("#bannerPreview") && ($("#bannerPreview").src = banner?.src || defaultBanner);
     $("#logoPreview") && ($("#logoPreview").src = logo?.src || defaultAvatar);
 
-    // contatos/endereço
     const emailPublico = perfil.emailcontato || "—";
     const telPublico   = formatTelefoneBR(perfil.telefonecontato || "");
-
     $("#emailEmpresa")    && ($("#emailEmpresa").textContent = emailPublico);
     $("#telefoneEmpresa") && ($("#telefoneEmpresa").textContent = telPublico);
     $("#enderecoEmpresa") && ($("#enderecoEmpresa").textContent = perfil.endereco || "—");
     $("#cepEmpresa")      && ($("#cepEmpresa").textContent = perfil.cep || "—");
 
-    // tags
     const tagsEl = $("#listaTags");
     if (tagsEl) {
       tagsEl.innerHTML = "";
@@ -366,17 +339,12 @@ async function carregarPerfilEmpresa(){
       });
     }
 
-    // progresso
-    const progresso = typeof perfil.progresso === "number"
-      ? perfil.progresso
-      : calcProgressoEmpresaFront(perfil);
+    const progresso = typeof perfil.progresso === "number" ? perfil.progresso : calcProgressoEmpresaFront(perfil);
     setProgress(progresso);
     travarPublicacaoVaga(progresso);
 
-    // vagas
     renderVagas(Array.isArray(vagas) ? vagas : []);
 
-    // popup edição
     $("#editRazaoSocial") && ($("#editRazaoSocial").value = perfil.razao_social || perfil.nome || "");
     $("#editUsuario") && ($("#editUsuario").value = perfil.usuario || "");
     $("#editDescricao") && ($("#editDescricao").value = perfil.descricao || "");
@@ -389,29 +357,27 @@ async function carregarPerfilEmpresa(){
       $("#editTags").value = (perfil.tags || []).join(", ");
       initChipsTags();
     }
+
+    if (modoPublico) {
+      $("#btnEditar") && ($("#btnEditar").hidden = true);
+      $("#btnGerenciar") && ($("#btnGerenciar").hidden = true);
+      $("#btnPublicar") && ($("#btnPublicar").hidden = true);
+    }
   }catch(e){
     console.error("Erro ao carregar perfil:", e);
   }
 }
 
-// ----------------- salvar edição -----------------
 $("#formEdicao")?.addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (!token || !isSelf) return;
+  if (!token || !isSelf || modoPublico) return;
 
-  // normaliza o usuario igual ao backend
   const rawUsuario = $("#editUsuario")?.value || "";
-  const usuario = rawUsuario
-    .trim()
-    .replace(/^@+/, "")
-    .toLowerCase()
-    .replace(/\s+/g, "")
-    .replace(/[^a-z0-9._-]/g, "");
+  const usuario = rawUsuario.trim().replace(/^@+/, "").toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9._-]/g, "");
 
   const tags =
     $("#editTags")?._chips?.value ??
-    ($("#editTags")?.value || "")
-      .split(",").map(s => s.trim()).filter(Boolean);
+    ($("#editTags")?.value || "").split(",").map(s => s.trim()).filter(Boolean);
 
   const body = {
     razao_social: $("#editRazaoSocial")?.value,
@@ -419,7 +385,7 @@ $("#formEdicao")?.addEventListener("submit", async (e) => {
     descricao: $("#editDescricao")?.value,
     tags: [...new Set(tags)],
     emailcontato: $("#editEmailContato")?.value || null,
-    telefonecontato: ($("#editTelefoneContato")?.value || "").replace(/\D/g, ""),
+    telefonecontato: ($("#editTelefoneContato")?.value || "").replace(/\D/g, "")
   };
 
   try {
@@ -430,16 +396,13 @@ $("#formEdicao")?.addEventListener("submit", async (e) => {
     });
 
     const data = await resp.json().catch(() => ({}));
-
     if (!resp.ok) {
       const msg = data?.error || `Erro ao atualizar perfil (HTTP ${resp.status})`;
       throw new Error(msg);
     }
 
-    // feedback imediato
     setProgress(data?.progresso ?? calcProgressoEmpresaFront(data));
     travarPublicacaoVaga(data?.progresso ?? calcProgressoEmpresaFront(data));
-
     closeAllPopups();
     await carregarPerfilEmpresa();
     alert("✅ Perfil da empresa atualizado!");
@@ -449,9 +412,8 @@ $("#formEdicao")?.addEventListener("submit", async (e) => {
   }
 });
 
-// ----------------- upload imagens (logo/banner) -----------------
 async function uploadImagem(tipo) {
-  if (!isSelf) return;
+  if (!isSelf || modoPublico) return;
   const input = document.createElement("input");
   input.type = "file";
   input.accept = "image/*";
@@ -477,12 +439,9 @@ async function uploadImagem(tipo) {
         if ($("#bannerPreview")) $("#bannerPreview").src = $("#bannerEmpresa").src;
       }
 
-      const prog = typeof data?.empresa?.progresso === "number"
-        ? data.empresa.progresso
-        : calcProgressoEmpresaFront(data.empresa || {});
+      const prog = typeof data?.empresa?.progresso === "number" ? data.empresa.progresso : calcProgressoEmpresaFront(data.empresa || {});
       setProgress(prog);
       travarPublicacaoVaga(prog);
-
       alert("🖼️ Imagem enviada!");
     } catch (err) {
       console.error(err);
@@ -494,12 +453,10 @@ async function uploadImagem(tipo) {
 $("#btnNovaLogo")?.addEventListener("click", () => uploadImagem("logo"));
 $("#btnNovoBanner")?.addEventListener("click", () => uploadImagem("banner"));
 
-// denúncia (somente visual)
 $("#formDenuncia")?.addEventListener("submit", (e) => {
   e.preventDefault();
   popupDenuncia?.setAttribute("aria-hidden", "true");
   popupDenunciaOk?.setAttribute("aria-hidden", "false");
 });
 
-// init
 document.addEventListener("DOMContentLoaded", carregarPerfilEmpresa);

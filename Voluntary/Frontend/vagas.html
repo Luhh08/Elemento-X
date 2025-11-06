@@ -131,136 +131,27 @@
                 <input type="search" id="pesquisar_vagas" placeholder="Pesquisar" class="main-search-input">
                 <img src="img/lupa.png" alt="Search Icon" class="search-icon">
             </form>
-            <div class="jobs-grid">
-                <article class="job-card">
-                    <div class="job-card-image-wrapper">
-                        <img src="img/placeholdervaga.png" alt="Group of people planting trees" class="job-card-image">
-                    </div>
-                    <div class="vaga">
-                        <p class="titulo_vaga">Vaga</p>
-                        <h3 class="descricao_vaga">Descrição_vaga</h3>
-                        <div class="tags_vaga">
-                            <span class="tag-vaga">Manhã</span>
-                            <span class="tag-vaga">Educação</span>
-                            <span class="tag-vaga">Presencial</span>
-                        </div>
-                    </div>
-                    <a href="descricao_vagas.html" target="_blank" class="btn btn-details">Ver Detalhes</a>
-                </article>
-                <article class="job-card">
-                    <div class="job-card-image-wrapper">
-                        <img src="img/placeholdervaga.png" alt="Group of people planting trees" class="job-card-image">
-                    </div>
-                    <div class="vaga">
-                        <p class="titulo_vaga">Vaga</p>
-                        <h3 class="descricao_vaga">Descrição_vaga</h3>
-                        <div class="tags_vaga">
-                            <span class="tag-vaga">Manhã</span>
-                            <span class="tag-vaga">Educação</span>
-                            <span class="tag-vaga">Presencial</span>
-                        </div>
-                    </div>
-                    <a href="descricao_vagas.html" target="_blank" class="btn btn-details">Ver Detalhes</a>
-                </article>
-                <article class="job-card">
-                    <div class="job-card-image-wrapper">
-                        <img src="img/placeholdervaga.png" alt="Group of people planting trees" class="job-card-image">
-                    </div>
-                    <div class="vaga">
-                        <p class="titulo_vaga">Vaga</p>
-                        <h3 class="descricao_vaga">Descrição_vaga</h3>
-                        <div class="tags_vaga">
-                            <span class="tag-vaga">Manhã</span>
-                            <span class="tag-vaga">Educação</span>
-                            <span class="tag-vaga">Presencial</span>
-                        </div>
-                    </div>
-                    <a href="descricao_vagas.html" target="_blank" class="btn btn-details">Ver Detalhes</a>
-                </article>
-                <article class="job-card">
-                    <div class="job-card-image-wrapper">
-                        <img src="img/placeholdervaga.png" alt="Group of people planting trees" class="job-card-image">
-                    </div>
-                    <div class="vaga">
-                        <p class="titulo_vaga">Vaga</p>
-                        <h3 class="descricao_vaga">Descrição_vaga</h3>
-                        <div class="tags_vaga">
-                            <span class="tag-vaga">Manhã</span>
-                            <span class="tag-vaga">Educação</span>
-                            <span class="tag-vaga">Presencial</span>
-                        </div>
-                    </div>
-                    <a href="descricao_vagas.html" target="_blank" class="btn btn-details">Ver Detalhes</a>
-                </article>
-                <article class="job-card">
-                    <div class="job-card-image-wrapper">
-                        <img src="img/placeholdervaga.png" alt="Group of people planting trees" class="job-card-image">
-                    </div>
-                    <div class="vaga">
-                        <p class="titulo_vaga">Vaga</p>
-                        <h3 class="descricao_vaga">Descrição_vaga</h3>
-                        <div class="tags_vaga">
-                            <span class="tag-vaga">Manhã</span>
-                            <span class="tag-vaga">Educação</span>
-                            <span class="tag-vaga">Presencial</span>
-                        </div>
-                    </div>
-                    <a href="descricao_vagas.html" target="_blank" class="btn btn-details">Ver Detalhes</a>
-                </article>
-                <article class="job-card">
-                    <div class="job-card-image-wrapper">
-                        <img src="img/placeholdervaga.png" alt="Group of people planting trees" class="job-card-image">
-                    </div>
-                    <div class="vaga">
-                        <p class="titulo_vaga">Vaga</p>
-                        <h3 class="descricao_vaga">Descrição_vaga</h3>
-                        <div class="tags_vaga">
-                            <span class="tag-vaga">Manhã</span>
-                            <span class="tag-vaga">Educação</span>
-                            <span class="tag-vaga">Presencial</span>
-                        </div>
-                    </div>
-                    <a href="descricao_vagas.html" target="_blank" class="btn btn-details">Ver Detalhes</a>
-                </article>
-               
-            <nav class="pagination">
-                <a href="#" class="pagination-link prev-link">
-                    <img src="img/arrowleft.png" alt="Previous">
-                    Previous
-                </a>
-                <div class="pagination-pages">
-                    <a href="#" class="pagination-link page-number active">1</a>
-                    <a href="#" class="pagination-link page-number">2</a>
-                    <a href="#" class="pagination-link page-number">3</a>
-                    <span class="pagination-ellipsis">...</span>
-                    <a href="#" class="pagination-link page-number">9</a>
-                    <a href="#" class="pagination-link page-number">10</a>
-                </div>
-                <a href="#" class="pagination-link next-link">
-                    Next
-                    <img src="../img/arrowright.png" alt="Next">
-                </a>
-            </nav>
-        </main>
-    </div>
-</section>
+            
+            <div class="jobs-grid" id="jobsGrid"></div>
+            <nav class="pagination">...</nav>
 <script>
 (() => {
-  // ————— estado —————
-  const active = new Set();     // tags ativas
-  const ALL_TAGS = [
-    "Animais","Arrecadação","Crianças","Cultura","Educação","Híbrido",
-    "Idosos","Limpeza","Manhã","Meio Ambiente","Noite","Noturno",
-    "Presencial","Remoto","Tecnologia","Saúde"
-  ];
+  // estado
+  const active = new Set();
+  let ALL_TAGS = [];
 
-  // ————— refs —————
-  const $ = (s)=>document.querySelector(s);
+  // refs
+  const $ = (s) => document.querySelector(s);
   const resultsBox = $("#tagResults");
   const activeBar  = $("#tagActiveBar");
   const searchIn   = $("#pesquisar_tags");
 
-  // ————— render chips ativos —————
+  // API base
+  const SAME_ORIGIN = location.origin.includes(':3000');
+  const API_BASE    = SAME_ORIGIN ? '/api' : 'http://localhost:3000/api';
+  const TAGS_URL    = `${API_BASE}/tags`;
+
+  // desenha chips ativos
   function renderActive(){
     activeBar.innerHTML = "";
     active.forEach(tag => {
@@ -277,10 +168,13 @@
     });
   }
 
-  // ————— render resultados (aparecem só quando há texto) —————
+  // resultados da busca (mostra quando tiver texto)
   function renderResults(){
     const q = (searchIn.value || "").trim().toLowerCase();
-    const matches = !q ? [] : ALL_TAGS.filter(t => t.toLowerCase().includes(q) && !active.has(t));
+    const matches = !q
+      ? []
+      : ALL_TAGS.filter(t => t.toLowerCase().includes(q) && !active.has(t));
+
     resultsBox.innerHTML = "";
     resultsBox.hidden = matches.length === 0;
 
@@ -294,10 +188,10 @@
       const cb = pill.querySelector("input");
       cb.addEventListener("change", () => {
         if (cb.checked){
-          active.add(tag);         // vira filtro ativo
-          cb.checked = false;      // limpa visual
-          renderActive();          // mostra em cima
-          renderResults();         // some da lista de resultados
+          active.add(tag);
+          cb.checked = false;
+          renderActive();
+          renderResults();
           applyFilters();
         }
       });
@@ -305,24 +199,45 @@
     });
   }
 
-  // ————— aplica filtros nos cards (título/descrição/tags) —————
-  function applyFilters(){
+  // filtra cards já renderizados
+  window.applyFilters = function applyFilters(){
     const want = Array.from(active).map(s => s.toLowerCase());
     document.querySelectorAll(".job-card").forEach(card => {
-      const tags = Array.from(card.querySelectorAll(".tag-vaga")).map(e => e.textContent.trim().toLowerCase());
-      const ok = want.every(t => tags.includes(t)); // todas as ativas devem estar no card
-      card.hidden = !ok && want.length > 0 ? true : false;
+      const tags = Array.from(card.querySelectorAll(".tag-vaga"))
+        .map(e => e.textContent.trim().toLowerCase());
+      const ok = want.every(t => tags.includes(t));
+      card.hidden = !ok && want.length > 0;
     });
+  };
+
+  // carrega todas as tags do backend
+  async function loadAllTags(){
+    try {
+      const res = await fetch(TAGS_URL, { headers: { 'Accept':'application/json' } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      // prioridade: 'tags' se veio separado; senão 'all'
+      ALL_TAGS = (data.tags && data.tags.length ? data.tags : data.all) || [];
+      // fallback se vier vazio
+      if (!ALL_TAGS.length) ALL_TAGS = [];
+    } catch (e) {
+      console.error('Falha ao buscar tags, usando lista vazia:', e);
+      ALL_TAGS = [];
+    } finally {
+      renderResults(); // atualiza a lista conforme o que já foi digitado
+    }
   }
 
-  // ————— eventos —————
+  // eventos
   searchIn.addEventListener("input", renderResults);
 
   // start
   renderActive();
-  renderResults();
+  loadAllTags();   // <- busca dinâmico
 })();
 </script>
+<script src="scripts/vagas.js"></script>
 <script src="scripts/notificacoes.js"></script>
 </body>
 </html>

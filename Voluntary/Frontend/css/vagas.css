@@ -173,7 +173,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;padding:0}
 /* imagem uniforme */
 .job-card-image-wrapper{
   position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;border-radius:var(--radius-8);
-  background:#f3f4f6;line-height:0;margin:0 0 12px;
+  background:#f3f4f6;line-height:0;margin:0 0;
 }
 .job-card-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 
@@ -224,3 +224,38 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;padding:0}
 
 .hidden{display:none}
 
+h3 {
+    margin-bottom: 10px;
+    margin-top: 0px;
+}
+
+.empresa-mini{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:4px;        /* fica logo abaixo do título */
+  text-decoration:none;
+  color:#0f172a;
+}
+
+.empresa-mini:hover .empresa-nome{
+  text-decoration: underline;
+}
+
+.empresa-avatar{
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  object-fit:cover;
+  border:1px solid #e5e7eb;
+  flex:0 0 24px;
+}
+
+.empresa-nome{
+  font-size:14px;
+  font-weight:500;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

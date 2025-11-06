@@ -42,6 +42,7 @@ app.use("/api", empresaRoutes);
 app.use("/api", vagaRoutes);
 app.use('/api/admin', adminRoutes);
 app.get('/api/admin/painel', authAdmin, (req,res)=>res.json({ok:true}));
+app.use("/api/empresas", empresaRoutes);
 
 /* 404 só para /api (depois de todas as rotas /api) */
 app.use("/api", (_req, res) => res.status(404).json({ error: "Rota não encontrada" }));
