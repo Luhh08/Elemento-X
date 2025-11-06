@@ -259,9 +259,13 @@ function vagaCard(v){
   const art = document.createElement("article");
   art.className = "vaga-card";
 
+  const id = v.id ?? v._id ?? v.vagaId ?? v.uuid;
+  if (!id) console.warn("Vaga sem ID válido:", v);
+
   let capa = DEFAULT_VAGA_IMG;
   if (Array.isArray(v.imagens) && v.imagens.length) capa = resolveImage(v.imagens[0]);
   else if (v.capaUrl) capa = resolveImage(v.capaUrl);
+  const editHref = `/criacao_vagas.html?id=${encodeURIComponent(id || "")}`;
 
   art.innerHTML = `
     <img src="${capa}" alt="vaga">
@@ -270,15 +274,21 @@ function vagaCard(v){
       <p class="vaga-sub">${(v.tags||[]).join(", ") || "—"}</p>
       <div class="row">
         <span class="status ${statusClass(v.status)}">${statusLabel(v.status)}</span>
-        <a class="chip" href="descricao_vagas.html?id=${v.id}">Editar vaga</a>
+        <a class="chip" href="${editHref}">Editar vaga</a>
       </div>
     </div>`;
 
   const img = art.querySelector("img");
   img.addEventListener("error", () => { img.src = DEFAULT_VAGA_IMG; });
 
+  const btn = art.querySelector("a.chip");
+  btn.addEventListener("click", (e) => {
+    if (!id) { e.preventDefault(); alert("ID da vaga não encontrado."); }
+  });
+
   return art;
 }
+
 function renderVagas(vagas){
   const box = $("#listaVagas");
   if(!box) return;

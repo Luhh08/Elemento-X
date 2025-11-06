@@ -492,73 +492,99 @@ async function listarVagasDaEmpresa(req, res, next) {
   } catch (e) { next(e); }
 }
 
-// === ALTERADO: agora aceita req.files (imagens) e junta com URLs do body ===
+const isValidObjectId = (s) => typeof s === "string" && /^[0-9a-fA-F]{24}$/.test(s);
+
+function normalizeList(value) {
+  // aceita: array ["a","b"], "a,b", " a , b ", undefined
+  if (Array.isArray(value)) {
+    return value
+      .flatMap(v => String(v).split(","))
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+  if (typeof value === "string") {
+    return value.split(",").map(s => s.trim()).filter(Boolean);
+  }
+  return [];
+}
+
 async function criarVagaParaEmpresa(req, res, next) {
   try {
     const { id } = req.params; // empresaId
 
-    // BLOQUEIO: exige 100% do perfil
-    const empresa = await prisma.empresa.findUnique({ where: { id } });
-    if (!empresa) return res.status(404).json({ error: "Empresa não encontrada" });
+    // 1) valida empresaId antes do Prisma (evita P2023)
+    if (!id || id === "null" || !isValidObjectId(id)) {
+      return res.status(400).json({ error: "empresaId inválido" });
+    }
 
+    // 2) empresa existe?
+    const empresa = await prisma.empresa.findUnique({ where: { id } });
+    if (!empresa) {
+      return res.status(404).json({ error: "Empresa não encontrada" });
+    }
+
+    // 3) bloqueio de perfil < 100%
     const progresso = calcProgresso(empresa);
     if (progresso < 100) {
       return res.status(403).json({
         error: "Complete 100% do perfil da empresa para publicar uma vaga.",
         progressoAtual: progresso
+        // (opcional) envie também "faltando": camposFaltando(empresa)
       });
     }
 
+    // 4) coleta e normalização de campos
     const {
-      titulo,
-      descricao,
-      tags,
-      local,
-      turno,
+      titulo = "",
+      descricao = "",
+      local = "",
+      status = "ABERTA",
       dataInicio,
       dataFim,
-      status,
-      imagens, // pode vir como array de URLs ou CSV
+      tags,                  // pode vir array ou string (FormData)
+      turno,                 // idem
+      imagens,               // URLs no body (opcional)
+      imagens_existentes,    // URLs de imagens já salvas (manter)
     } = req.body;
 
-    // 1) URLs vindas no body (opcional)
-    let bodyUrls = [];
-    if (Array.isArray(imagens)) {
-      bodyUrls = imagens.filter(Boolean);
-    } else if (typeof imagens === "string" && imagens.trim()) {
-      bodyUrls = imagens.split(",").map(s => s.trim()).filter(Boolean);
+    if (!String(titulo).trim()) {
+      return res.status(400).json({ error: "Título é obrigatório." });
     }
 
-    // 2) URLs geradas pelos arquivos enviados (req.files)
-    // manteremos coerente com upload de empresa: URL RELATIVA
+    const tagsNorm  = normalizeList(tags);
+    const turnos    = normalizeList(turno);
+    const antigas   = normalizeList(imagens_existentes);
+    const bodyUrls  = normalizeList(imagens);
+
+    // 5) arquivos enviados (coerente com upload da empresa: URL RELATIVA)
     const fileUrls = (req.files || []).map(f => `/uploads/${f.filename}`);
 
-    const todasAsImagens = [...bodyUrls, ...fileUrls];
+    // 6) dedupe das imagens finais
+    const imagensFinais = Array.from(new Set([...antigas, ...bodyUrls, ...fileUrls]));
 
+    // 7) cria a vaga
     const vaga = await prisma.vaga.create({
       data: {
         empresaId: id,
-        titulo,
-        descricao,
-        tags: Array.isArray(tags)
-          ? tags
-          : (typeof tags === "string" ? tags.split(",").map(s=>s.trim()).filter(Boolean) : []),
-        local,
-        turno: Array.isArray(turno)
-          ? turno
-          : (typeof turno === "string" ? turno.split(",").map(s=>s.trim()).filter(Boolean) : []),
-        status,
+        titulo: String(titulo).trim(),
+        descricao: String(descricao).trim(),
+        tags: tagsNorm,
+        local: String(local).trim(),
+        turno: turnos,
+        status: String(status || "ABERTA").toUpperCase(),
         dataInicio: dataInicio ? new Date(dataInicio) : null,
-        dataFim: dataFim ? new Date(dataFim) : null,
-        imagens: todasAsImagens, // usa seu campo existente (String[])
+        dataFim:    dataFim    ? new Date(dataFim)    : null,
+        imagens: imagensFinais, // campo String[]
       },
     });
 
-    res.status(201).json(vaga);
+    return res.status(201).json(vaga);
   } catch (e) {
-    next(e);
+    return next(e);
   }
 }
+
+
 
 module.exports = {
   registrarEmpresa,
