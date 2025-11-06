@@ -294,7 +294,7 @@ el.salvar?.addEventListener("click", async (e) => {
       if (!resp.ok) throw new Error(json?.error || `Erro ao criar vaga (HTTP ${resp.status})`);
       const novoId = json.id || json._id;
       alert("✅ Vaga criada!");
-      location.href = `/criacao_vagas.html?id=${encodeURIComponent(novoId)}`; // já abre em edição
+      location.href = `/descricao_vagas.html?id=${encodeURIComponent(novoId)}`; // já abre em edição
     }
   } catch (err) {
     console.error(err);

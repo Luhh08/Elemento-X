@@ -581,3 +581,6 @@ a.chip:hover { filter: brightness(.98); }
   object-fit: cover;
   display: block;
 }
+
+.vaga-card.clickable { cursor: pointer; }
+.vaga-card .edit-link { cursor: pointer; }
