@@ -21,18 +21,21 @@ if (!modoPublico && (!token || !empresaId || !tipoConta.includes("empresa"))) {
 
 function toggleActions() {
   const show = (sel, state) => { const el = document.querySelector(sel); if (el) el.hidden = !state; };
+
   if (modoPublico) {
     show("#btnEditar", false);
     show("#btnGerenciar", false);
     show("#btnPublicar", false);
-    show("#btnDenunciar", false);
+    show("#btnDenunciar", true);   // <- aqui
     return;
   }
+
   show("#btnEditar", isSelf);
   show("#btnDenunciar", !isSelf);
   show("#btnGerenciar", isSelf);
   show("#btnPublicar", isSelf);
 }
+
 
 const popupEdicao = $("#popupEdicao");
 const popupDenuncia = $("#popupDenuncia");
@@ -288,6 +291,8 @@ async function carregarPerfilEmpresa(){
   try{
     let perfil, vagas;
     if (modoPublico) {
+      const wrap = document.getElementById("progressWrap") || document.querySelector(".progress-wrap");
+      if (wrap) wrap.style.display = "none";
       const [perfilRes, vagasRes] = await Promise.all([
         fetch(`/api/empresas/${viewedId}/public`),
         fetch(`/api/empresas/${viewedId}/vagas/public`)
@@ -345,6 +350,11 @@ async function carregarPerfilEmpresa(){
 
     renderVagas(Array.isArray(vagas) ? vagas : []);
 
+const tituloVagas = document.querySelector(".titulo-vagas") || document.querySelector("#tituloVagas");
+if (tituloVagas) {
+  if (modoPublico || !isSelf) tituloVagas.textContent = "Vagas da empresa";
+  else tituloVagas.textContent = "Minhas vagas";
+}
     $("#editRazaoSocial") && ($("#editRazaoSocial").value = perfil.razao_social || perfil.nome || "");
     $("#editUsuario") && ($("#editUsuario").value = perfil.usuario || "");
     $("#editDescricao") && ($("#editDescricao").value = perfil.descricao || "");

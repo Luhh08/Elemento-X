@@ -23,9 +23,9 @@
     </a>
 
     <nav class="main-navigation"></nav>
+    
 
     <div class="header-actions">
-      <!-- 🔔 Painel de notificações integrado -->
       <div class="notification-wrapper" id="notificationWrapper">
         <button id="notifBtn" class="icon-btn" title="Notificações">
           <i class="fa-solid fa-bell"></i>
@@ -52,17 +52,16 @@
         </div>
       </div>
 
-      <!-- 👤 Menu do usuário -->
       <div class="user-menu">
         <img src="img/default-avatar.jpg" alt="Foto do usuário" class="user-avatar" id="userAvatar">
         <div class="dropdown-menu" id="dropdownMenu">
-          <a href="../Frontend/perfil-usuario.html" class="dropdown-item">
+          <a href="../perfil-usuario.html" class="dropdown-item">
             <span class="icon"><i class="fa-solid fa-user"></i></span> Perfil
           </a>
           <a href="configuracoes.html" class="dropdown-item">
             <span class="icon"><i class="fa-solid fa-gear"></i></span> Configurações
           </a>
-          <a href="../Frontend/login.html" class="dropdown-item logout">
+          <a href="../login.html" class="dropdown-item logout">
             <span class="icon"><i class="fa-solid fa-arrow-right-from-bracket"></i></span> Sair
           </a>
         </div>
@@ -236,6 +235,21 @@
   renderActive();
   loadAllTags();   // <- busca dinâmico
 })();
+</script>
+<script>
+    const avatar = document.getElementById('userAvatar');
+    const dropdown = document.getElementById('dropdownMenu');
+
+    avatar.addEventListener('click', () => {
+        dropdown.classList.toggle('active');
+    });
+
+    // Fechar o menu ao clicar fora
+    window.addEventListener('click', function(e) {
+        if (!avatar.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('active');
+        }
+    });
 </script>
 <script src="scripts/vagas.js"></script>
 <script src="scripts/notificacoes.js"></script>

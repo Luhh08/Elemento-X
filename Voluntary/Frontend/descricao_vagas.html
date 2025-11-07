@@ -353,24 +353,28 @@ updateApplyVisibility();
     }
   }
 
-  function applyPreview(p){
-    if (!p) return;
-    el.title.textContent   = p.titulo || "Vaga";
-    el.company.textContent = p.empresa || p.empresaNome || "Empresa";
-    el.desc.textContent    = p.descricao || "—";
-    el.loc.textContent     = p.local || "—";
-    el.turno.textContent   = ensureArray(p.turno).join(", ") || "—";
-    el.ini.textContent     = fmtBR(p.dataInicio);
-    el.fim.textContent     = fmtBR(p.dataFim);
+function applyPreview(p){
+  if (!p) return;
+  el.title.textContent   = p.titulo || "Vaga";
+  el.company.textContent = p.empresa || p.empresaNome || "Empresa";
+  el.desc.textContent    = p.descricao || "—";
+  el.loc.textContent     = p.local || "—";
+  el.turno.textContent   = ensureArray(p.turno).join(", ") || "—";
+  el.ini.textContent     = fmtBR(p.dataInicio);
+  el.fim.textContent     = fmtBR(p.dataFim);
 
-    const s = mapStatus(p.status);
-    if (el.status) {
-      el.status.textContent = s.label;
-      el.status.className = "status-badge " + s.cls;
-    }
+  const s = mapStatus(p.status);
+  if (el.status) {
+    el.status.textContent = s.label;
+    el.status.className = "status-badge " + s.cls;
+    el.status.setAttribute("data-status", p.status || "");
+  }
 
-    el.tags.innerHTML = "";
-    (p.tags || []).forEach(t=>{
+  updateApplyVisibility(p.status);
+
+  el.tags.innerHTML = "";
+  (p.tags
+ || []).forEach(t=>{
       const b = document.createElement("button");
       b.className = "tag";
       b.textContent = t;
@@ -380,12 +384,10 @@ updateApplyVisibility();
     mountCarousel(p.imagens);
   }
 
-  // preview ao vivo (iframe)
   window.addEventListener("message", (ev)=>{
     if (ev?.data?.type === "VAGA_PREVIEW") applyPreview(ev.data.payload);
   });
 
-  // detectar dono da vaga (para ocultar "Denunciar")
   function extractOwnerId(v){
     return v?.empresa?.id || v?.empresaId || v?.ownerId || v?.usuarioId || null;
   }
