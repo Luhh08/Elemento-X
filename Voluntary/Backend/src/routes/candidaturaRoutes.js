@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { criar, listar, atualizarStatus } = require("../controllers/candidaturaController");
 const { autenticarToken } = require("../middlewares/authMiddleware");
+const ctrl = require("../controllers/candidaturaController");
 
-
-router.get("/candidaturas", listar);
-router.post("/candidaturas", autenticarToken, criar);
-router.patch("/candidaturas/:id", autenticarToken, atualizarStatus);
+router.post("/candidaturas", autenticarToken, ctrl.criarCandidatura);
+router.get("/candidaturas", autenticarToken, ctrl.listarCandidaturas);
+router.get("/candidaturas/da-vaga/:vagaId", autenticarToken, ctrl.listarCandidaturasDaVaga);
+router.patch("/candidaturas/:id", autenticarToken, ctrl.atualizarStatus);
 
 module.exports = router;

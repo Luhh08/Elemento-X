@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="css/notificacoes.css">
   <style>
-    /* reforço para cobrir a área toda do carrossel quando o CSS externo ainda não carregou */
     .carousel{position:relative;overflow:hidden;height:300px;display:flex;align-items:center;background:#000}
     @media (max-width: 900px){ .carousel{height:220px} }
     .carousel-track{display:flex;transition:transform .35s ease;height:100%}
@@ -19,34 +18,26 @@
   <header class="site-header">
     <div class="brand">Voluntary</div>
     <div class="header-actions">
-
-        <div class="notification-wrapper" id="notificationWrapper">
-  <button id="notifBtn" class="icon-btn" title="Notificações">
-    <i class="fa-solid fa-bell"></i>
-  </button>
-
-  <!-- Painel popup de notificações -->
-  <div class="notif-panel" id="notifPanel">
-    <div class="notif-header">Notificações</div>
-
-    <div class="notif-item">
+      <div class="notification-wrapper" id="notificationWrapper">
+        <button id="notifBtn" class="icon-btn" title="Notificações">
+          <i class="fa-solid fa-bell"></i>
+        </button>
+        <div class="notif-panel" id="notifPanel">
+          <div class="notif-header">Notificações</div>
+          <div class="notif-item">
             <div class="notif-title">Nova mensagem recebida <i class="fa-solid fa-envelope"></i></div>
             <div class="notif-time">Há 2 minutos</div>
-        </div>
-
-        <div class="notif-item">
+          </div>
+          <div class="notif-item">
             <div class="notif-title">Seu cadastro foi aprovado <i class="fa-solid fa-check"></i></div>
             <div class="notif-time">Há 15 minutos</div>
-        </div>
-
-        <div class="notif-item">
+          </div>
+          <div class="notif-item">
             <div class="notif-title">Projeto “Verde Limpo” precisa de voluntários <i class="fa-solid fa-seedling"></i></div>
             <div class="notif-time">Há 1 hora</div>
+          </div>
         </div>
-  </div>
-</div>
-
-
+      </div>
       <div class="avatar"><a href="perfil-usuario.html"><img src="img/default-avatar.jpg" width="22" height="22" alt="perfil"></a></div>
     </div>
   </header>
@@ -66,7 +57,6 @@
           <h1 id="jobTitle" class="job-title">Vaga</h1>
           <div id="companyName" class="company">Nome_empresa</div>
 
-          <!-- ações alinhadas à direita -->
           <div class="job-actions">
             <button id="reportBtn" class="btn pill danger">Denunciar</button>
             <button id="editBtn" class="btn pill">Editar vaga</button>
@@ -111,13 +101,13 @@
           </div>
         </div>
 
-        <!-- painel de aplicação no canto -->
+        <!-- painel de aplicação -->
         <div class="apply-panel">
           <div class="apply-note">
             Ao clicar no botão de aplicar vaga, os seus dados serão enviados para a empresa
           </div>
           <div class="apply-row">
-            <button id="applyBtn" data-vaga-id="{{vaga.id}}" class="apply-btn">Aplicar</button>
+            <button id="applyBtn" data-vaga-id="" class="apply-btn">Aplicar</button>
           </div>
         </div>
       </section>
@@ -142,7 +132,6 @@
     </div>
   </div>
 
-  <!-- Confirmar exclusão -->
   <div id="confirmDelete" class="modal" aria-hidden="true">
     <div class="modal-content">
       <h3>Excluir vaga</h3>
@@ -164,48 +153,34 @@
   const vagaId = qs.get("id");
   if (live) document.body.classList.add("live");
 
-// --- botões de ação ---
-const btnEdit   = document.getElementById("editBtn");
-const btnDelete = document.getElementById("deleteBtn");
-const btnReport = document.getElementById("reportBtn");
+  const btnEdit   = document.getElementById("editBtn");
+  const btnDelete = document.getElementById("deleteBtn");
+  const btnReport = document.getElementById("reportBtn");
 
-// 1) Esconde por padrão (evita piscar para não-donos)
-[btnEdit, btnDelete].forEach(b => { if (b) b.style.display = "none"; });
+  [btnEdit, btnDelete].forEach(b => { if (b) b.style.display = "none"; });
 
-// util: pega id do dono da vaga
-function getOwnerIdFromVaga(v){
-  return v?.empresaId || v?.empresa?.id || v?.ownerId || v?.usuarioId || null;
-}
-// util: pega id da empresa logada (padrão do seu login_empresa.js)
-function getLoggedEmpresaId(){
-  // você salva empresaId no login de empresa e remove userId
-  return localStorage.getItem("empresaId") || null;
-}
+  function getOwnerIdFromVaga(v){
+    return v?.empresaId || v?.empresa?.id || v?.ownerId || v?.usuarioId || null;
+  }
+  function getLoggedEmpresaId(){
+    return localStorage.getItem("empresaId") || null;
+  }
 
-// --- EDITAR ---
-if (btnEdit){
-  btnEdit.addEventListener("click", ()=>{
-    const qs = new URLSearchParams(location.search);
-    const vagaId = qs.get("id");
-    if (!vagaId){ alert("ID da vaga não encontrado."); return; }
-    location.href = `criacao_vagas.html?modo=editar&id=${encodeURIComponent(vagaId)}`;
-  });
-}
+  if (btnEdit){
+    btnEdit.addEventListener("click", ()=>{
+      const id = new URLSearchParams(location.search).get("id");
+      if (!id){ alert("ID da vaga não encontrado."); return; }
+      location.href = `criacao_vagas.html?modo=editar&id=${encodeURIComponent(id)}`;
+    });
+  }
 
-// --- EXCLUIR (com confirmação) ---
-// (fica como estava)
-
-
-  // --- EXCLUIR (com confirmação) ---
   const confirmModal     = document.getElementById("confirmDelete");
   const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
-
   if (btnDelete && confirmModal && confirmDeleteBtn){
     btnDelete.addEventListener("click", ()=>{
       if (!vagaId){ alert("ID da vaga não encontrado."); return; }
       openModal(confirmModal);
     });
-
     confirmDeleteBtn.addEventListener("click", async ()=>{
       const token = localStorage.getItem("token");
       confirmDeleteBtn.disabled = true;
@@ -223,7 +198,7 @@ if (btnEdit){
           throw new Error(data?.error || `Falha ao excluir (HTTP ${resp.status})`);
         }
         closeModal(confirmModal);
-        location.href = "vagas.html"; // ajuste se sua lista tiver outro nome
+        location.href = "vagas.html";
       }catch(err){
         alert(err.message || "Não foi possível excluir a vaga.");
       }finally{
@@ -233,7 +208,6 @@ if (btnEdit){
     });
   }
 
-  // --- elementos de conteúdo ---
   const el = {
     title:  document.getElementById("jobTitle"),
     company:document.getElementById("companyName"),
@@ -248,37 +222,29 @@ if (btnEdit){
     prev:   document.getElementById("prevBtn"),
     next:   document.getElementById("nextBtn"),
   };
-  
-// elementos do painel de aplicação
-const applyPanel  = document.querySelector(".apply-panel");
-const applyBtnEl  = document.getElementById("applyBtn");
-const applyNoteEl = document.querySelector(".apply-note");
 
-// detecta conta de empresa
-function isEmpresaAccount(){
-  const t = (localStorage.getItem("tipoConta") || localStorage.getItem("role") || "").toLowerCase();
-  if (t.includes("empresa")) return true;
-  if (localStorage.getItem("empresaId")) return true;
-  if (localStorage.getItem("isEmpresa") === "1") return true;
-  return false;
-}
+  const applyPanel  = document.querySelector(".apply-panel");
+  const applyBtnEl  = document.getElementById("applyBtn");
+  const applyNoteEl = document.querySelector(".apply-note");
 
-// status que escondem o botão
-function shouldHideApply(status){
-  const s = String(status || "").toUpperCase();
-  return ["INSCRICOES_FINALIZADAS","ANDAMENTO","FINALIZADA"].includes(s);
-}
-
-// aplica visibilidade
-function updateApplyVisibility(status){
-  const hide = isEmpresaAccount() || shouldHideApply(status);
-  if (applyPanel)  applyPanel.style.display  = hide ? "none" : "";
-  if (applyBtnEl)  applyBtnEl.style.display  = hide ? "none" : "";
-  if (applyNoteEl) applyNoteEl.style.display = hide ? "none" : "";
-}
-
-// estado inicial (antes de carregar a vaga/preview)
-updateApplyVisibility();
+  function isEmpresaAccount(){
+    const t = (localStorage.getItem("tipoConta") || localStorage.getItem("role") || "").toLowerCase();
+    if (t.includes("empresa")) return true;
+    if (localStorage.getItem("empresaId")) return true;
+    if (localStorage.getItem("isEmpresa") === "1") return true;
+    return false;
+  }
+  function shouldHideApply(status){
+    const s = String(status || "").toUpperCase();
+    return ["INSCRICOES_FINALIZADAS","ANDAMENTO","FINALIZADA"].includes(s);
+  }
+  function updateApplyVisibility(status){
+    const hide = isEmpresaAccount() || shouldHideApply(status);
+    if (applyPanel)  applyPanel.style.display  = hide ? "none" : "";
+    if (applyBtnEl)  applyBtnEl.style.display  = hide ? "none" : "";
+    if (applyNoteEl) applyNoteEl.style.display = hide ? "none" : "";
+  }
+  updateApplyVisibility();
 
   function resolveImage(src) {
     const FALLBACK = DEFAULT_VAGA_IMG;
@@ -353,28 +319,27 @@ updateApplyVisibility();
     }
   }
 
-function applyPreview(p){
-  if (!p) return;
-  el.title.textContent   = p.titulo || "Vaga";
-  el.company.textContent = p.empresa || p.empresaNome || "Empresa";
-  el.desc.textContent    = p.descricao || "—";
-  el.loc.textContent     = p.local || "—";
-  el.turno.textContent   = ensureArray(p.turno).join(", ") || "—";
-  el.ini.textContent     = fmtBR(p.dataInicio);
-  el.fim.textContent     = fmtBR(p.dataFim);
+  function applyPreview(p){
+    if (!p) return;
+    el.title.textContent   = p.titulo || "Vaga";
+    el.company.textContent = p.empresa || p.empresaNome || "Empresa";
+    el.desc.textContent    = p.descricao || "—";
+    el.loc.textContent     = p.local || "—";
+    el.turno.textContent   = ensureArray(p.turno).join(", ") || "—";
+    el.ini.textContent     = fmtBR(p.dataInicio);
+    el.fim.textContent     = fmtBR(p.dataFim);
 
-  const s = mapStatus(p.status);
-  if (el.status) {
-    el.status.textContent = s.label;
-    el.status.className = "status-badge " + s.cls;
-    el.status.setAttribute("data-status", p.status || "");
-  }
+    const s = mapStatus(p.status);
+    if (el.status) {
+      el.status.textContent = s.label;
+      el.status.className = "status-badge " + s.cls;
+      el.status.setAttribute("data-status", p.status || "");
+    }
 
-  updateApplyVisibility(p.status);
+    updateApplyVisibility(p.status);
 
-  el.tags.innerHTML = "";
-  (p.tags
- || []).forEach(t=>{
+    el.tags.innerHTML = "";
+    (p.tags || []).forEach(t=>{
       const b = document.createElement("button");
       b.className = "tag";
       b.textContent = t;
@@ -388,12 +353,10 @@ function applyPreview(p){
     if (ev?.data?.type === "VAGA_PREVIEW") applyPreview(ev.data.payload);
   });
 
-  // detectar dono da vaga (para ocultar "Denunciar")
   function extractOwnerId(v){
     return v?.empresa?.id || v?.empresaId || v?.ownerId || v?.usuarioId || null;
   }
 
-  // carregar vaga real
   async function loadVagaReal() {
     if (!vagaId || live) return;
     try {
@@ -401,7 +364,6 @@ function applyPreview(p){
       if (!resp.ok) throw new Error("vaga não encontrada");
       const v = await resp.json();
 
-      // esconder "Denunciar" se o usuário logado for o dono
       try{
         const loggedId = localStorage.getItem("userId") || localStorage.getItem("empresaId");
         const ownerId  = extractOwnerId(v);
@@ -413,12 +375,8 @@ function applyPreview(p){
       let imgs = [];
       if (Array.isArray(v.imagens)) imgs = v.imagens;
       else if (typeof v.imagens === "string") {
-        try {
-          const parsed = JSON.parse(v.imagens);
-          imgs = Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
-        } catch {
-          imgs = v.imagens ? [v.imagens] : [];
-        }
+        try { const parsed = JSON.parse(v.imagens); imgs = Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []); }
+        catch { imgs = v.imagens ? [v.imagens] : []; }
       }
       if (v.capaUrl && !imgs.length) imgs = [v.capaUrl];
 
@@ -434,13 +392,77 @@ function applyPreview(p){
         status: v.status,
         imagens: imgs
       });
+
+      if (applyBtnEl) applyBtnEl.dataset.vagaId = v.id || vagaId; // garante o id no botão
     } catch(e){
       console.error(e);
       applyPreview({ imagens: [DEFAULT_VAGA_IMG] });
     }
   }
 
+  // === INTEGRAÇÃO DO BOTÃO "APLICAR" COM O BACKEND ===
+  function wireApplyButton(){
+    if (!applyBtnEl) return;
+
+    // se veio pelo query, já preenche o data-vaga-id
+    if (vagaId && !applyBtnEl.dataset.vagaId) {
+      applyBtnEl.dataset.vagaId = vagaId;
+    }
+
+    applyBtnEl.addEventListener("click", async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Você precisa estar logado para se candidatar.");
+        return;
+      }
+
+      const id = applyBtnEl.dataset.vagaId || vagaId;
+      if (!id) {
+        alert("ID da vaga não encontrado.");
+        return;
+      }
+
+      // status atual pode esconder o botão; se ainda estiver aparecendo, segue
+      applyBtnEl.disabled = true;
+      const originalLabel = applyBtnEl.textContent;
+      applyBtnEl.textContent = "Enviando...";
+
+      try {
+        const resp = await fetch("/api/candidaturas", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ vagaId: id })
+        });
+
+        const data = await resp.json().catch(()=> ({}));
+
+        if (!resp.ok) {
+          const msg = data?.error || (resp.status === 409 ? "Você já possui candidatura para esta vaga." : "Erro ao enviar candidatura.");
+          alert(msg);
+          return;
+        }
+
+        alert("✅ Candidatura enviada com sucesso!");
+        updateApplyVisibility("INSCRICOES_FINALIZADAS"); // opcional: esconde após aplicar
+      } catch (err) {
+        console.error("Erro ao enviar candidatura:", err);
+        alert("❌ Erro ao conectar com o servidor.");
+      } finally {
+        applyBtnEl.disabled = false;
+        applyBtnEl.textContent = originalLabel;
+      }
+    });
+  }
+
+  // helpers mínimos para modais que já existiam
+  function openModal(m){ m?.setAttribute("aria-hidden","false"); }
+  function closeModal(m){ m?.setAttribute("aria-hidden","true"); }
+
   loadVagaReal();
+  wireApplyButton();
 })();
   </script>
   <script src="scripts/notificacoes.js"></script>

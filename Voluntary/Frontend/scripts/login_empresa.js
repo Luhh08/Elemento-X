@@ -56,18 +56,17 @@ form.addEventListener("submit", async (e) => {
 
     if (!resp.ok) {
       if (resp.status === 403 && data?.error) {
-        alert(data.error); // conta não verificada, por ex.
+        alert(data.error); 
         return;
       }
       throw new Error(data?.error || "Falha no login.");
     }
 
-    // ===== Guarda sessão padronizada =====
-    localStorage.setItem("token", data.token || "");
-    localStorage.setItem("tipoConta", "empresa");
-    localStorage.setItem("role", "empresa");
+localStorage.setItem("empresaId", data.empresa.id);
+localStorage.setItem("token", data.token);           
+localStorage.setItem("empresaToken", data.token);    
+localStorage.setItem("tipoConta", "empresa");
 
-    // Extrai ID de forma robusta (objeto empresa ou fallback no JWT.sub)
     let id = data?.empresa?.id || data?.empresa?._id || "";
     if ((!id || id === "null" || id === "undefined") && data?.token && data.token.split(".").length === 3) {
       try {

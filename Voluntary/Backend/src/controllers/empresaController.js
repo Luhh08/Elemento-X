@@ -704,6 +704,19 @@ async function listarVagasPublicasPorEmpresa(req, res){
   }
 }
 
+function gerarTokenEmpresa(empresa) {
+  return jwt.sign(
+    {
+      id: empresa.id,
+      empresaId: empresa.id, // 🔥 importante para o middleware reconhecer
+      tipo: "empresa",
+      email: empresa.email_empresa
+    },
+    SECRET,
+    { expiresIn: "7d" }
+  );
+}
+
 module.exports = {
   registrarEmpresa,
   verificarEmail,
@@ -718,4 +731,5 @@ module.exports = {
   loginEmpresa,
   getEmpresaPublic,
   listarVagasPublicasPorEmpresa,
+  gerarTokenEmpresa,
 };

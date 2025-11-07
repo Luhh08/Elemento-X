@@ -1,7 +1,7 @@
 (() => {
   const SAME_ORIGIN = location.origin.includes(':3000');
   const API_BASE = SAME_ORIGIN ? '/api' : 'http://localhost:3000/api';
-  const ENDPOINTS = [`${API_BASE}/candidaturas`, `${API_BASE}/aplicacoes`];
+  const ENDPOINTS = [`${API_BASE}/candidaturas`];
   const PAGE_SIZE = 6;
   const PLACEHOLDER = 'img/imagem_voluntario.png';
 
@@ -12,9 +12,21 @@
   const tagActiveBar = document.getElementById('tagActiveBar');
   const tagResults = document.getElementById('tagResults');
 
-  const state = { page: 1, pageSize: PAGE_SIZE, total: 0, items: [], tagsActive: new Set(), allTags: [], q: '', turnos: new Set() };
+  const state = {
+    page: 1,
+    pageSize: PAGE_SIZE,
+    total: 0,
+    items: [],
+    tagsActive: new Set(),
+    allTags: [],
+    q: '',
+    turnos: new Set()
+  };
 
-  const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  // === HELPERS ===
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[m]));
   const norm = s => String(s||'').toLowerCase();
   const asArr = v => Array.isArray(v) ? v.filter(Boolean) : v ? [v] : [];
 
@@ -23,6 +35,16 @@
     if(!d) return '—';
     if(d.length<=10) return d.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3').replace(/-$/,'');
     return d.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3').replace(/-$/,'');
+  }
+
+  // função para pegar token de empresa OU padrão
+  function getAuthToken() {
+    return (
+      localStorage.getItem('token') ||
+      localStorage.getItem('empresaToken') ||
+      localStorage.getItem('adminToken') ||
+      ''
+    );
   }
 
   function mapApp(a){
@@ -65,6 +87,7 @@
     </article>`;
   }
 
+  // === RENDER ===
   function render(){
     const q = norm(state.q);
     const tags = [...state.tagsActive].map(norm);
@@ -107,7 +130,13 @@
       const chip=document.createElement('span');
       chip.className='filter-chip';
       chip.innerHTML = `${esc(t)} <span class="chip-x"></span>`;
-      chip.querySelector('.chip-x').addEventListener('click', ()=>{ state.tagsActive.delete(t); renderActiveChips(); renderTagResults(); state.page=1; render(); });
+      chip.querySelector('.chip-x').addEventListener('click', ()=>{
+        state.tagsActive.delete(t);
+        renderActiveChips();
+        renderTagResults();
+        state.page=1;
+        render();
+      });
       tagActiveBar.appendChild(chip);
     });
   }
@@ -122,16 +151,34 @@
       lbl.className='tag-pill';
       lbl.innerHTML=`<input type="checkbox"><span>${esc(t)}</span>`;
       const cb=lbl.querySelector('input');
-      cb.addEventListener('change',()=>{ if(cb.checked){ state.tagsActive.add(t); cb.checked=false; renderActiveChips(); renderTagResults(); state.page=1; render(); }});
+      cb.addEventListener('change',()=>{
+        if(cb.checked){
+          state.tagsActive.add(t);
+          cb.checked=false;
+          renderActiveChips();
+          renderTagResults();
+          state.page=1;
+          render();
+        }
+      });
       tagResults.appendChild(lbl);
     });
   }
 
   function wireFilters(){
-    qMain?.addEventListener('input', ()=>{ state.q=qMain.value||''; state.page=1; render(); });
+    qMain?.addEventListener('input', ()=>{
+      state.q=qMain.value||'';
+      state.page=1;
+      render();
+    });
     qTags?.addEventListener('input', renderTagResults);
     document.querySelectorAll('input[name="turno"]').forEach(cb=>{
-      cb.addEventListener('change', ()=>{ if(cb.checked) state.turnos.add(cb.value); else state.turnos.delete(cb.value); state.page=1; render(); });
+      cb.addEventListener('change', ()=>{
+        if(cb.checked) state.turnos.add(cb.value);
+        else state.turnos.delete(cb.value);
+        state.page=1;
+        render();
+      });
     });
   }
 
@@ -151,37 +198,67 @@
   }
 
   async function updateStatus(id,status){
-    const token = localStorage.getItem('token') || '';
-    for(const base of ENDPOINTS){
-      try{
-        const res = await fetch(`${base}/${encodeURIComponent(id)}`,{
-          method:'PATCH',
-          headers:{'Content-Type':'application/json', ...(token?{'Authorization':`Bearer ${token}`}:{})},
-          body:JSON.stringify({status})
-        });
-        if(res.ok){ const item=state.items.find(i=>i.id===id); if(item){ item.status=status; render(); } return; }
-      }catch(_){}
-    }
+    const token = getAuthToken();
+    try{
+      const res = await fetch(`${API_BASE}/candidaturas/${encodeURIComponent(id)}`,{
+        method:'PATCH',
+        headers:{
+          'Content-Type':'application/json',
+          ...(token?{'Authorization':`Bearer ${token}`}:{}),
+        },
+        body:JSON.stringify({status})
+      });
+      if(res.ok){
+        const item=state.items.find(i=>i.id===id);
+        if(item){ item.status=status; render(); }
+        return;
+      }
+    }catch(_){}
     alert('Não foi possível atualizar o status.');
   }
 
-  async function fetchApps(page=1,pageSize=PAGE_SIZE){
-    for(const base of ENDPOINTS){
-      try{
-        const url=new URL(base, location.origin);
-        url.searchParams.set('page',page);
-        url.searchParams.set('pageSize',pageSize);
-        const res=await fetch(url.toString(),{headers:{Accept:'application/json'}});
-        if(!res.ok) continue;
-        const data=await res.json();
-        const items = data.items || data.aplicacoes || data.candidaturas || [];
-        const mapped = items.map(mapApp);
-        const allTags = [...new Set(mapped.flatMap(x=>x.skills).filter(Boolean))];
-        return { mapped, allTags };
-      }catch(_){}
-    }
-    return { mapped:[], allTags:[] };
+  async function fetchApps(page = 1, pageSize = PAGE_SIZE) {
+  const token =
+    localStorage.getItem("token") ||
+    localStorage.getItem("empresaToken") ||
+    localStorage.getItem("adminToken");
+
+  if (!token) {
+    console.warn("⚠️ Nenhum token encontrado. Faça login novamente como empresa.");
+    alert("Você precisa estar logado como empresa para ver as candidaturas.");
+    return { mapped: [], allTags: [] };
   }
+
+  try {
+    const url = new URL(`${API_BASE}/candidaturas`, location.origin);
+    url.searchParams.set("page", page);
+    url.searchParams.set("pageSize", pageSize);
+
+    const res = await fetch(url.toString(), {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`, // 🔥 garante o envio do token
+      },
+    });
+
+    if (res.status === 401) {
+      alert("Sessão expirada ou token inválido. Faça login novamente.");
+      return { mapped: [], allTags: [] };
+    }
+
+    if (!res.ok) throw new Error(`Erro ao carregar candidaturas (${res.status})`);
+
+    const data = await res.json();
+    const items = data.items || [];
+    const mapped = items.map(mapApp);
+    const allTags = [...new Set(mapped.flatMap((x) => x.skills).filter(Boolean))];
+
+    return { mapped, allTags };
+  } catch (err) {
+    console.error("Erro ao buscar candidaturas:", err);
+    return { mapped: [], allTags: [] };
+  }
+}
 
   async function init(){
     const { mapped, allTags } = await fetchApps(1, PAGE_SIZE);

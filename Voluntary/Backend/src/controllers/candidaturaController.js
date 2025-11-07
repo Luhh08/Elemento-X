@@ -1,121 +1,175 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const PAGE_DEFAULT = 1;
-const PAGE_SIZE_DEFAULT = 6;
-
-const toObjId = (v) => String(v);
-
-function mapItem(c) {
-  const v = c.voluntario || {};
-  const vaga = c.vaga || {};
-  return {
-    id: c.id,
-    status: c.status,
-    voluntario: {
-      id: v.id,
-      nome: v.nome,
-      emailcontato: v.emailcontato || v.email || null,
-      telefonecontato: v.telefonecontato || null,
-      competencias: v.competencias || [],
-      preferenciaHorario: v.preferenciaHorario || [],
-      fotoUrl: v.fotoUrl || null,
-    },
-    vaga: {
-      id: vaga.id,
-      titulo: vaga.titulo || vaga.nome || "Vaga",
-    },
-  };
-}
-
-exports.criar = async (req, res, next) => {
+async function criarCandidatura(req, res, next) {
   try {
     const { vagaId } = req.body;
-    const user = req.user; // vindo do autenticarToken
-    if (!vagaId || !user?.id) return res.status(400).json({ error: "vagaId obrigatório." });
+    const voluntarioId = req.user?.id;
 
-    const created = await prisma.candidatura.create({
-      data: {
-        vagaId: toObjId(vagaId),
-        voluntarioId: toObjId(user.id),
-      },
-      include: { voluntario: true, vaga: true },
+    if (!voluntarioId) return res.status(401).json({ error: "Não autenticado." });
+    if (!vagaId) return res.status(400).json({ error: "vagaId é obrigatório." });
+
+    const vaga = await prisma.vaga.findUnique({
+      where: { id: vagaId },
+      select: { id: true, status: true }
+    });
+    if (!vaga) return res.status(404).json({ error: "Vaga não encontrada." });
+
+    if (vaga.status && vaga.status !== "ABERTA") {
+      return res.status(400).json({ error: "Inscrições não estão abertas para esta vaga." });
+    }
+
+    const existente = await prisma.candidatura.findUnique({
+      where: { vagaId_voluntarioId: { vagaId, voluntarioId } }
+    });
+    if (existente) {
+      return res.status(409).json({ error: "Você já se candidatou a esta vaga." });
+    }
+
+    const nova = await prisma.candidatura.create({
+      data: { vagaId, voluntarioId } 
     });
 
-    res.status(201).json(mapItem(created));
+    res.status(201).json({ message: "Candidatura criada!", candidatura: nova });
   } catch (err) {
-    if (String(err.message).includes("Unique constraint")) {
-      return res.status(409).json({ error: "Candidatura já existente para esta vaga." });
-    }
     next(err);
   }
-};
+}
 
-exports.listar = async (req, res, next) => {
+async function listarCandidaturas(req, res, next) {
   try {
-    const page = Math.max(1, parseInt(req.query.page || PAGE_DEFAULT));
-    const pageSize = Math.max(1, parseInt(req.query.pageSize || PAGE_SIZE_DEFAULT));
-    const q = (req.query.q || "").toLowerCase();
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const pageSize = Math.max(1, Math.min(50, parseInt(req.query.pageSize, 10) || 6));
+    const skip = (page - 1) * pageSize;
+    const take = pageSize;
 
-    const where = {}; // ajuste se quiser filtrar por status / vaga / empresa
+    const userId = req.user?.id || null;
+    const empresaId =
+      req.user?.empresaId ||
+      req.user?.empresa?.id ||
+      (req.user?.tipo === "empresa" ? req.user?.id : null) ||
+      null;
 
-    const [total, rows] = await Promise.all([
-      prisma.candidatura.count({ where }),
+    let where = {};
+    let include = {};
+
+    if (empresaId) {
+      const vagas = await prisma.vaga.findMany({
+        where: { empresaId: empresaId },
+        select: { id: true }
+      });
+      const vagaIds = vagas.map(v => v.id);
+      if (!vagaIds.length) {
+        return res.json({ items: [], total: 0, page, pageSize });
+      }
+      where = { vagaId: { in: vagaIds } };
+      include = {
+        voluntario: {
+          select: {
+            id: true,
+            nome: true,
+            usuario: true,
+            email: true,
+            emailcontato: true,
+            telefonecontato: true,
+            competencias: true,
+            fotoUrl: true,
+            preferenciaHorario: true
+          }
+        },
+        vaga: { select: { id: true, titulo: true, status: true, empresaId: true } }
+      };
+    } else if (userId) {
+      where = { voluntarioId: userId };
+      include = {
+        vaga: { select: { id: true, titulo: true, status: true, empresaId: true } }
+      };
+    } else {
+      return res.status(401).json({ error: "Não autenticado." });
+    }
+
+    const [items, total] = await Promise.all([
       prisma.candidatura.findMany({
         where,
-        include: {
-          voluntario: true,
-          vaga: true,
-        },
+        include,
         orderBy: { createdAt: "desc" },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
+        skip,
+        take
       }),
+      prisma.candidatura.count({ where })
     ]);
 
-    let items = rows;
-    if (q) {
-      items = rows.filter((c) => {
-        const v = c.voluntario || {};
-        const hay = [
-          v.nome,
-          v.emailcontato || v.email,
-          ...(v.competencias || []),
-          c.vaga?.titulo || c.vaga?.nome,
-        ]
-          .join(" | ")
-          .toLowerCase();
-        return hay.includes(q);
-      });
-    }
-
-    res.json({
-      page,
-      pageSize,
-      total,
-      items: items.map(mapItem),
-    });
+    res.json({ items, total, page, pageSize });
   } catch (err) {
     next(err);
   }
-};
+}
 
-exports.atualizarStatus = async (req, res, next) => {
+async function listarCandidaturasDaVaga(req, res, next) {
+  try {
+    const { vagaId } = req.params;
+    if (!vagaId) return res.status(400).json({ error: "vagaId é obrigatório." });
+
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const pageSize = Math.max(1, Math.min(50, parseInt(req.query.pageSize, 10) || 6));
+    const skip = (page - 1) * pageSize;
+    const take = pageSize;
+
+    const [items, total] = await Promise.all([
+      prisma.candidatura.findMany({
+        where: { vagaId },
+        orderBy: { createdAt: "desc" },
+        include: {
+          voluntario: {
+            select: {
+              id: true,
+              nome: true,
+              usuario: true,
+              email: true,
+              emailcontato: true,
+              telefonecontato: true,
+              competencias: true,
+              fotoUrl: true,
+              preferenciaHorario: true
+            }
+          }
+        },
+        skip,
+        take
+      }),
+      prisma.candidatura.count({ where: { vagaId } })
+    ]);
+
+    res.json({ items, total, page, pageSize });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function atualizarStatus(req, res, next) {
   try {
     const { id } = req.params;
-    let { status } = req.body;
-    const allow = ["INSCRITA", "ACEITA", "RECUSADA", "EM_ANDAMENTO"];
-    status = String(status || "").toUpperCase();
-    if (!allow.includes(status)) return res.status(400).json({ error: "Status inválido." });
+    const { status } = req.body;
+
+    const valid = ["ACEITA", "RECUSADA", "PENDENTE"];
+    if (!valid.includes(String(status || ""))) {
+      return res.status(400).json({ error: "Status inválido." });
+    }
 
     const up = await prisma.candidatura.update({
       where: { id },
-      data: { status },
-      include: { voluntario: true, vaga: true },
+      data: { status }
     });
 
-    res.json(mapItem(up));
+    res.json({ message: "Status atualizado.", candidatura: up });
   } catch (err) {
     next(err);
   }
+}
+
+module.exports = {
+  criarCandidatura,
+  listarCandidaturas,
+  listarCandidaturasDaVaga,
+  atualizarStatus,
 };
