@@ -1,6 +1,7 @@
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 
+const popupFeedbacks = document.getElementById("popupFeedbacks");
 const token = localStorage.getItem("token");
 const empresaId = localStorage.getItem("empresaId") || localStorage.getItem("userId") || "";
 const tipoConta = (localStorage.getItem("tipoConta") || localStorage.getItem("role") || "").toLowerCase();

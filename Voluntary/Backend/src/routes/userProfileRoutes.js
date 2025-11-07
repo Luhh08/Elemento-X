@@ -1,38 +1,41 @@
 const express = require("express");
 const router = express.Router();
-const { autenticarToken } = require("../middlewares/authMiddleware");
+
+const authMiddleware = require("../middlewares/authMiddleware");
 const {
   getUsuario,
   updateUsuario,
   updateBannerUrl,
   updateFotoUrl,
 } = require("../controllers/userProfileController");
-const { upload } = require("../middlewares/uploadMiddleware");
+
+const { upload } = require("../middlewares/uploadMiddleware"); // mantém como estava no seu projeto
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 // --- Rotas do perfil do usuário ---
-router.get("/usuario/:id", autenticarToken, getUsuario);
-router.put("/usuario/:id", autenticarToken, updateUsuario);
-router.put("/usuario/:id/banner", autenticarToken, updateBannerUrl);
-router.put("/usuario/:id/foto", autenticarToken, updateFotoUrl);
+router.get("/usuario/:id", authMiddleware, getUsuario);
+router.put("/usuario/:id", authMiddleware, updateUsuario);
+router.put("/usuario/:id/banner", authMiddleware, updateBannerUrl);
+router.put("/usuario/:id/foto", authMiddleware, updateFotoUrl);
 
 // --- Upload de imagem local (foto/banner) ---
 router.post(
   "/usuario/:id/upload/:tipo",
-  autenticarToken,
+  authMiddleware,
   upload.single("imagem"),
   async (req, res, next) => {
     try {
-      if (!req.file)
+      if (!req.file) {
         return res.status(400).json({ error: "Nenhum arquivo enviado." });
+      }
 
       const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
-      const { tipo } = req.params;
-      const { id } = req.params;
+      const { tipo, id } = req.params;
 
       // --- Segurança: impede alterar imagem de outro usuário ---
-      if (id !== req.userId) {
+      const autorId = String(req.user?.usuarioId || req.user?.id || "");
+      if (!autorId || String(id) !== autorId) {
         return res
           .status(403)
           .json({ error: "Você não pode alterar imagens de outro perfil." });
@@ -45,8 +48,9 @@ router.post(
           ? { bannerUrl: fileUrl }
           : null;
 
-      if (!updateData)
+      if (!updateData) {
         return res.status(400).json({ error: "Tipo inválido (foto/banner)." });
+      }
 
       const usuario = await prisma.usuario.update({
         where: { id },

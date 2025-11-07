@@ -17,6 +17,7 @@ const vagaRoutes = require("./src/routes/vagaRoutes");
 const candidaturaRoutes = require("./src/routes/candidaturaRoutes");
 const authAdmin = require("./src/middlewares/authAdmin");
 const adminRoutes = require("./src/routes/adminRoutes");
+const avaliacaoRoutes = require("./src/routes/avaliacaoRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -46,6 +47,7 @@ app.use("/api", candidaturaRoutes);
 app.use("/api/admin", adminRoutes);
 app.get("/api/admin/painel", authAdmin, (req, res) => res.json({ ok: true }));
 app.use("/api/empresas", empresaRoutes);
+app.use("/api", avaliacaoRoutes);
 
 app.use("/api", (_req, res) => res.status(404).json({ error: "Rota não encontrada" }));
 

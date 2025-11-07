@@ -1,11 +1,18 @@
 const express = require("express");
 const router = express.Router();
-const { autenticarToken } = require("../middlewares/authMiddleware");
-const ctrl = require("../controllers/candidaturaController");
 
-router.post("/candidaturas", autenticarToken, ctrl.criarCandidatura);
-router.get("/candidaturas", autenticarToken, ctrl.listarCandidaturas);
-router.get("/candidaturas/da-vaga/:vagaId", autenticarToken, ctrl.listarCandidaturasDaVaga);
-router.patch("/candidaturas/:id", autenticarToken, ctrl.atualizarStatus);
+const authMiddleware = require("../middlewares/authMiddleware");
+
+const {
+  criarCandidatura,
+  listarCandidaturas,
+  listarCandidaturasDaVaga,
+  atualizarStatus,
+} = require("../controllers/candidaturaController");
+
+router.post("/candidaturas", authMiddleware, criarCandidatura);
+router.get("/candidaturas", authMiddleware, listarCandidaturas);
+router.get("/candidaturas/vaga/:vagaId", authMiddleware, listarCandidaturasDaVaga);
+router.patch("/candidaturas/:id/status", authMiddleware, atualizarStatus);
 
 module.exports = router;

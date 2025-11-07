@@ -5,8 +5,9 @@ function autenticarToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 
-  if (!token)
+  if (!token) {
     return res.status(401).json({ error: "Token não fornecido." });
+  }
 
   jwt.verify(token, SECRET, (err, decoded) => {
     if (err) {
@@ -21,16 +22,12 @@ function autenticarToken(req, res, next) {
         tipo: "empresa",
         empresaId: decoded.sub || decoded.empresaId || decoded.id,
       };
-    }
-
-    else if (decoded.typ === "usuario" || decoded.tipo === "usuario") {
+    } else if (decoded.typ === "usuario" || decoded.tipo === "usuario") {
       req.user = {
         tipo: "usuario",
         usuarioId: decoded.sub || decoded.usuarioId || decoded.id,
       };
-    }
-
-    else {
+    } else {
       req.user = decoded;
     }
 
@@ -38,4 +35,4 @@ function autenticarToken(req, res, next) {
   });
 }
 
-module.exports = { autenticarToken };
+module.exports = autenticarToken;

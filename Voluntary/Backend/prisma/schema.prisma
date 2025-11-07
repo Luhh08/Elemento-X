@@ -37,6 +37,8 @@ model Usuario {
   banReason       String?
 
   candidaturas Candidatura[]
+
+  avaliacaos Avaliacao[]
 }
 
 model Empresa {
@@ -70,6 +72,8 @@ model Empresa {
 
   isBanned        Boolean   @default(false)
   banReason       String?                              
+
+  respostaAvaliacaos RespostaAvaliacao[]
 }
 
 model RepresentanteLegal {
@@ -115,6 +119,8 @@ model Vaga{
 
 
   candidaturas Candidatura[]
+
+  avaliacaos Avaliacao[]
 }
 
 enum StatusCandidatura {
@@ -137,4 +143,35 @@ model Candidatura {
   vaga         Vaga              @relation(fields: [vagaId], references: [id])
 
   @@unique([vagaId, voluntarioId])
+}
+
+model Avaliacao {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  vagaId       String   @db.ObjectId
+  voluntarioId String   @db.ObjectId      // usuário que participou
+  nota         Int                              // 1..5
+  comentario   String
+  fotos        String[]                        // nomes/paths em /uploads
+  createdAt    DateTime @default(now())
+
+  // resposta 1-para-1 da empresa (opcional)
+  resposta     RespostaAvaliacao?
+
+  vaga         Vaga       @relation(fields: [vagaId], references: [id], onDelete: Cascade)
+  voluntario   Usuario    @relation(fields: [voluntarioId], references: [id], onDelete: Cascade)
+
+  @@index([vagaId])
+  @@unique([vagaId, voluntarioId]) // 1 avaliação por voluntário por vaga
+}
+
+model RespostaAvaliacao {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  avaliacaoId String     @unique @db.ObjectId
+  empresaId   String     @db.ObjectId
+  mensagem    String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  avaliacao   Avaliacao  @relation(fields: [avaliacaoId], references: [id], onDelete: Cascade)
+  empresa     Empresa    @relation(fields: [empresaId], references: [id], onDelete: Cascade)
 }
