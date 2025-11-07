@@ -35,6 +35,8 @@ model Usuario {
 
   isBanned        Boolean   @default(false)
   banReason       String?
+
+  candidaturas Candidatura[]
 }
 
 model Empresa {
@@ -111,4 +113,28 @@ model Vaga{
   aplicacoes  Int        @default(0)
   empresa    Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
 
+
+  candidaturas Candidatura[]
+}
+
+enum StatusCandidatura {
+  INSCRITA
+  ACEITA
+  RECUSADA
+  EM_ANDAMENTO
+}
+
+model Candidatura {
+  id           String            @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  status       StatusCandidatura @default(INSCRITA)
+
+  voluntarioId String            @db.ObjectId
+  voluntario   Usuario           @relation(fields: [voluntarioId], references: [id])
+
+  vagaId       String            @db.ObjectId
+  vaga         Vaga              @relation(fields: [vagaId], references: [id])
+
+  @@unique([vagaId, voluntarioId])
 }

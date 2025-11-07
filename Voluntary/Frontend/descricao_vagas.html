@@ -117,7 +117,7 @@
             Ao clicar no botão de aplicar vaga, os seus dados serão enviados para a empresa
           </div>
           <div class="apply-row">
-            <button id="applyBtn" class="apply-btn">Aplicar para a vaga</button>
+            <button id="applyBtn" data-vaga-id="{{vaga.id}}" class="apply-btn">Aplicar</button>
           </div>
         </div>
       </section>
@@ -388,6 +388,7 @@ function applyPreview(p){
     if (ev?.data?.type === "VAGA_PREVIEW") applyPreview(ev.data.payload);
   });
 
+  // detectar dono da vaga (para ocultar "Denunciar")
   function extractOwnerId(v){
     return v?.empresa?.id || v?.empresaId || v?.ownerId || v?.usuarioId || null;
   }

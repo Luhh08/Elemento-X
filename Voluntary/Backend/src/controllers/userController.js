@@ -125,31 +125,84 @@ if (usuario.isBanned) {
   }
 }
 
-// ------------------------------
-// Listar usuários (admin/teste)
-// ------------------------------
 async function listarUsuarios(req, res, next) {
   try {
-    const usuarios = await prisma.usuario.findMany({
-      select: {
-        id: true,
-        nome: true,
-        email: true,
-        usuario: true,
-        cpf: true,
-        validacao: true,
-      },
-    });
-    res.status(200).json(usuarios);
+    const page     = Math.max(1, parseInt(req.query.page || '1', 10));
+    const pageSize = Math.max(1, Math.min(50, parseInt(req.query.pageSize || '50', 10)));
+    const skip     = (page - 1) * pageSize;
+
+    const q = (req.query.q || '').trim();
+    const where = q
+      ? {
+          OR: [
+            { nome: { contains: q, mode: 'insensitive' } },
+            { emailcontato: { contains: q, mode: 'insensitive' } },
+            { competencias: { hasSome: [q] } },
+          ],
+        }
+      : {};
+
+    const [items, total] = await Promise.all([
+      prisma.usuario.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { nome: 'asc' },
+        select: {
+          id: true,
+          nome: true,
+          fotoUrl: true,
+          emailcontato: true,
+          telefonecontato: true,
+          competencias: true,
+          isBanned: true,
+        },
+      }),
+      prisma.usuario.count({ where }),
+    ]);
+
+    const data = items.map(u => ({
+      id: u.id,
+      nome: u.nome || 'Voluntário',
+      fotoUrl: u.fotoUrl || null,
+      emailcontato: u.emailcontato || null,
+      telefonecontato: u.telefonecontato || null,
+      competencias: Array.isArray(u.competencias) ? u.competencias : [],
+      isBanned: !!u.isBanned,
+    }));
+
+    res.json({ items: data, total, page, pageSize });
   } catch (err) {
     next(err);
   }
 }
 
+async function listarCompetenciasUsuarios(req, res, next) {
+  try {
+    const rows = await prisma.usuario.findMany({
+      select: { competencias: true },
+    });
+    const set = new Set();
+    for (const r of rows) {
+      for (const t of (r.competencias || [])) {
+        const v = String(t || '').trim();
+        if (v) set.add(v);
+      }
+    }
+    const items = Array.from(set).sort((a, b) =>
+      a.localeCompare(b, 'pt-BR', { sensitivity: 'base' })
+    );
+    res.json({ items });
+  } catch (err) {
+    next(err);
+  }
+}
 
 module.exports = {
   registrarUsuario,
   verificarEmail,
   loginUsuario,
   listarUsuarios,
+  listarCompetenciasUsuarios,
 };
+

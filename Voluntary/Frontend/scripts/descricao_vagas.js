@@ -91,12 +91,7 @@ applicationsCount.addEventListener('click', () => {
   applicationsPanel.setAttribute('aria-hidden', isVisible ? 'true' : 'false');
 });
 
-closeApps.addEventListener('click', () => {
-  applicationsPanel.style.display = 'none';
-  applicationsPanel.setAttribute('aria-hidden', 'true');
-});
-
-applyBtn.addEventListener('click', () => {
+applyBtn.addEventListener('click', async () => {
   const message = applyMessage.value.trim();
   if (message.length < 10) {
     alert('Escreva pelo menos 10 caracteres na motivação para aplicar.');
@@ -104,18 +99,43 @@ applyBtn.addEventListener('click', () => {
     return;
   }
 
-  const nome = prompt('Digite seu nome (opcional):');
-  const applications = loadApplications();
-  applications.unshift({
-    name: nome ? nome.trim() : 'Anônimo',
-    message,
-    date: new Date().toISOString()
-  });
-  saveApplications(applications);
-  renderApplications();
-  alert('Sua candidatura foi enviada com sucesso!');
-  applyMessage.value = '';
+  const vagaId = applyBtn.dataset.vagaId;
+  if (!vagaId) {
+    alert('ID da vaga não encontrado.');
+    return;
+  }
+
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('Você precisa estar logado para se candidatar.');
+    return;
+  }
+
+  try {
+    const resp = await fetch('/api/candidaturas', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ vagaId })
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      alert(data.error || 'Erro ao enviar candidatura.');
+      return;
+    }
+
+    alert('✅ Candidatura enviada com sucesso!');
+    applyMessage.value = '';
+  } catch (err) {
+    console.error('Erro ao enviar candidatura:', err);
+    alert('❌ Erro ao conectar com o servidor.');
+  }
 });
+
 
 applicationsList.addEventListener('click', (e) => {
   if (e.target.matches('.remove-app')) {
