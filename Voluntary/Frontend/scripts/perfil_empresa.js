@@ -7,7 +7,8 @@ const tipoConta = (localStorage.getItem("tipoConta") || localStorage.getItem("ro
 
 const qs = new URLSearchParams(location.search);
 const viewedId = qs.get("id") || empresaId;
-const modoPublico = qs.get("public") === "true";
+
+const modoPublico = (qs.get("public") === "true") || !token;
 
 const isSelf = viewedId && empresaId && String(viewedId) === String(empresaId);
 
@@ -18,6 +19,7 @@ if (!qs.get("id") && viewedId) {
 if (!modoPublico && (!token || !empresaId || !tipoConta.includes("empresa"))) {
   window.location.href = "login_empresa.html";
 }
+
 
 function toggleActions() {
   const show = (sel, state) => { const el = document.querySelector(sel); if (el) el.hidden = !state; };

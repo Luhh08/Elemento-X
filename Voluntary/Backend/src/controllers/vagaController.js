@@ -24,7 +24,18 @@ const [vagas, total] = await Promise.all([
     orderBy: { id: 'desc' },
     skip: (page - 1) * pageSize,
     take: pageSize,
-    include: {
+    select: {
+      id: true,
+      empresaId: true,
+      titulo: true,
+      descricao: true,
+      tags: true,
+      local: true,
+      turno: true,
+      status: true,
+      dataInicio: true,
+      dataFim: true,
+      imagens: true, // <<< AQUI
       empresa: {
         select: { id: true, usuario: true, razao_social: true, logoUrl: true }
       }
@@ -32,7 +43,6 @@ const [vagas, total] = await Promise.all([
   }),
   prisma.vaga.count({ where }),
 ]);
-
 
 const vagasComResumo = vagas.map(v => ({
   ...v,
@@ -52,7 +62,20 @@ async function getVaga(req, res, next) {
     const { id } = req.params;
     const vaga = await prisma.vaga.findUnique({
       where: { id },
-      include: { empresa: { select: { razao_social: true } } } // 👈
+      select: {
+        id: true,
+        titulo: true,
+        descricao: true,
+        local: true,
+        status: true,
+        tags: true,
+        turno: true,
+        dataInicio: true,
+        dataFim: true,
+        imagens: true, // <<< AQUI
+        empresaId: true,
+        empresa: { select: { id: true, razao_social: true, logoUrl: true } }
+      }
     });
     if (!vaga) return res.status(404).json({ error: "Vaga não encontrada" });
     res.json(vaga);

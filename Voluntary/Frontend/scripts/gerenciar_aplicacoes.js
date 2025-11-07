@@ -69,22 +69,44 @@
     const linkVaga = x.vagaId ? `descricao_vagas.html?id=${encodeURIComponent(x.vagaId)}` : '#';
     return `
     <article class="job-card">
-      <div class="job-card-image-wrapper">
-        <img src="${esc(x.foto)}" alt="${esc(x.nome)}" class="job-card-image" onerror="this.src='${PLACEHOLDER}'">
-      </div>
-      <div class="vaga">
-        <div class="badge-vaga"><a href="${linkVaga}">${esc(x.vagaTitulo)}</a><span class="mini">${esc(x.status || '')}</span></div>
-        <p class="titulo_vaga">${esc(x.nome)}</p>
-        <p class="resumo_vaga" style="margin:.25rem 0 0;color:#334155;font-size:14px;">${fmtPhone(x.tel)}</p>
-        <h3 class="descricao_vaga" style="font-weight:600">${esc(x.emailContato)}</h3>
-        <div class="tags_vaga" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">${x.skills.map(tag).join('')}</div>
-        <div class="card-actions">
-          <button class="btn-accept" data-accept="${esc(x.id)}">Aceitar aplicação</button>
-          <button class="btn-reject" data-reject="${esc(x.id)}">Recusar aplicação</button>
-          <a href="perfil-usuario.html?id=${encodeURIComponent(x.raw?.voluntario?.id || x.raw?.usuario?.id || '')}" class="btn btn-details">Ver Perfil Detalhado</a>
-        </div>
-      </div>
-    </article>`;
+  <div class="job-card-image-wrapper">
+    <img src="${esc(x.foto)}" alt="${esc(x.nome)}" class="job-card-image" onerror="this.src='${PLACEHOLDER}'">
+  </div>
+  <div class="vaga">
+    <div class="badge-vaga">
+      <a href="${linkVaga}">${esc(x.vagaTitulo)}</a>
+      <span class="mini">${esc(x.status || '')}</span>
+    </div>
+
+    <p class="titulo_vaga">${esc(x.nome)}</p>
+    <p class="resumo_vaga" style="margin:.25rem 0 0;color:#334155;font-size:14px;">
+      ${fmtPhone(x.tel)}
+    </p>
+    <p class="descricao_vaga" style="
+      font-weight:500;
+      font-size:14px;
+      line-height:1.3;
+      color:#0f172a;
+      margin:.25rem 0 0;
+      max-width:100%;
+      white-space:normal;
+      overflow-wrap:anywhere;    
+      word-break:break-word;     
+    ">
+      ${esc(x.emailContato)}
+    </p>
+    <div class="tags_vaga" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">
+      ${x.skills.map(tag).join('')}
+    </div>
+
+    <div class="card-actions">
+      <button class="btn-accept" data-accept="${esc(x.id)}">Aceitar aplicação</button>
+      <button class="btn-reject" data-reject="${esc(x.id)}">Recusar aplicação</button>
+      <a href="perfil-usuario.html?id=${encodeURIComponent(x.raw?.voluntario?.id || x.raw?.usuario?.id || '')}" class="btn btn-details">Ver Perfil Detalhado</a>
+    </div>
+  </div>
+</article>
+`;
   }
 
   // === RENDER ===

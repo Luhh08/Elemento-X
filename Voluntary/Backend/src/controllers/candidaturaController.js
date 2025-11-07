@@ -27,7 +27,7 @@ async function criarCandidatura(req, res, next) {
     }
 
     const nova = await prisma.candidatura.create({
-      data: { vagaId, voluntarioId } 
+      data: { vagaId, voluntarioId }
     });
 
     res.status(201).json({ message: "Candidatura criada!", candidatura: nova });
@@ -55,13 +55,14 @@ async function listarCandidaturas(req, res, next) {
 
     if (empresaId) {
       const vagas = await prisma.vaga.findMany({
-        where: { empresaId: empresaId },
+        where: { empresaId },
         select: { id: true }
       });
       const vagaIds = vagas.map(v => v.id);
       if (!vagaIds.length) {
         return res.json({ items: [], total: 0, page, pageSize });
       }
+
       where = { vagaId: { in: vagaIds } };
       include = {
         voluntario: {
@@ -77,12 +78,31 @@ async function listarCandidaturas(req, res, next) {
             preferenciaHorario: true
           }
         },
-        vaga: { select: { id: true, titulo: true, status: true, empresaId: true } }
+        // 🔴 Agora inclui imagens e dados mínimos da empresa
+        vaga: {
+          select: {
+            id: true,
+            titulo: true,
+            status: true,
+            empresaId: true,
+            imagens: true,
+            empresa: { select: { id: true, razao_social: true, logoUrl: true } }
+          }
+        }
       };
     } else if (userId) {
       where = { voluntarioId: userId };
       include = {
-        vaga: { select: { id: true, titulo: true, status: true, empresaId: true } }
+        vaga: {
+          select: {
+            id: true,
+            titulo: true,
+            status: true,
+            empresaId: true,
+            imagens: true,
+            empresa: { select: { id: true, razao_social: true, logoUrl: true } }
+          }
+        }
       };
     } else {
       return res.status(401).json({ error: "Não autenticado." });
@@ -132,6 +152,17 @@ async function listarCandidaturasDaVaga(req, res, next) {
               fotoUrl: true,
               preferenciaHorario: true
             }
+          },
+          // 🔴 Aqui também traz imagens e empresa da vaga
+          vaga: {
+            select: {
+              id: true,
+              titulo: true,
+              status: true,
+              empresaId: true,
+              imagens: true,
+              empresa: { select: { id: true, razao_social: true, logoUrl: true } }
+            }
           }
         },
         skip,
@@ -171,5 +202,5 @@ module.exports = {
   criarCandidatura,
   listarCandidaturas,
   listarCandidaturasDaVaga,
-  atualizarStatus,
+  atualizarStatus
 };

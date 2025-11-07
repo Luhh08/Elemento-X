@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voluntary • Avaliação</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/avaliacao.css">
+</head>
+<body>
+  <div class="screen">
+<button class="back-fab" type="button" id="btnVoltar">
+  <i class="ri-arrow-left-line"></i> Voltar
+</button>
+
+    <main class="wrap">
+      <h1 class="eyebrow">⭐ Avalie sua experiência!</h1>
+      <h2 class="subtitle">
+        Conte-nos como foi participar com <span id="empresaNome">XXXXX</span>
+      </h2>
+
+      <section class="card">
+        <!-- Estrelas -->
+        <div class="stars" id="stars" aria-label="Avaliação de 1 a 5 estrelas">
+          <!-- 5 para 1 (visual como no Figma, as três primeiras preenchidas por padrão) -->
+          <button class="star" data-value="1" aria-label="1 estrela"><i class="ri-star-fill"></i></button>
+          <button class="star" data-value="2" aria-label="2 estrelas"><i class="ri-star-fill"></i></button>
+          <button class="star" data-value="3" aria-label="3 estrelas"><i class="ri-star-fill"></i></button>
+          <button class="star" data-value="4" aria-label="4 estrelas"><i class="ri-star-line"></i></button>
+          <button class="star" data-value="5" aria-label="5 estrelas"><i class="ri-star-line"></i></button>
+        </div>
+
+        <!-- Opinião -->
+        <label class="label sr-only" for="opniao">Compartilhe sua opinião</label>
+        <textarea id="opniao" class="input area" placeholder="Compartilhe sua opinião..." rows="5"></textarea>
+
+        <!-- Upload -->
+        <p class="label">Anexar fotos (opcional)</p>
+        <div class="upload">
+          <label class="drop" for="fotosInput">
+            <span class="drop-hint">Clique para adicionar<br>ou arraste aqui</span>
+            <input id="fotosInput" type="file" accept="image/*" multiple hidden>
+          </label>
+          <div id="previews" class="previews"></div>
+        </div>
+
+        <!-- Ações -->
+        <div class="actions">
+          <button class="btn primary" id="btnEnviar">Enviar</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="scripts/avaliacao.js"></script>
+</body>
+</html>
