@@ -562,11 +562,11 @@ body.modal-open { overflow: hidden; }
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  text-decoration: none;        /* remove sublinhado */
-  color: inherit;               /* mantém a cor do texto do card */
+  text-decoration: none;        
+  color: inherit;              
 }
 .card.history .empresa-link:visited {
-  color: inherit;               /* evita roxo */
+  color: inherit;               
 }
 .card.history .empresa-logo {
   width: 24px;
@@ -580,7 +580,6 @@ body.modal-open { overflow: hidden; }
   color: #334155;
 }
 
-/* Botão "Ver detalhes" como chip sem roxo/sublinhado */
 .card.history a.chip {
   text-decoration: none;
   color: #334155;
@@ -601,4 +600,29 @@ body.modal-open { overflow: hidden; }
 }
 .card.history .chip.outline:hover {
   filter: brightness(0.97);
+}
+
+.btn-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #dffcf9;
+  border: 2px solid #bfeee8;
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+  padding: 10px 16px;
+  border-radius: 999px;
+  transition: 0.2s;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 16px; /* cria espaço entre o botão e a palavra Voluntary */
+}
+
+.btn-voltar:hover {
+  background: #d3f3ef;
+  transform: translateY(-2px);
+}
+
+.btn-voltar i {
+  font-size: 18px;
 }

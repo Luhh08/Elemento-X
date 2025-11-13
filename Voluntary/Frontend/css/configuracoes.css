@@ -53,3 +53,32 @@ input:checked + .slider:before { transform: translateX(22px); }
 
 /* Responsivo */
 @media (max-width: 1200px) { .page { grid-template-columns: 1fr; } }
+
+/* Botão de Voltar */
+.btn-voltar {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #dffcf9;
+  border: 2px solid #bfeee8;
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+  padding: 10px 16px;
+  border-radius: 999px;
+  transition: 0.2s;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+}
+
+.btn-voltar:hover {
+  background: #d3f3ef;
+  transform: translateY(-2px);
+}
+
+.btn-voltar i {
+  font-size: 18px;
+}

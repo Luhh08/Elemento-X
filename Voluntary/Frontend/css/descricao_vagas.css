@@ -301,3 +301,27 @@ body.live::before{
   content: none !important;
 }
 body.live{scroll-behavior: none;}
+
+.btn-voltar {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #dffcf9;
+  border: 2px solid #bfeee8;
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+  padding: 10px 16px;
+  border-radius: 999px;
+  transition: 0.2s;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+}
+
+.btn-voltar:hover {
+  background: #d3f3ef;
+  transform: translateY(-2px);
+}
+
+.btn-voltar i {
+  font-size: 18px;
+}
