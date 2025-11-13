@@ -20,6 +20,12 @@
   const modalText    = document.getElementById('modalText');
   const btnYes       = document.getElementById('confirmYes');
   const btnNo        = document.getElementById('confirmNo');
+  const modalResolver = document.getElementById('modalResolverDenuncia');
+  const resolverForm  = document.getElementById('resolverDenunciaForm');
+  const resolverTextarea = document.getElementById('resolverMensagem');
+  const resolverCancelar = document.getElementById('resolverCancelar');
+  const resolverTitulo   = document.getElementById('resolverTitulo');
+  const resolverConclusaoWrap = document.getElementById('resolverConclusaoWrap');
   const toast        = document.getElementById('toast');
 
   const sections     = document.querySelectorAll('.table-section');
@@ -35,6 +41,13 @@
 
   // --------- Utils ---------
   const headers = () => ({ Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' });
+  const escapeHtml = (str = '') => String(str).replace(/[&<>"']/g, m => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[m]));
 
   function showToast(text, ok = true) {
     toast.textContent = text;
@@ -92,8 +105,35 @@
     (v.empresa && (v.empresa.nome || v.empresa.razaoSocial || v.empresa.fantasia)) || v.empresaNome || '—';
   const getTituloVaga = (v) => v.titulo || v.nome || v.nomeVaga || '—';
   const getCandidaturas = (v) => (Array.isArray(v.candidaturas) ? v.candidaturas.length : (v.qtdCandidaturas ?? v.aplicacoes ?? 0));
-  const getMotivoDenuncia = (d) => d.motivo || d.reason || d.tipo || '—';
+  const getMotivoDenuncia = (d) => d.mensagem || d.motivo || d.reason || d.tipo || '—';
   const getComentario = (f) => f.comentario || f.texto || f.mensagem || '—';
+  const formatReporter = (d) => {
+    const autor = d?.quemDenunciou;
+    if (autor) {
+      const nome = autor.nome || autor.usuario || autor.email || autor.id || 'Denunciante';
+      const usuario = autor.usuario && autor.usuario !== nome ? ` (@${autor.usuario})` : '';
+      const email = autor.email ? ` - ${autor.email}` : '';
+      return `${nome}${usuario}${email}`;
+    }
+    if (d?.reporterNome || d?.reporterEmail) {
+      return `${d.reporterNome || ''}${d.reporterEmail ? ` - ${d.reporterEmail}` : ''}`.trim() || 'Denunciante';
+    }
+    if (d?.reporterTipo) return `Denunciante (${d.reporterTipo})`;
+    return d?.quemDenunciouId ? `Usuário #${String(d.quemDenunciouId).slice(0,6)}…` : 'Anônimo';
+  };
+  const getDenunciaTargetText = (d) => {
+    if (!d) return '—';
+    const alvo = d.alvo || {};
+    if (d.tipo === 'vaga') {
+      if (alvo.nome && alvo.empresaNome) return `${alvo.nome} (${alvo.empresaNome})`;
+      return alvo.nome || `Vaga #${d.alvoId}`;
+    }
+    if (alvo.nome) return alvo.nome;
+    if (d.tipo && d.alvoId) return `${d.tipo.toUpperCase()} #${d.alvoId}`;
+    return '—';
+  };
+  const getDenunciaTipo = (d) => String(d?.tipo || '').toLowerCase();
+  const getDenunciaTargetId = (d) => d?.alvo?.id || d?.alvoId || null;
 
   // --------- Status visual (badge) ----------
   function badge(label, cls) {
@@ -126,12 +166,93 @@ function statusBadgeForAccount(item) {
     // denúncia/feedback => remoção
     const id = getId(item);
     if (tipo === 'denuncias') {
-      return `<button class="ban" data-tipo="denuncia" data-acao="remover" data-id="${id}">Remover</button>`;
+      const statusBtn = item.resolvida
+        ? `<button class="resolver-btn" data-role="reabrir-denuncia" data-id="${id}" style="margin-right:6px;">Reabrir</button>`
+        : `<button class="resolver-btn" data-role="resolver-denuncia" data-id="${id}" style="margin-right:6px;">Marcar resolvida</button>`;
+      const alvoTipo = getDenunciaTipo(item);
+      const alvoId = getDenunciaTargetId(item);
+      const moderationLabel = alvoTipo === 'vaga' ? 'Excluir' : 'Banir';
+      const modBtn = (alvoId && alvoTipo)
+        ? `<button class="ban" data-tipo="${alvoTipo}" data-acao="banir" data-id="${alvoId}">${moderationLabel}</button>`
+        : '';
+      return `${statusBtn}${modBtn}`;
     }
     if (tipo === 'feedback') {
       return `<button class="ban" data-tipo="feedback" data-acao="remover" data-id="${id}">Remover</button>`;
-    }
+  }
     return '';
+  }
+
+  let resolverState = null;
+  function openResolverModal(payload) {
+    resolverState = payload;
+    if (resolverTitulo) {
+      resolverTitulo.textContent = payload.resolvida
+        ? 'Marcar denúncia como resolvida'
+        : 'Reabrir denúncia';
+    }
+    if (resolverForm) {
+      resolverForm.reset();
+      resolverTextarea.value = '';
+      const chosen = resolverForm.querySelector('input[name="resolverConclusao"]:checked');
+      if (chosen) chosen.checked = false;
+    }
+    if (resolverConclusaoWrap) {
+      resolverConclusaoWrap.style.display = payload.resolvida ? 'block' : 'none';
+    }
+    modalResolver?.setAttribute('aria-hidden', 'false');
+    modalResolver?.classList.add('open');
+  }
+  function closeResolverModal() {
+    resolverState = null;
+    modalResolver?.setAttribute('aria-hidden', 'true');
+    modalResolver?.classList.remove('open');
+  }
+  resolverCancelar?.addEventListener('click', closeResolverModal);
+  modalResolver?.addEventListener('click', (e) => {
+    if (e.target === modalResolver) closeResolverModal();
+  });
+  resolverForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!resolverState) return closeResolverModal();
+    const nota = resolverTextarea.value.trim();
+    let resultado = null;
+    if (resolverState.resolvida) {
+      const radio = resolverForm.querySelector('input[name="resolverConclusao"]:checked');
+      if (!radio) {
+        showToast('Selecione se a denúncia era procedente ou falsa.', false);
+        return;
+      }
+      resultado = radio.value;
+    }
+    try {
+      const resp = await fetch(`/api/denuncias/${resolverState.id}/resolver`, {
+        method: 'PATCH',
+        headers: headers(),
+        body: JSON.stringify({
+          resolvida: resolverState.resolvida,
+          adminNota: nota || null,
+          resultado
+        })
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        showToast(data.error || 'Falha ao atualizar denúncia.', false);
+        return;
+      }
+      showToast(resolverState.resolvida ? 'Denúncia marcada como resolvida.' : 'Denúncia reaberta.');
+      closeResolverModal();
+      await loadAll();
+      applySearch();
+    } catch (err) {
+      console.error(err);
+      showToast('Erro de rede ao atualizar denúncia.', false);
+    }
+  });
+
+  function atualizarStatusDenuncia(id, resolvida) {
+    if (!id) return;
+    openResolverModal({ id, resolvida });
   }
 
   // --------- Render ---------
@@ -170,20 +291,44 @@ function statusBadgeForAccount(item) {
           <td>${vagaStatus}</td>
           <td>${actionButtonHTML(item, 'vagas')}</td>`;
       } else if (tipo === 'denuncias') {
+        const tipoLabel = (item.tipo || '').toUpperCase();
+        const reporter = escapeHtml(formatReporter(item));
+        const alvoDesc = escapeHtml(getDenunciaTargetText(item));
+        const mensagemFull = item.mensagem || '—';
+        const motivo = escapeHtml(mensagemFull.substring(0, 50));
+        const sufixo = mensagemFull.length > 50 ? '...' : '';
+        const data = item.criadoEm ? new Date(item.criadoEm).toLocaleDateString('pt-BR') : '—';
+        const statusBadge = item.resolvida
+          ? `<span class="badge status-ok" style="background:#16a34a;color:#fff;">Resolvida</span>`
+          : `<span class="badge status-pendente" style="background:#f97316;color:#fff;">Pendente</span>`;
+        const nota = item.adminNota ? `<div style="font-size:12px;color:#475569;margin-top:4px;">${escapeHtml(item.adminNota)}</div>` : '';
+        const conclusao = item.resultado
+          ? `<div style="font-size:12px;color:#475569;margin-top:4px;"><strong>Conclusão:</strong> ${
+              item.resultado === 'improcedente' ? 'Denúncia falsa / improcedente' : 'Denúncia procedente'
+            }</div>`
+          : '';
         cols = `
           <td><input type="checkbox" data-id="${id}"></td>
           <td>${id}</td>
-          <td>${getNome(item.usuario || item.autor || {})}</td>
-          <td>${getMotivoDenuncia(item)}</td>
-          <td>${getStatusText(item)}</td>
+          <td>${badge(tipoLabel, 'status-denunciado')}</td>
+          <td>${reporter}</td>
+          <td>${alvoDesc}</td>
+          <td>${statusBadge}${nota}${conclusao}</td>
+          <td>${motivo}${sufixo}</td>
+          <td>${data}</td>
           <td>${actionButtonHTML(item, 'denuncias')}</td>`;
       } else if (tipo === 'feedback') {
+        const nota = item.nota || '—';
+        const comentario = (item.comentario || '—').substring(0, 50);
+        const data = item.criadoEm ? new Date(item.criadoEm).toLocaleDateString('pt-BR') : '—';
         cols = `
           <td><input type="checkbox" data-id="${id}"></td>
           <td>${id}</td>
           <td>${getTituloVaga(item.vaga || {})}</td>
-          <td>${getNome(item.usuario || {})}</td>
-          <td>${getComentario(item)}</td>
+          <td>${getNome(item.voluntario || {})}</td>
+          <td>${nota} ⭐</td>
+          <td>${comentario}...</td>
+          <td>${data}</td>
           <td>${actionButtonHTML(item, 'feedback')}</td>`;
       }
 
@@ -200,11 +345,13 @@ function applySearch() {
       getId(x), getNome(x), getEmail(x),
       getTituloVaga(x), getEmpresaNomeFromVaga(x),
       getMotivoDenuncia(x), getComentario(x),
+      formatReporter(x), getDenunciaTargetText(x),
       getStatusText(x),
       String(x.status || ''),         // 👈 acrescentado
       (x.validacao ? 'verificado' : 'pendente'),
       (x.isBanned ? 'banido' : ''),
-      (x.banReason || '')
+      (x.banReason || ''),
+      (x.resolvida ? 'resolvida' : 'pendente')
     ].join(' ').toLowerCase();
     return blob.includes(q);
   });
@@ -226,6 +373,15 @@ function applySearch() {
         openModal({ tipo, id, acao });
       });
     });
+
+    if (section === 'denuncias') {
+      document.querySelectorAll('#denuncias [data-role="resolver-denuncia"]').forEach(btn => {
+        btn.addEventListener('click', () => atualizarStatusDenuncia(btn.dataset.id, true));
+      });
+      document.querySelectorAll('#denuncias [data-role="reabrir-denuncia"]').forEach(btn => {
+        btn.addEventListener('click', () => atualizarStatusDenuncia(btn.dataset.id, false));
+      });
+    }
   }
 
   // --------- Navegação lateral ---------

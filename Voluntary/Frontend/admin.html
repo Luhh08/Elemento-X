@@ -101,9 +101,12 @@
           <tr>
             <th><input type="checkbox" id="selectAllDenuncias"></th>
             <th>ID</th>
-            <th>Usuário</th>
-            <th>Motivo</th>
+            <th>Tipo</th>
+            <th>Quem denunciou</th>
+            <th>Alvo</th>
             <th>Status</th>
+            <th>Motivo</th>
+            <th>Data</th>
             <th>Ações</th>
           </tr>
         </thead>
@@ -121,8 +124,10 @@
             <th><input type="checkbox" id="selectAllFeedback"></th>
             <th>ID</th>
             <th>Vaga</th>
-            <th>Usuário</th>
+            <th>Voluntário</th>
+            <th>Nota</th>
             <th>Comentário</th>
+            <th>Data</th>
             <th>Ações</th>
           </tr>
         </thead>
@@ -140,6 +145,29 @@
         <button id="confirmYes" class="btn btn-green">Sim</button>
         <button id="confirmNo" class="btn btn-red">Não</button>
       </div>
+    </div>
+  </div>
+
+  <div id="modalResolverDenuncia" class="modal" aria-hidden="true">
+    <div class="modal-dialog">
+      <h3 id="resolverTitulo" style="margin-top:0;">Atualizar denúncia</h3>
+      <form id="resolverDenunciaForm">
+        <div id="resolverConclusaoWrap" style="margin-bottom:12px;">
+          <p style="margin:0 0 6px;">A denúncia é:</p>
+          <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <input type="radio" name="resolverConclusao" value="procedente"> Procedente (verdadeira)
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;">
+            <input type="radio" name="resolverConclusao" value="improcedente"> Improcedente (falsa)
+          </label>
+        </div>
+        <label for="resolverMensagem" style="display:block;font-size:13px;margin-bottom:6px;">Mensagem para o denunciado</label>
+        <textarea id="resolverMensagem" rows="4" style="width:100%;resize:vertical;" placeholder="Explique o motivo da resolução ou reabertura."></textarea>
+        <div class="modal-actions" style="margin-top:12px;">
+          <button type="submit" class="btn btn-green">Salvar</button>
+          <button type="button" id="resolverCancelar" class="btn btn-red">Cancelar</button>
+        </div>
+      </form>
     </div>
   </div>
 

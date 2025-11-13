@@ -22,8 +22,10 @@ body {
 
 .page {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
   min-height: 100vh;
+  width: 100%;
+  min-width: 0;
 }
 
 .sidebar {
@@ -50,7 +52,7 @@ body {
 
 .pill-logout { margin-top:auto; background:#ffdcdc; color:#a00; }
 
-.content { padding:24px; }
+.content { padding:24px; width:100%; max-width:100%; min-width:0; }
 .content-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
 .content-header h2 { font-size:24px; display:flex; align-items:center; gap:8px; }
 .content-header input {
@@ -67,12 +69,21 @@ body {
 .filter-resolvido { background: var(--filter-resolvido); }
 .filter-descartado { background: var(--filter-descartado); }
 
+.content-body{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  gap:24px;
+}
+
 .card.table-card {
   background: var(--panel);
   border-radius: var(--radius);
   padding: 16px;
   box-shadow: var(--shadow);
   overflow-x:auto;
+  width:100%;
+  min-width:0;
 }
 
 table { width:100%; border-collapse:collapse; }
@@ -80,7 +91,15 @@ thead th { text-align:left; padding:12px 8px; font-weight:700; background:#f5f5f
 tbody td { padding:10px 8px; border-top:1px solid #eee; }
 tbody tr:hover { background:#f9f9f9; }
 .status-badge {
-  padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; display:inline-block;
+  padding:4px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:600;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  white-space:nowrap;
+  min-width:80px;
 }
 .status-ativo { background:#a7dcb5; color:#136e1a; }
 .status-inativo { background:#e0e0e0; color:#555; }
@@ -173,6 +192,7 @@ table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+  table-layout: auto;
 }
 
 thead th {
@@ -190,6 +210,7 @@ tbody td {
   font-size: 14px;
   text-align: center;
   vertical-align: middle;
+  word-break: break-word;
 }
 
 .table-section {
@@ -197,6 +218,7 @@ tbody td {
   opacity: 0;
   transform: translateX(30px) scale(0.98);
   transition: opacity 0.4s ease, transform 0.4s ease;
+  width:100%;
 }
 
 .table-section.active {
@@ -240,6 +262,51 @@ tbody td {
 #usuarios table td:nth-child(6) { width: 120px; }
 #usuarios table th:nth-child(7),
 #usuarios table td:nth-child(7) { width: 160px; }
+
+#denuncias td:last-child,
+#denuncias th:last-child{
+  min-width:200px;
+}
+#denuncias td:last-child{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+#denuncias table th:nth-child(3),
+#denuncias table td:nth-child(3){
+  white-space:nowrap;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  width:110px;
+}
+
+.resolver-btn{
+  appearance:none;
+  border:0;
+  padding:8px 14px;
+  border-radius:9999px;
+  background:#34a853;
+  color:#fff;
+  font-weight:600;
+  font-size:13px;
+  cursor:pointer;
+  box-shadow:
+    inset 0 -2px 0 rgba(0,0,0,.1),
+    0 2px 6px rgba(52,168,83,.3);
+  transition:filter .2s ease, box-shadow .2s ease, transform .02s ease;
+}
+.resolver-btn:hover{
+  filter:brightness(.95);
+  box-shadow:
+    inset 0 -2px 0 rgba(0,0,0,.12),
+    0 4px 12px rgba(52,168,83,.35);
+}
+.resolver-btn:active{
+  transform:translateY(1px);
+}
 
 button.ban{
   appearance:none;
