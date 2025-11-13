@@ -3,6 +3,8 @@ const $  = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 function esc(t){ return String(t ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
 
+console.log("✓ perfil.js carregado");
+
 // ---- normalizador de caminhos de upload + extratores de URL ----
 
 // Tenta extrair uma URL de vários formatos (string, objeto, arrays, etc.)
@@ -23,8 +25,6 @@ function pickUrl(x){
   }
   return "";
 }
-
-// pega a primeira imagem de: array | json string | csv string | string simples | objeto
 function firstImage(imagens){
   if(!imagens) return "";
   if(Array.isArray(imagens)) return pickUrl(imagens);
@@ -102,6 +102,13 @@ const userId = localStorage.getItem("userId");     // opcional
 const params   = new URLSearchParams(location.search);
 const viewedId = params.get("id") || userId;       // permite público via ?id=
 const isSelf   = userId && viewedId === userId;
+
+console.log("📊 Variáveis globais inicializadas:");
+console.log("   token=", !!token);
+console.log("   userId=", userId);
+console.log("   params.get('id')=", params.get("id"));
+console.log("   viewedId=", viewedId);
+console.log("   isSelf=", isSelf);
 
 if(!params.get("id") && viewedId){
   history.replaceState(null,"",`${location.pathname}?id=${encodeURIComponent(viewedId)}`);
@@ -308,14 +315,6 @@ async function carregarHistoricoCandidaturas(){
       }
     }));
 
-    // sanity-check opcional para debugar origens vazias
-    items.forEach((it,i)=>{
-      const url = resolveCapaFromVaga(it.vaga || {});
-      if (!url || url === HIST_DEFAULT_IMG) {
-        // console.warn("Sem capa resolvida para item", i, it.vaga);
-      }
-    });
-
     await enrichWithEmpresaInfo(items);
     renderHistorico(items);
   }catch(e){
@@ -396,13 +395,45 @@ if(btnEditar)    btnEditar.style.display   = isSelf ? "" : "none";
 if(btnDenunciar) btnDenunciar.style.display= (userId && !isSelf) ? "" : "none";
 
 let _scrollLock={ y:0, padRight:"" };
-function lockScroll(){ if(document.body.classList.contains("modal-open")) return; const sb=window.innerWidth-document.documentElement.clientWidth; _scrollLock.padRight=document.body.style.paddingRight; if(sb>0) document.body.style.paddingRight=`${sb}px`; _scrollLock.y=window.scrollY||document.documentElement.scrollTop||0; document.body.style.top=`-${_scrollLock.y}px`; document.body.classList.add("modal-open"); document.body.style.position="fixed"; document.body.style.width="100%"; }
-function unlockScroll(){ if(!document.body.classList.contains("modal-open")) return; document.body.classList.remove("modal-open"); document.body.style.position=""; document.body.style.top=""; document.body.style.width=""; document.body.style.paddingRight=_scrollLock.padRight||""; window.scrollTo(0,_scrollLock.y); }
-function anyModalOpen(){ return [popupEdicao,popupDenuncia,popupDenunciaOk].some(p=>p && p.getAttribute("aria-hidden")==="false"); }
-function openPopup(p){ p?.setAttribute("aria-hidden","false"); lockScroll(); }
-function closeAllPopups(){ [popupEdicao,popupDenuncia,popupDenunciaOk].forEach(p=>p?.setAttribute("aria-hidden","true")); if(!anyModalOpen()) unlockScroll(); }
+function lockScroll(){
+  if(document.body.classList.contains("modal-open")) return;
+  const sb=window.innerWidth-document.documentElement.clientWidth;
+  _scrollLock.padRight=document.body.style.paddingRight;
+  if(sb>0) document.body.style.paddingRight=`${sb}px`;
+  _scrollLock.y=window.scrollY||document.documentElement.scrollTop||0;
+  document.body.style.top=`-${_scrollLock.y}px`;
+  document.body.classList.add("modal-open");
+  document.body.style.position="fixed";
+  document.body.style.width="100%";
+}
+function unlockScroll(){
+  if(!document.body.classList.contains("modal-open")) return;
+  document.body.classList.remove("modal-open");
+  document.body.style.position="";
+  document.body.style.top="";
+  document.body.style.width="";
+  document.body.style.paddingRight=_scrollLock.padRight||"";
+  window.scrollTo(0,_scrollLock.y);
+}
+function anyModalOpen(){
+  return [popupEdicao,popupDenuncia,popupDenunciaOk].some(p=>p && p.getAttribute("aria-hidden")==="false");
+}
+function openPopup(p){
+  p?.setAttribute("aria-hidden","false");
+  lockScroll();
+}
+function closeAllPopups(){
+  [popupEdicao,popupDenuncia,popupDenunciaOk].forEach(p=>p?.setAttribute("aria-hidden","true"));
+  if(!anyModalOpen()) unlockScroll();
+}
 $("#btnEditar")?.addEventListener("click", ()=>openPopup(popupEdicao));
-$("#btnDenunciar")?.addEventListener("click", ()=>openPopup(popupDenuncia));
+$("#btnDenunciar")?.addEventListener("click", ()=>{
+  if(!token){
+    alert("Faça login para denunciar este usuário.");
+    return;
+  }
+  openPopup(popupDenuncia);
+});
 $$("[data-close]")?.forEach((b)=>b.addEventListener("click", closeAllPopups));
 document.addEventListener("keydown",(e)=>{ if(e.key==="Escape"&&anyModalOpen()) closeAllPopups(); });
 
@@ -412,29 +443,50 @@ const defaultBanner = "../img/default-banner.png";
 
 // ========= carregar perfil + histórico =========
 async function carregarPerfil(){
-  if(!viewedId) { await carregarHistoricoCandidaturas(); return; } // nada a exibir no perfil, mas tenta histórico
+  console.log("📌 carregarPerfil() INICIADA");
+  console.log("   viewedId=", viewedId, "token=", !!token, "userId=", userId);
+  
+  if(!viewedId || viewedId === 'undefined') { 
+    console.log("   ⚠ viewedId inválido, carregando histórico apenas");
+    await carregarHistoricoCandidaturas(); 
+    return; 
+  } // nada a exibir no perfil, mas tenta histórico
 
   try{
     const headers = { };
     if(token) headers.Authorization = `Bearer ${token}`;  // usa se existir
 
-    const res = await fetch(`/api/usuario/${encodeURIComponent(viewedId)}`, { headers });
-    if(!res.ok) throw new Error("Erro ao carregar perfil");
+    const url = `/api/usuario/${encodeURIComponent(viewedId)}`;
+    console.log("   🔄 Fazendo fetch para:", url);
+    const res = await fetch(url, { headers });
+    console.log("   ✓ Response status:", res.status);
+    
+    if(!res.ok) {
+      console.warn("   ❌ Perfil não encontrado ou sem acesso - Status:", res.status);
+      const errorData = await res.json().catch(() => ({}));
+      console.warn("   Erro do servidor:", errorData);
+      await carregarHistoricoCandidaturas();
+      return;
+    }
     const data = await res.json();
+    console.log("   ✓ Dados do perfil recebidos:", data);
 
-    $("#nomeUsuario").textContent      = data.nome || "";
-    $("#usuarioTag").textContent       = data.usuario ? `@${data.usuario}` : "";
-    $("#descricaoUsuario").textContent = data.descricao || "Este usuário ainda não adicionou uma descrição.";
-    $("#bannerUsuario").src = data.bannerUrl || defaultBanner;
-    $("#fotoUsuario").src   = data.fotoUrl   || defaultFoto;
-    $("#bannerPreview").src = data.bannerUrl || defaultBanner;
-    $("#fotoPreview").src   = data.fotoUrl   || defaultFoto;
+    $("#nomeUsuario") && ($("#nomeUsuario").textContent      = data.nome || "");
+    $("#usuarioTag") && ($("#usuarioTag").textContent       = data.usuario ? `@${data.usuario}` : "");
+    $("#descricaoUsuario") && ($("#descricaoUsuario").textContent = data.descricao || "Este usuário ainda não adicionou uma descrição.");
+    $("#bannerUsuario") && ($("#bannerUsuario").src = data.bannerUrl || defaultBanner);
+    $("#fotoUsuario")   && ($("#fotoUsuario").src   = data.fotoUrl   || defaultFoto);
+    $("#bannerPreview") && ($("#bannerPreview").src = data.bannerUrl || defaultBanner);
+    $("#fotoPreview")   && ($("#fotoPreview").src   = data.fotoUrl   || defaultFoto);
 
     const tagsEl = $("#listaCompetencias");
     if(tagsEl){
       tagsEl.innerHTML="";
       (data.competencias||[]).forEach(t=>{
-        const span=document.createElement("span"); span.className="tag"; span.textContent=t; tagsEl.appendChild(span);
+        const span=document.createElement("span");
+        span.className="tag";
+        span.textContent=t;
+        tagsEl.appendChild(span);
       });
       const progressRow = document.querySelector(".progress-row");
       if(progressRow && !isSelf) progressRow.style.display="none";
@@ -442,22 +494,25 @@ async function carregarPerfil(){
 
     const horarios = Array.isArray(data.preferenciaHorario) ? data.preferenciaHorario
                     : (data.preferenciaHorario ? [data.preferenciaHorario] : []);
-    $("#turnoUsuario").textContent = horarios.length ? horarios.join(", ") : "—";
-    $("#emailContato").textContent = data.emailcontato || "—";
-    $("#telefoneContato").textContent = formatTelefoneBR(data.telefonecontato);
+    $("#turnoUsuario") && ($("#turnoUsuario").textContent = horarios.length ? horarios.join(", ") : "—");
+    $("#emailContato") && ($("#emailContato").textContent = data.emailcontato || "—");
+    $("#telefoneContato") && ($("#telefoneContato").textContent = formatTelefoneBR(data.telefonecontato));
 
-    $("#editNome").value  = data.nome || "";
-    $("#editUsuario").value = data.usuario || "";
-    $("#editDescricao").value = data.descricao || "";
-    $("#editEmailContato").value = data.emailcontato || "";
-    $("#editTelefoneContato").value = formatTelefoneBR(data.telefonecontato || "");
-    $("#editCompetencias").value = (data.competencias||[]).join(", ");
+    $("#editNome") && ($("#editNome").value  = data.nome || "");
+    $("#editUsuario") && ($("#editUsuario").value = data.usuario || "");
+    $("#editDescricao") && ($("#editDescricao").value = data.descricao || "");
+    $("#editEmailContato") && ($("#editEmailContato").value = data.emailcontato || "");
+    $("#editTelefoneContato") && ($("#editTelefoneContato").value = formatTelefoneBR(data.telefonecontato || ""));
+    $("#editCompetencias") && ($("#editCompetencias").value = (data.competencias||[]).join(", "));
 
     aplicarMascaraTelefone($("#editTelefoneContato"));
     initChipsCompetencias();
 
     $$('input[name="disp[]"]').forEach(ch=>ch.checked=false);
-    horarios.forEach(h=>{ const cb=document.querySelector(`input[name="disp[]"][value="${h}"]`); if(cb) cb.checked=true; });
+    horarios.forEach(h=>{
+      const cb=document.querySelector(`input[name="disp[]"][value="${h}"]`);
+      if(cb) cb.checked=true;
+    });
 
     atualizarBarraProgresso(data.progresso);
     const barra = document.querySelector(".progress-container, #barraProgresso");
@@ -473,8 +528,56 @@ async function carregarPerfil(){
 
 function atualizarBarraProgresso(valor){
   const p = Math.max(0, Math.min(100, Number(valor||0)));
-  $("#barraProgresso").style.width = `${p}%`;
-  $("#labelProgresso").textContent = `${p}% completo`;
+  const barra = $("#barraProgresso");
+  const label = $("#labelProgresso");
+  if(barra) barra.style.width = `${p}%`;
+  if(label) label.textContent = `${p}% completo`;
 }
 
-document.addEventListener("DOMContentLoaded", carregarPerfil);
+// ========= denúncia ==========
+// (aproveita os mesmos popupDenuncia / popupDenunciaOk e closeAllPopups/openPopup acima)
+const formDenuncia = $("#formDenuncia");
+const motivoDenunciaInput = $("#motivoDenuncia");
+
+// Enviar denúncia
+if (formDenuncia) {
+  formDenuncia.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const motivo = (motivoDenunciaInput?.value || "").trim();
+    if (!motivo) {
+      alert("Por favor, escreva o motivo da denúncia.");
+      return;
+    }
+
+    const body = { tipo: "usuario", alvoId: viewedId || "", mensagem: motivo };
+    const tokenLocal = localStorage.getItem("token") || "";
+    if (!tokenLocal) {
+      alert("Você precisa estar logado para enviar uma denúncia.");
+      closeAllPopups();
+      return;
+    }
+    try {
+      const resp = await fetch("/api/denuncias", {
+        method: "POST",
+        headers: Object.assign(
+          { "Content-Type": "application/json" },
+          tokenLocal ? { Authorization: `Bearer ${tokenLocal}` } : {}
+        ),
+        body: JSON.stringify(body)
+      });
+      if (!resp.ok) throw new Error("Falha ao enviar denúncia.");
+      // sucesso
+      if (motivoDenunciaInput) motivoDenunciaInput.value = "";
+      closeAllPopups();
+      openPopup(popupDenunciaOk);
+    } catch (err) {
+      console.error("Erro ao enviar denúncia:", err);
+      alert("Falha ao enviar denúncia. Tente novamente mais tarde.");
+    }
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM pronto, carregando perfil do usuário...");
+  carregarPerfil();
+});

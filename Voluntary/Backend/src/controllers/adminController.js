@@ -13,7 +13,7 @@ function parseTipo(tipo) {
 
 async function getPainelDados(req, res) {
   try {
-    const [usuarios, empresas, vagas] = await Promise.all([
+    const [usuarios, empresas, vagas, denuncias, avaliacaos] = await Promise.all([
       prisma.usuario.findMany({
         select: { id:true, nome:true, email:true, usuario:true, validacao:true, isBanned:true, banReason:true }
       }),
@@ -24,8 +24,21 @@ async function getPainelDados(req, res) {
         select: { id:true, titulo:true, empresaId:true, status:true, isBanned:true,
                   empresa:{ select:{ razao_social:true, usuario:true, email:true } } }
       }),
+      prisma.denuncia.findMany({
+        orderBy: { criadoEm: 'desc' },
+        take: 200,
+        include: { quemDenunciou: { select: { id: true, nome: true, usuario: true, email: true } } }
+      }),
+      prisma.avaliacao.findMany({
+        orderBy: { criadoEm: 'desc' },
+        take: 200,
+        include: { 
+          vaga: { select: { id: true, titulo: true } },
+          voluntario: { select: { id: true, nome: true, usuario: true, email: true } }
+        }
+      })
     ]);
-    res.json({ usuarios, empresas, vagas, denuncias: [], feedback: [] });
+    res.json({ usuarios, empresas, vagas, denuncias, feedback: avaliacaos });
   } catch (e) {
     console.error('getPainelDados', e);
     res.status(500).json({ error: 'Falha ao obter dados' });

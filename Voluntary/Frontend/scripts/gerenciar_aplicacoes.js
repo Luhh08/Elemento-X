@@ -60,7 +60,8 @@
     const turnos = asArr(v.preferenciaHorario || v.turnos);
     const vagaId = vaga.id || vaga._id || '';
     const vagaTitulo = vaga.titulo || vaga.nome || 'Vaga';
-    return { id, status, nome, emailContato, tel, foto, skills, turnos, vagaId, vagaTitulo, raw:a };
+    const vagaStatus = (vaga.status || '').toString().toUpperCase();
+    return { id, status, nome, emailContato, tel, foto, skills, turnos, vagaId, vagaTitulo, vagaStatus, raw:a };
   }
 
   function tag(t){ return `<span class="tag-vaga tag-skill">${esc(t)}</span>`; }
@@ -99,9 +100,12 @@
       ${x.skills.map(tag).join('')}
     </div>
 
-    <div class="card-actions">
-      <button class="btn-accept" data-accept="${esc(x.id)}">Aceitar aplicação</button>
-      <button class="btn-reject" data-reject="${esc(x.id)}">Recusar aplicação</button>
+      <div class="card-actions">
+      ${(['ANDAMENTO','FINALIZADA'].includes(x.vagaStatus) ?
+        `<span class="note">Vaga ${esc(x.vagaStatus.toLowerCase())}. Ações desabilitadas.</span>` :
+        `<button class="btn-accept" data-accept="${esc(x.id)}">Aceitar aplicação</button>
+         <button class="btn-reject" data-reject="${esc(x.id)}">Recusar aplicação</button>`
+      )}
       <a href="perfil-usuario.html?id=${encodeURIComponent(x.raw?.voluntario?.id || x.raw?.usuario?.id || '')}" class="btn btn-details">Ver Perfil Detalhado</a>
     </div>
   </div>
@@ -222,7 +226,7 @@
   async function updateStatus(id,status){
     const token = getAuthToken();
     try{
-      const res = await fetch(`${API_BASE}/candidaturas/${encodeURIComponent(id)}`,{
+      const res = await fetch(`${API_BASE}/candidaturas/${encodeURIComponent(id)}/status`,{
         method:'PATCH',
         headers:{
           'Content-Type':'application/json',

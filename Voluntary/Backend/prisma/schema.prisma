@@ -39,6 +39,8 @@ model Usuario {
   candidaturas Candidatura[]
 
   avaliacaos Avaliacao[]
+  denuncias Denuncia[]
+  notificacoes Notificacao[]
 }
 
 model Empresa {
@@ -74,6 +76,9 @@ model Empresa {
   banReason       String?                              
 
   respostaAvaliacaos RespostaAvaliacao[]
+
+  denuncias Denuncia[]
+  notificacoes Notificacao[]
 }
 
 model RepresentanteLegal {
@@ -170,4 +175,36 @@ model RespostaAvaliacao {
   updatedAt   DateTime @updatedAt
   avaliacao   Avaliacao @relation("AvaliacaoResposta", fields: [avaliacaoId], references: [id], onDelete: Cascade)
   empresa     Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+}
+
+model Denuncia {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  tipo           String
+  alvoId         String   @db.ObjectId
+  quemDenunciouId String?  @db.ObjectId
+  quemDenunciou  Usuario? @relation(fields: [quemDenunciouId], references: [id], onDelete: SetNull)
+  quemDenunciouEmpresaId String? @db.ObjectId
+  quemDenunciouEmpresa   Empresa? @relation(fields: [quemDenunciouEmpresaId], references: [id], onDelete: SetNull)
+  mensagem       String
+  criadoEm       DateTime @default(now())
+  resolvida      Boolean  @default(false)
+  adminNota      String?
+  reporterNome   String?
+  reporterEmail  String?
+  reporterTipo   String?
+  resultado      String?
+}
+
+model Notificacao {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  titulo    String
+  mensagem  String
+  categoria String?
+  link      String?
+  usuarioId String?  @db.ObjectId
+  usuario   Usuario? @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  empresaId String?  @db.ObjectId
+  empresa   Empresa? @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  lida      Boolean  @default(false)
+  criadoEm  DateTime @default(now())
 }

@@ -112,10 +112,104 @@ router.get('/dados', authAdmin, async (_req, res) => {
       banReason: v.banReason ?? null,
     }));
 
-    const denuncias = [];
-    const feedback  = [];
+    const denunciasRaw = await prisma.denuncia.findMany({
+      orderBy: { criadoEm: 'desc' },
+      take: 200,
+      include: {
+        quemDenunciou: { select: { id: true, nome: true, usuario: true, email: true } },
+        quemDenunciouEmpresa: { select: { id: true, razao_social: true, usuario: true, email: true } }
+      }
+    });
 
-    res.json({ usuarios, empresas, vagas, denuncias, feedback });
+    const idsUsuarios = new Set();
+    const idsEmpresas = new Set();
+    const idsVagas = new Set();
+    denunciasRaw.forEach(d => {
+      if (d.tipo === 'usuario') idsUsuarios.add(d.alvoId);
+      else if (d.tipo === 'empresa') idsEmpresas.add(d.alvoId);
+      else if (d.tipo === 'vaga') idsVagas.add(d.alvoId);
+    });
+
+    const [alvosUsuarios, alvosEmpresas, alvosVagas] = await Promise.all([
+      idsUsuarios.size ? prisma.usuario.findMany({
+        where: { id: { in: Array.from(idsUsuarios) } },
+        select: { id: true, nome: true, usuario: true, email: true }
+      }) : [],
+      idsEmpresas.size ? prisma.empresa.findMany({
+        where: { id: { in: Array.from(idsEmpresas) } },
+        select: { id: true, razao_social: true, usuario: true, email: true }
+      }) : [],
+      idsVagas.size ? prisma.vaga.findMany({
+        where: { id: { in: Array.from(idsVagas) } },
+        select: {
+          id: true,
+          titulo: true,
+          status: true,
+          empresa: { select: { id: true, razao_social: true } }
+        }
+      }) : []
+    ]);
+
+    const mapUsuarios = new Map(alvosUsuarios.map(u => [u.id, u]));
+    const mapEmpresas = new Map(alvosEmpresas.map(e => [e.id, e]));
+    const mapVagas = new Map(alvosVagas.map(v => [v.id, v]));
+
+    const denuncias = denunciasRaw.map(d => {
+      let alvo = null;
+      if (d.tipo === 'usuario') {
+        const target = mapUsuarios.get(d.alvoId);
+        if (target) {
+          alvo = {
+            id: target.id,
+            nome: target.nome || target.usuario || 'Usuário',
+            email: target.email,
+            usuario: target.usuario || null
+          };
+        }
+      } else if (d.tipo === 'empresa') {
+        const target = mapEmpresas.get(d.alvoId);
+        if (target) {
+          alvo = {
+            id: target.id,
+            nome: target.razao_social || target.usuario || 'Empresa',
+            email: target.email,
+            usuario: target.usuario || null
+          };
+        }
+      } else if (d.tipo === 'vaga') {
+          const target = mapVagas.get(d.alvoId);
+          if (target) {
+            alvo = {
+              id: target.id,
+              nome: target.titulo || 'Vaga',
+              status: target.status,
+              empresaNome: target.empresa?.razao_social || '—'
+            };
+          }
+      }
+      let reporter = d.quemDenunciou || null;
+      if (!reporter && d.quemDenunciouEmpresa) {
+        reporter = {
+          id: d.quemDenunciouEmpresa.id,
+          nome: d.quemDenunciouEmpresa.razao_social || d.quemDenunciouEmpresa.usuario || "Empresa",
+          usuario: d.quemDenunciouEmpresa.usuario || null,
+          email: d.quemDenunciouEmpresa.email || null,
+          tipo: "empresa"
+        };
+      }
+      if (!reporter && (d.reporterNome || d.reporterEmail)) {
+        reporter = {
+          id: null,
+          nome: d.reporterNome || d.reporterEmail || "Denunciante",
+          usuario: null,
+          email: d.reporterEmail || null,
+          tipo: d.reporterTipo || null
+        };
+      }
+      return { ...d, alvo, quemDenunciou: reporter };
+    });
+
+    res.json({ usuarios, empresas, vagas, denuncias, feedback: [] });
   } catch (err) {
     console.error('[admin/dados] erro:', err);
     res.status(500).json({ error: 'Erro ao carregar dados.' });
@@ -223,8 +317,8 @@ router.delete('/banir/:tipo/:id', authAdmin, async (req, res) => {
   const { tipo, id } = req.params;
   try {
     if (tipo === 'denuncia') {
-      // await prisma.denuncia.delete({ where: { id } });
-      return res.json({ message: 'Denúncia removida (placeholder)' });
+      await prisma.denuncia.delete({ where: { id } });
+      return res.json({ message: 'Denúncia removida' });
     }
     if (tipo === 'feedback') {
       // await prisma.feedback.delete({ where: { id } });

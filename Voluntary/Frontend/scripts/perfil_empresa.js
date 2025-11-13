@@ -28,7 +28,7 @@ function toggleActions() {
     show("#btnEditar", false);
     show("#btnGerenciar", false);
     show("#btnPublicar", false);
-    show("#btnDenunciar", true);
+    show("#btnDenunciar", !!token);
     return;
   }
 
@@ -79,7 +79,13 @@ function closeAllPopups() {
   if (!anyModalOpen()) unlockScroll();
 }
 $("#btnEditar")?.addEventListener("click", () => openPopup(popupEdicao));
-$("#btnDenunciar")?.addEventListener("click", () => openPopup(popupDenuncia));
+$("#btnDenunciar")?.addEventListener("click", () => {
+  if (!token) {
+    alert("Faça login para denunciar esta empresa.");
+    return;
+  }
+  openPopup(popupDenuncia);
+});
 $$("[data-close]").forEach((b) => b.addEventListener("click", closeAllPopups));
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && anyModalOpen()) closeAllPopups(); });
 
@@ -479,10 +485,34 @@ async function uploadImagem(tipo) {
 $("#btnNovaLogo")?.addEventListener("click", () => uploadImagem("logo"));
 $("#btnNovoBanner")?.addEventListener("click", () => uploadImagem("banner"));
 
-$("#formDenuncia")?.addEventListener("submit", (e) => {
+$("#formDenuncia")?.addEventListener("submit", async (e) => {
   e.preventDefault();
-  popupDenuncia?.setAttribute("aria-hidden", "true");
-  popupDenunciaOk?.setAttribute("aria-hidden", "false");
+  const motivo = (document.getElementById('motivoDenuncia')?.value || '').trim();
+  if (!motivo) { alert('Por favor, escreva o motivo da denúncia.'); return; }
+
+  const body = { tipo: 'empresa', alvoId: viewedId || '', mensagem: motivo };
+  const tokenLocal = localStorage.getItem('token') || '';
+  if (!tokenLocal) {
+    alert('Você precisa estar logado como voluntário para denunciar uma empresa.');
+    closeAllPopups();
+    return;
+  }
+  try {
+    const resp = await fetch('/api/denuncias', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, tokenLocal ? { Authorization: `Bearer ${tokenLocal}` } : {}),
+      body: JSON.stringify(body)
+    });
+    if (!resp.ok) throw new Error('Falha ao enviar denúncia.');
+    // sucesso
+    popupDenuncia?.setAttribute('aria-hidden', 'true');
+    popupDenunciaOk?.setAttribute('aria-hidden', 'false');
+    const motivoField = document.getElementById('motivoDenuncia');
+    if (motivoField) motivoField.value = '';
+  } catch (err) {
+    console.error('Erro ao enviar denúncia:', err);
+    alert('Falha ao enviar denúncia. Tente novamente mais tarde.');
+  }
 });
 
 document.addEventListener("DOMContentLoaded", carregarPerfilEmpresa);

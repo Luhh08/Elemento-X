@@ -13,6 +13,16 @@ const applicationsList = document.getElementById('applicationsList');
 const closeApps = document.getElementById('closeApps');
 const tagsEls = document.querySelectorAll('.tag');
 const tagFilterState = new Set();
+const pageParams = new URLSearchParams(location.search);
+const pageVagaId = pageParams.get('id') || '';
+
+function resolveVagaId() {
+  if (applyBtn?.dataset?.vagaId) return applyBtn.dataset.vagaId;
+  if (reportBtn?.dataset?.vagaId) return reportBtn.dataset.vagaId;
+  const dataEl = document.querySelector('[data-vaga-id]');
+  if (dataEl?.dataset?.vagaId) return dataEl.dataset.vagaId;
+  return pageVagaId;
+}
 
 let currentSlide = 0;
 const slides = carouselTrack.querySelectorAll('img');
@@ -32,20 +42,41 @@ let autoplay = setInterval(() => showSlide(currentSlide + 1), 5000);
 [prevBtn, nextBtn, carouselTrack].forEach(el => el.addEventListener('mouseenter', () => clearInterval(autoplay)));
 carouselTrack.addEventListener('mouseleave', () => autoplay = setInterval(() => showSlide(currentSlide + 1), 5000));
 
-reportBtn.addEventListener('click', () => {
-  reportModal.setAttribute('aria-hidden', 'false');
+reportBtn?.addEventListener('click', () => {
+  if (!localStorage.getItem('token')) {
+    alert('Faça login para denunciar uma vaga.');
+    return;
+  }
+  reportModal?.setAttribute('aria-hidden', 'false');
 });
 
-cancelReport.addEventListener('click', () => {
-  reportModal.setAttribute('aria-hidden', 'true');
+cancelReport?.addEventListener('click', () => {
+  reportModal?.setAttribute('aria-hidden', 'true');
 });
 
-sendReport.addEventListener('click', () => {
-  const text = document.getElementById('reportText').value.trim();
-  console.log('Denúncia enviada:', text);
-  alert('Denúncia enviada. Obrigado por reportar.');
-  reportModal.setAttribute('aria-hidden', 'true');
-  document.getElementById('reportText').value = '';
+sendReport?.addEventListener('click', async () => {
+  const reportField = document.getElementById('reportText');
+  if (!reportField) return;
+  const text = reportField.value.trim();
+  if (!text) { alert('Por favor, descreva o motivo da denúncia.'); return; }
+  const token = localStorage.getItem('token');
+  if (!token) { alert('Faça login para enviar uma denúncia.'); reportModal?.setAttribute('aria-hidden','true'); return; }
+  const targetId = resolveVagaId();
+  if (!targetId) { alert('Não foi possível identificar a vaga.'); return; }
+  try {
+    const resp = await fetch('/api/denuncias', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ tipo: 'vaga', alvoId: targetId, mensagem: text })
+    });
+    if (!resp.ok) throw new Error('Falha ao enviar denúncia');
+    alert('Denúncia enviada. Obrigado por reportar.');
+    reportModal?.setAttribute('aria-hidden', 'true');
+    reportField.value = '';
+  } catch (err) {
+    console.error('Erro ao enviar denúncia:', err);
+    alert('Falha ao enviar denúncia. Tente novamente mais tarde.');
+  }
 });
 
 const JOB_ID = 'job-001';

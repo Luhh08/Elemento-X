@@ -36,8 +36,9 @@ async function canUserReview(vagaId, voluntarioId) {
     where: { vagaId_voluntarioId: { vagaId, voluntarioId } },
     select: { status: true },
   });
+  if (!cand) return { ok: false, empresaId: vaga.empresaId };
 
-  const elegivel = vaga.status === "FINALIZADA" || (cand?.status === "ACEITA");
+  const elegivel = vaga.status === "FINALIZADA" || cand.status === "ACEITA";
   return { ok: !!elegivel, empresaId: vaga.empresaId };
 }
 
@@ -47,7 +48,7 @@ async function canUserReview(vagaId, voluntarioId) {
 ============================================================ */
 async function criarAvaliacao(req, res, next) {
   try {
-    const voluntarioId = req.user?.id;
+    const voluntarioId = req.user?.usuarioId || req.user?.id;
     const { vagaId, nota, comentario } = req.body;
 
     if (!voluntarioId) return res.status(401).json({ error: "Não autenticado." });
@@ -168,7 +169,7 @@ async function listarAvaliacaoEmpresa(req, res, next) {
 async function responderAvaliacao(req, res, next) {
   try {
     // ajuste conforme seu auth: id da empresa no token
-    const empresaIdAut = req.user?.empresaId || req.user?.id;
+    const empresaIdAut = req.user?.empresaId || req.user?.empresa?.id || req.user?.id;
     if (!empresaIdAut) return res.status(401).json({ error: "Empresa não autenticada." });
 
     const { id } = req.params;

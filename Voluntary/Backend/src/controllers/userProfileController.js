@@ -36,6 +36,7 @@ function calcularProgresso(u) {
 exports.getUsuario = async (req, res, next) => {
   try {
     const { id } = req.params;
+    console.log("[getUsuario] Buscando usuário com ID:", id);
 
     const usuario = await prisma.usuario.findUnique({
       where: { id },
@@ -54,10 +55,12 @@ exports.getUsuario = async (req, res, next) => {
       },
     });
 
+    console.log("[getUsuario] Usuário encontrado:", !!usuario);
     if (!usuario)
       return res.status(404).json({ error: "Usuário não encontrado." });
 
     const progresso = calcularProgresso(usuario);
+    console.log("[getUsuario] Retornando dados do usuário com progresso:", progresso);
     res.json({ ...usuario, progresso });
   } catch (error) {
     console.error("Erro ao buscar perfil:", error);

@@ -14,7 +14,8 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 // --- Rotas do perfil do usuário ---
-router.get("/usuario/:id", authMiddleware, getUsuario);
+// GET permite visualizar perfil público sem autenticação, PUT requer autenticação
+router.get("/usuario/:id", getUsuario);
 router.put("/usuario/:id", authMiddleware, updateUsuario);
 router.put("/usuario/:id/banner", authMiddleware, updateBannerUrl);
 router.put("/usuario/:id/foto", authMiddleware, updateFotoUrl);
