@@ -21,7 +21,6 @@ if (!modoPublico && (!token || !empresaId || !tipoConta.includes("empresa"))) {
   window.location.href = "login_empresa.html";
 }
 
-
 function toggleActions() {
   const show = (sel, state) => { const el = document.querySelector(sel); if (el) el.hidden = !state; };
 
@@ -29,7 +28,7 @@ function toggleActions() {
     show("#btnEditar", false);
     show("#btnGerenciar", false);
     show("#btnPublicar", false);
-    show("#btnDenunciar", true);   // <- aqui
+    show("#btnDenunciar", true);
     return;
   }
 
@@ -39,7 +38,6 @@ function toggleActions() {
   show("#btnPublicar", isSelf);
 }
 
-
 const popupEdicao = $("#popupEdicao");
 const popupDenuncia = $("#popupDenuncia");
 const popupDenunciaOk = $("#popupDenunciaOk");
@@ -47,7 +45,8 @@ const popupDenunciaOk = $("#popupDenunciaOk");
 let _lock = { y: 0, padRight: "" };
 
 function anyModalOpen() {
-  return [popupEdicao, popupDenuncia, popupDenunciaOk].some((p) => p && p.getAttribute("aria-hidden") === "false");
+  return [popupEdicao, popupDenuncia, popupDenunciaOk, popupFeedbacks]
+    .some((p) => p && p.getAttribute("aria-hidden") === "false");
 }
 function lockScroll() {
   if (document.body.classList.contains("modal-open")) return;
@@ -69,15 +68,27 @@ function unlockScroll() {
   document.body.style.paddingRight = _lock.padRight || "";
   window.scrollTo(0, _lock.y);
 }
-function openPopup(p) { p?.setAttribute("aria-hidden", "false"); lockScroll(); }
+function openPopup(p) {
+  if (!p) return;
+  p.setAttribute("aria-hidden", "false");
+  lockScroll();
+}
 function closeAllPopups() {
-  [popupEdicao, popupDenuncia, popupDenunciaOk].forEach((p) => p?.setAttribute("aria-hidden", "true"));
+  [popupEdicao, popupDenuncia, popupDenunciaOk, popupFeedbacks]
+    .forEach((p) => p?.setAttribute("aria-hidden", "true"));
   if (!anyModalOpen()) unlockScroll();
 }
 $("#btnEditar")?.addEventListener("click", () => openPopup(popupEdicao));
 $("#btnDenunciar")?.addEventListener("click", () => openPopup(popupDenuncia));
 $$("[data-close]").forEach((b) => b.addEventListener("click", closeAllPopups));
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && anyModalOpen()) closeAllPopups(); });
+
+[popupEdicao, popupDenuncia, popupDenunciaOk, popupFeedbacks].forEach((p) => {
+  p?.addEventListener("click", (e) => {
+    const dialog = p.querySelector(".popup-dialog");
+    if (dialog && !dialog.contains(e.target)) closeAllPopups();
+  });
+});
 
 $("#logout")?.addEventListener("click", (e) => {
   e.preventDefault();
@@ -353,11 +364,11 @@ async function carregarPerfilEmpresa(){
 
     renderVagas(Array.isArray(vagas) ? vagas : []);
 
-const tituloVagas = document.querySelector(".titulo-vagas") || document.querySelector("#tituloVagas");
-if (tituloVagas) {
-  if (modoPublico || !isSelf) tituloVagas.textContent = "Vagas da empresa";
-  else tituloVagas.textContent = "Minhas vagas";
-}
+    const tituloVagas = document.querySelector(".titulo-vagas") || document.querySelector("#tituloVagas");
+    if (tituloVagas) {
+      if (modoPublico || !isSelf) tituloVagas.textContent = "Vagas da empresa";
+      else tituloVagas.textContent = "Minhas vagas";
+    }
     $("#editRazaoSocial") && ($("#editRazaoSocial").value = perfil.razao_social || perfil.nome || "");
     $("#editUsuario") && ($("#editUsuario").value = perfil.usuario || "");
     $("#editDescricao") && ($("#editDescricao").value = perfil.descricao || "");
@@ -452,7 +463,9 @@ async function uploadImagem(tipo) {
         if ($("#bannerPreview")) $("#bannerPreview").src = $("#bannerEmpresa").src;
       }
 
-      const prog = typeof data?.empresa?.progresso === "number" ? data.empresa.progresso : calcProgressoEmpresaFront(data.empresa || {});
+      const prog = typeof data?.empresa?.progresso === "number"
+        ? data.empresa.progresso
+        : calcProgressoEmpresaFront(data.empresa || {});
       setProgress(prog);
       travarPublicacaoVaga(prog);
       alert("🖼️ Imagem enviada!");
@@ -473,3 +486,234 @@ $("#formDenuncia")?.addEventListener("submit", (e) => {
 });
 
 document.addEventListener("DOMContentLoaded", carregarPerfilEmpresa);
+
+/* ================== AVALIAÇÕES (resumo no card + popup paginado) ================== */
+(function(){
+  const card    = document.getElementById("cardAvaliacoes");
+  const resumo  = document.getElementById("resumoAvaliacao");
+  const popup   = document.getElementById("popupFeedbacks");
+  const lista   = document.getElementById("listaFeedbacks");
+  const btnMais = document.getElementById("btnMaisFeedbacks");
+  if (!card || !resumo) return;
+
+  const headersAuth = modoPublico ? {} : { Authorization: `Bearer ${token}` };
+  const defaultMiniAvatar = "img/default-avatar.jpg";
+
+  const fmtDate = (iso) => { try { return new Date(iso).toLocaleDateString("pt-BR"); } catch { return "—"; } };
+  const stars = (n) => {
+    n = Math.max(0, Math.min(5, Number(n)||0));
+    const f = "★".repeat(Math.round(n));
+    const e = "☆".repeat(5 - Math.round(n));
+    return `<span class="stars" aria-label="Nota ${n}/5" title="${n.toFixed(2)}">${f}${e}</span>`;
+  };
+
+  // --- helpers mini-perfil (avatar/nome + normalização de imagem)
+  const getNomeVol = (v) => (v?.nome || v?.usuario || "Voluntário");
+  const getAvatarVol = (v) => {
+    const src = v?.fotoUrl || v?.foto || v?.avatarUrl || "";
+    return (src && String(src).trim()) ? src : defaultMiniAvatar;
+  };
+  const normImg = (src) => {
+    if (!src) return src;
+    return (src.startsWith("/uploads/") || src.startsWith("uploads/"))
+      ? (src.startsWith("/") ? src : `/${src}`)
+      : src;
+  };
+
+  async function carregarResumo(){
+    try{
+      if (!viewedId) throw new Error("Empresa não encontrada.");
+      const r = await fetch(`/api/empresas/${encodeURIComponent(viewedId)}/avaliacoes/summary`, { headers: headersAuth });
+      if (!r.ok) {
+        resumo.innerHTML = `<p style="color:#ef4444">Falha ao carregar (HTTP ${r.status})</p>`;
+        return;
+      }
+      const { total=0, media=0, porEstrela={}, recentes=[] } = await r.json();
+
+      const barras = [5,4,3,2,1].map(s=>{
+        const q = Number(porEstrela[s] || 0);
+        const pct = total ? Math.round((q/total)*100) : 0;
+        return `
+          <div class="row" style="align-items:center;gap:8px">
+            <span style="width:22px">${s}★</span>
+            <div style="flex:1;height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden">
+              <div style="height:8px;width:${pct}%;background:#fbbf24"></div>
+            </div>
+            <span style="width:34px;text-align:right">${q}</span>
+          </div>`;
+      }).join("");
+
+      // === versão nova com mini-perfil + "Participou da vaga: <titulo>" ===
+      const recentesHtml = (recentes||[]).map(av => {
+        const vol    = av?.voluntario || {};
+        const foto   = getAvatarVol(vol);
+        const nome   = getNomeVol(vol);
+        const titulo = av?.vaga?.titulo ? av.vaga.titulo : "";
+
+        return `
+          <div class="mini-avl" style="margin-top:10px">
+            <!-- mini perfil -->
+            <div class="mini-head" style="display:flex;align-items:center;gap:10px">
+              <img src="${foto}" alt="" class="mini-avatar"
+                   style="width:36px;height:36px;border-radius:50%;object-fit:cover"
+                   onerror="this.src='${defaultMiniAvatar}'">
+              <div class="mini-id" style="min-width:0">
+                <div class="mini-name" style="font-weight:600;line-height:1.1">${nome}</div>
+                ${titulo ? `<div class="mini-sub" style="color:#6b7280;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Participou da vaga: ${titulo}</div>` : ""}
+              </div>
+            </div>
+
+            <!-- linha estrelas + data -->
+            <div class="mini-meta" style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 4px">
+              <span class="mini-stars">${stars(av.nota)}</span>
+              <span class="mini-date" style="color:#6b7280;font-size:12px">${fmtDate(av.createdAt)}</span>
+            </div>
+
+            <!-- comentário -->
+            <div class="mini-text" style="font-size:14px;color:#374151">
+              ${(av.comentario||"").trim() || "<i>Sem comentário</i>"}
+            </div>
+
+            ${av?.resposta ? `
+              <div class="mini-reply" style="margin-top:8px;padding:8px;border-radius:10px;background:#f3f4f6">
+                <div style="font-size:12px;color:#6b7280;margin-bottom:4px">Resposta da empresa • ${fmtDate(av.resposta.createdAt)}</div>
+                <div>${av.resposta.mensagem}</div>
+              </div>` : ""}
+          </div>
+        `;
+      }).join("");
+
+      resumo.innerHTML = `
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <div>${stars(media)} <span style="margin-left:6px;color:#6b7280">(${total})</span></div>
+          <button class="chip" id="btnAbrirFeedbacks" type="button">Ver todos</button>
+        </div>
+        <div class="bars" style="margin:10px 0 6px">${barras}</div>
+        ${recentes?.length ? `<div class="recentes">${recentesHtml}</div>` : `<p style="color:#6b7280">Ainda não há avaliações.</p>`}
+      `;
+
+      document.getElementById("btnAbrirFeedbacks")?.addEventListener("click", () => {
+        openPopup(popup);
+        resetLista();
+        carregarMais();
+      });
+
+      card.addEventListener("click", (e)=>{
+        if (e.target.closest("button,a")) return;
+        openPopup(popup);
+        resetLista();
+        carregarMais();
+      });
+    }catch(err){
+      console.error(err);
+      resumo.innerHTML = `<p style="color:#ef4444">Erro ao carregar avaliações.</p>`;
+    }
+  }
+
+  // ---- popup lista paginada
+  const state = { page: 1, pageSize: 10, loading:false, ended:false };
+  function resetLista(){
+    lista.innerHTML = "";
+    state.page = 1; state.ended = false; state.loading = false;
+    if (btnMais) { btnMais.disabled = false; btnMais.textContent = "Carregar mais"; }
+  }
+
+  // mini-perfil no item detalhado + "Participou da vaga"
+  const itemHtml = (av) => {
+    const vol    = av?.voluntario || {};
+    const nome   = getNomeVol(vol);
+    const avatar = getAvatarVol(vol);
+    const titulo = av?.vaga?.titulo ? av.vaga.titulo : "";
+    const fotos  = Array.isArray(av?.fotos) ? av.fotos : [];
+
+    return `
+      <article class="feedback-card" style="border-top:1px solid #e5e7eb;padding:12px 0">
+        <!-- mini perfil -->
+        <div class="mini-head" style="display:flex;align-items:center;gap:10px">
+          <img src="${avatar}" alt="" class="mini-avatar"
+               style="width:38px;height:38px;border-radius:50%;object-fit:cover"
+               onerror="this.src='${defaultMiniAvatar}'">
+          <div class="mini-id" style="min-width:0">
+            <div class="mini-name" style="font-weight:600;line-height:1.1">${nome}</div>
+            ${titulo ? `<div class="mini-sub" style="color:#6b7280;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Participou da vaga: ${titulo}</div>` : ""}
+          </div>
+        </div>
+
+        <!-- estrelas à esquerda • data à direita -->
+        <div class="mini-meta" style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 6px">
+          <span class="mini-stars">${stars(av.nota)}</span>
+          <span class="mini-date" style="color:#6b7280;font-size:12px">${fmtDate(av.createdAt)}</span>
+        </div>
+
+        <!-- comentário -->
+        <div class="mini-text" style="font-size:14px;color:#374151">
+          ${(av.comentario||"").trim() || "<i>Sem comentário</i>"}
+        </div>
+
+        ${fotos.length ? `
+          <div class="photos" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            ${fotos.map(s => `<img src="${normImg(s)}" alt="" style="width:72px;height:72px;object-fit:cover;border-radius:10px" onerror="this.remove()">`).join("")}
+          </div>` : ""}
+
+        ${av?.resposta ? `
+          <div class="mini-reply" style="margin-top:10px;padding:10px;border-radius:12px;background:#f3f4f6">
+            <div style="font-size:12px;color:#6b7280;margin-bottom:4px">Resposta da empresa • ${fmtDate(av.resposta.createdAt)}</div>
+            <div>${av.resposta.mensagem}</div>
+          </div>` : ""}
+      </article>`;
+  };
+
+  async function carregarMais(){
+    if (state.loading || state.ended || !viewedId) return;
+    state.loading = true;
+    if (btnMais) { btnMais.disabled = true; btnMais.textContent = "Carregando…"; }
+
+    try{
+      const url = `/api/empresas/${encodeURIComponent(viewedId)}/avaliacoes?page=${state.page}&pageSize=${state.pageSize}`;
+      const r = await fetch(url, { headers: headersAuth });
+      if (!r.ok) {
+        lista.insertAdjacentHTML("beforeend", `<p style="color:#ef4444">Falha ao carregar (HTTP ${r.status}).</p>`);
+        state.ended = true;
+        return;
+      }
+      const data  = await r.json();
+      const items = Array.isArray(data?.items) ? data.items : [];
+      const total = Number(data?.total || 0);
+      const page  = Number(data?.page  || state.page);
+      const size  = Number(data?.pageSize || state.pageSize);
+
+      if (page === 1 && total === 0) {
+        lista.innerHTML = `<p style="color:#6b7280">Ainda não há avaliações.</p>`;
+        state.ended = true;
+        return;
+      }
+
+      if (items.length) {
+        lista.insertAdjacentHTML("beforeend", items.map(itemHtml).join(""));
+      }
+
+      const last = page * size;
+      if (last >= total || items.length < size) {
+        state.ended = true;
+        if (btnMais) { btnMais.disabled = true; btnMais.textContent = "Fim"; }
+      } else {
+        state.page = page + 1;
+        if (btnMais) { btnMais.disabled = false; btnMais.textContent = "Carregar mais"; }
+      }
+    } catch (err){
+      console.error(err);
+      lista.insertAdjacentHTML("beforeend", `<p style="color:#ef4444">Erro ao carregar.</p>`);
+      state.ended = true;
+    } finally {
+      state.loading = false;
+    }
+  }
+
+  btnMais?.addEventListener("click", carregarMais);
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", carregarResumo);
+  } else {
+    carregarResumo();
+  }
+})();

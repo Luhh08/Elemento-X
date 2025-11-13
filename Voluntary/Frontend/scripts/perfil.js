@@ -76,7 +76,7 @@ function toUploadUrl(src){
 }
 
 const DEFAULT_COMPANY_IMG = "img/default-company.png"; // troque se este arquivo não existir
-const HIST_DEFAULT_IMG    = "img/vaga-foto.png";
+const HIST_DEFAULT_IMG    = "img/default-banner.png";
 
 function companyLogoThumb(src){
   const u = toUploadUrl(src);
