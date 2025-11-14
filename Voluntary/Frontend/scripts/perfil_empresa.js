@@ -12,6 +12,7 @@ const viewedId = qs.get("id") || empresaId;
 const modoPublico = (qs.get("public") === "true") || !token;
 
 const isSelf = viewedId && empresaId && String(viewedId) === String(empresaId);
+const btnNavMeuPerfil = document.getElementById("btnVoltarPerfilNav");
 
 if (!qs.get("id") && viewedId) {
   history.replaceState(null, "", `${location.pathname}?id=${encodeURIComponent(viewedId)}${modoPublico ? "&public=true" : ""}`);
@@ -31,6 +32,8 @@ function toggleActions() {
     show("#btnGerenciar", false);
     show("#btnPublicar", false);
     show("#btnDenunciar", !!token);
+    if (btnMeuPerfil) btnMeuPerfil.hidden = true;
+    if (btnNavMeuPerfil) btnNavMeuPerfil.hidden = true;
     return;
   }
 
@@ -38,6 +41,24 @@ function toggleActions() {
   show("#btnDenunciar", !isSelf);
   show("#btnGerenciar", isSelf);
   show("#btnPublicar", isSelf);
+  const meuPerfilUrl = (!isSelf) ? resolveMeuPerfilUrl() : null;
+  const wireBtn = (btn) => {
+    if (!btn) return;
+    if (meuPerfilUrl) {
+      btn.hidden = false;
+      btn.setAttribute("href", meuPerfilUrl);
+      btn.onclick = (ev) => {
+        ev.preventDefault();
+        window.location.href = meuPerfilUrl;
+      };
+    } else {
+      btn.hidden = true;
+      btn.removeAttribute("href");
+      btn.onclick = null;
+    }
+  };
+  wireBtn(btnMeuPerfil);
+  wireBtn(btnNavMeuPerfil);
 }
 
 function setupSidebarForVisitor(){
@@ -72,9 +93,20 @@ function setupSidebarForVisitor(){
   }
 }
 
+function resolveMeuPerfilUrl(){
+  const tipoAtual = (localStorage.getItem("tipoConta") || localStorage.getItem("role") || "").toLowerCase();
+  const meuUsuarioId = localStorage.getItem("userId") || "";
+  if(tipoAtual.includes("empresa")){
+    const minhaEmpresaId = localStorage.getItem("empresaId") || meuUsuarioId;
+    return minhaEmpresaId ? `perfil-empresa.html?id=${encodeURIComponent(minhaEmpresaId)}` : null;
+  }
+  return meuUsuarioId ? `perfil-usuario.html?id=${encodeURIComponent(meuUsuarioId)}` : null;
+}
+
 const popupEdicao = $("#popupEdicao");
 const popupDenuncia = $("#popupDenuncia");
 const popupDenunciaOk = $("#popupDenunciaOk");
+const btnMeuPerfil = document.getElementById("btnMeuPerfil");
 
 let _lock = { y: 0, padRight: "" };
 
@@ -300,6 +332,13 @@ function vagaCard(v){
   else if (v.capaUrl) capa = resolveImage(v.capaUrl);
   const viewHref = `/descricao_vagas.html?id=${encodeURIComponent(id || "")}`;
   const editHref = `/criacao_vagas.html?id=${encodeURIComponent(id || "")}`;
+  const canManage = Boolean(!modoPublico && isSelf && id);
+  const actionHtml = canManage
+    ? `<div class="vaga-actions">
+          <a class="chip edit-link" href="${editHref}" onclick="event.stopPropagation()">Editar vaga</a>
+          <button type="button" class="chip danger" data-action="delete-vaga" data-vaga-id="${id}" data-vaga-titulo="${(v.titulo || "Vaga").replace(/"/g, '&quot;')}">Excluir vaga</button>
+        </div>`
+    : "";
   art.innerHTML = `
     <div class="vaga-cover">
       <img src="${capa}" alt="vaga">
@@ -309,7 +348,7 @@ function vagaCard(v){
       <p class="vaga-sub">${v.descricao || "Descrição"}</p>
       <div class="row">
         <span class="status ${statusClass(v.status)}">${statusLabel(v.status)}</span>
-        <a class="chip edit-link" href="${editHref}" onclick="event.stopPropagation()">Editar vaga</a>
+        ${actionHtml}
       </div>
     </div>`;
   const img = art.querySelector("img");
@@ -334,6 +373,47 @@ function renderVagas(vagas){
     return;
   }
   vagas.forEach(v => box.appendChild(vagaCard(v)));
+  if (!modoPublico && isSelf) {
+    bindDeleteButtons(box);
+  }
+}
+
+function bindDeleteButtons(root){
+  root?.querySelectorAll('[data-action="delete-vaga"]').forEach(btn => {
+    btn.addEventListener("click", handleDeleteVaga);
+  });
+}
+
+async function handleDeleteVaga(ev){
+  ev.stopPropagation();
+  const btn = ev.currentTarget;
+  const vagaId = btn?.dataset?.vagaId;
+  if (!vagaId) return;
+  const titulo = btn.dataset.vagaTitulo || "esta vaga";
+  if (!confirm(`Deseja excluir ${titulo}? Essa ação é irreversível.`)) return;
+  if (!token) {
+    alert("Sessão expirada. Faça login novamente.");
+    return;
+  }
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Excluindo...";
+  try {
+    const resp = await fetch(`/api/vagas/${encodeURIComponent(vagaId)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) throw new Error(data?.error || "Erro ao excluir a vaga.");
+    alert("Vaga excluída com sucesso.");
+    await carregarPerfilEmpresa();
+  } catch (err) {
+    console.error(err);
+    alert(err.message || "Não foi possível excluir a vaga.");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
 }
 
 const defaultAvatar = "img/default-avatar.jpg";
@@ -376,6 +456,10 @@ async function carregarPerfilEmpresa(){
     $("#descricaoEmpresa") && ($("#descricaoEmpresa").textContent = perfil.descricao || "Aqui vai a descrição da empresa.");
     const banner = $("#bannerEmpresa"); if (banner) banner.src = perfil.bannerUrl || defaultBanner;
     const logo = $("#logoEmpresa"); if (logo) logo.src = perfil.logoUrl || defaultAvatar;
+
+    if (isSelf) {
+      localStorage.setItem("empresaLogoUrl", perfil.logoUrl || "");
+    }
 
     $("#bannerPreview") && ($("#bannerPreview").src = banner?.src || defaultBanner);
     $("#logoPreview") && ($("#logoPreview").src = logo?.src || defaultAvatar);
@@ -496,8 +580,10 @@ async function uploadImagem(tipo) {
       if (!resp.ok) throw new Error(data.error || "Erro no upload.");
 
       if (tipo === "logo") {
-        $("#logoEmpresa").src = data.empresa.logoUrl || defaultAvatar;
-        if ($("#logoPreview")) $("#logoPreview").src = $("#logoEmpresa").src;
+        const novoLogo = data.empresa.logoUrl || defaultAvatar;
+        $("#logoEmpresa").src = novoLogo;
+        if ($("#logoPreview")) $("#logoPreview").src = novoLogo;
+        if (isSelf) localStorage.setItem("empresaLogoUrl", data.empresa.logoUrl || "");
       } else {
         $("#bannerEmpresa").src = data.empresa.bannerUrl || defaultBanner;
         if ($("#bannerPreview")) $("#bannerPreview").src = $("#bannerEmpresa").src;

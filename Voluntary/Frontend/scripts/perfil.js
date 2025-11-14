@@ -163,6 +163,16 @@ function setupSidebarForViewer(){
   }
 }
 
+function resolveMeuPerfilUrl(){
+  const tipoConta = (localStorage.getItem("tipoConta") || localStorage.getItem("role") || "").toLowerCase();
+  const meuUsuarioId = localStorage.getItem("userId") || "";
+  if(tipoConta.includes("empresa")){
+    const minhaEmpresaId = localStorage.getItem("empresaId") || meuUsuarioId;
+    return minhaEmpresaId ? `perfil-empresa.html?id=${encodeURIComponent(minhaEmpresaId)}` : null;
+  }
+  return meuUsuarioId ? `perfil-usuario.html?id=${encodeURIComponent(meuUsuarioId)}` : null;
+}
+
 function decideRowUI(item, vagaId, vagaStatus, linkVaga){
   const vs = String(vagaStatus||"").toUpperCase();
 
@@ -170,7 +180,9 @@ function decideRowUI(item, vagaId, vagaStatus, linkVaga){
     return {
       chipText:  "Finalizado",
       chipClass: "status-finalizado",
-      btnHtml:   `<a class="chip primary" href="avaliacao.html?vaga=${encodeURIComponent(vagaId||"")}">Avaliar</a>`
+      btnHtml:   (isSelf
+        ? `<a class="chip primary" href="avaliacao.html?vaga=${encodeURIComponent(vagaId||"")}">Avaliar</a>`
+        : "")
     };
   }
 
@@ -223,6 +235,7 @@ function historicoCard(item){
   const status   = String(item.status || "").toUpperCase();
   const rejectionReason = status === "RECUSADA" ? (item.motivoRecusa || "").trim() : "";
   const rejectionHtml = rejectionReason ? esc(rejectionReason).replace(/\n/g,"<br>") : "";
+  const showReason = isSelf && rejectionHtml;
 
   const emp         = v.empresa || {};
   const empresaId   = emp.id || v.empresaId || null;
@@ -267,7 +280,7 @@ function historicoCard(item){
         <span class="status ${row.chipClass}">${esc(row.chipText)}</span>
         ${row.btnHtml}
       </div>
-      ${rejectionHtml ? `<div class="hist-reason"><strong>Motivo da recusa</strong>${rejectionHtml}</div>` : ""}
+      ${showReason ? `<div class="hist-reason"><strong>Motivo da recusa</strong>${rejectionHtml}</div>` : ""}
     </div>
   </article>`;
 }
@@ -431,10 +444,38 @@ const popupDenuncia  = $("#popupDenuncia");
 const popupDenunciaOk= $("#popupDenunciaOk");
 const btnEditar    = $("#btnEditar");
 const btnDenunciar = $("#btnDenunciar");
+const btnMeuPerfil = $("#btnMeuPerfil");
+const btnNavMeuPerfil = document.getElementById("btnVoltarPerfilNav");
 
 // mostra/oculta ações
 if(btnEditar)    btnEditar.style.display   = isSelf ? "" : "none";
 if(btnDenunciar) btnDenunciar.style.display= (userId && !isSelf) ? "" : "none";
+const myProfileUrl = (!isSelf) ? resolveMeuPerfilUrl() : null;
+const goToMyProfile = () => {
+  if (myProfileUrl) window.location.href = myProfileUrl;
+};
+
+if(btnMeuPerfil){
+  if(myProfileUrl){
+    btnMeuPerfil.hidden = false;
+    btnMeuPerfil.addEventListener("click", goToMyProfile);
+  } else {
+    btnMeuPerfil.hidden = true;
+  }
+}
+if (btnNavMeuPerfil) {
+  if (myProfileUrl) {
+    btnNavMeuPerfil.hidden = false;
+    btnNavMeuPerfil.href = myProfileUrl;
+    btnNavMeuPerfil.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      goToMyProfile();
+    });
+  } else {
+    btnNavMeuPerfil.hidden = true;
+    btnNavMeuPerfil.removeAttribute("href");
+  }
+}
 
 let _scrollLock={ y:0, padRight:"" };
 function lockScroll(){

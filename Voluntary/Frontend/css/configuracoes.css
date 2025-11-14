@@ -15,7 +15,14 @@ body { font-family: "Montserrat", system-ui, sans-serif; background: linear-grad
 
 /* Sidebar */
 .sidebar { position: sticky; top: 0; height: 100vh; padding: 24px 18px; background: var(--panel); }
-.brand { font-size: 34px; color: var(--brand); margin-bottom: 20px; }
+.brand {
+  font-family: "Alfa Slab One", serif;
+  font-size: 34px;
+  color: var(--brand);
+  margin-bottom: 20px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+}
 .menu { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
 .pill { display: flex; align-items: center; gap: 10px; background: #dffcf9; padding: 12px 14px; border-radius: 999px; text-decoration: none; color: var(--ink); font-weight: 600; border: 2px solid #bfeee8; transition: 0.2s; }
 .pill:hover { background: #d3f3ef; }

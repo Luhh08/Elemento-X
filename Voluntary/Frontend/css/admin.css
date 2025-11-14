@@ -39,7 +39,14 @@ body {
   box-shadow: 2px 0 10px rgba(0,0,0,0.05);
 }
 
-.brand { font-size: 28px; color: var(--bg); margin-bottom: 20px; font-weight:700; }
+.brand {
+  font-family: "Alfa Slab One", serif;
+  font-size: 28px;
+  color: var(--bg);
+  margin-bottom: 20px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+}
 .menu { display: flex; flex-direction: column; gap: 12px; }
 .pill {
   display: flex; align-items: center; gap: 8px;

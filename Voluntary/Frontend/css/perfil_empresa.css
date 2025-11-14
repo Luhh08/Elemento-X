@@ -43,9 +43,12 @@ body {
 }
 
 .brand {
+  font-family: "Alfa Slab One", serif;
   font-size: 34px;
   color: #0bb1a6;
   margin-bottom: 20px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
 }
 
 .menu {

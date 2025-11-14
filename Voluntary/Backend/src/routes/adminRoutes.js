@@ -209,7 +209,32 @@ router.get('/dados', authAdmin, async (_req, res) => {
       return { ...d, alvo, quemDenunciou: reporter };
     });
 
-    res.json({ usuarios, empresas, vagas, denuncias, feedback: [] });
+    const feedbackRaw = await prisma.avaliacao.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+      include: {
+        vaga: { select: { id: true, titulo: true } },
+        voluntario: { select: { id: true, nome: true, usuario: true, email: true } }
+      }
+    });
+    const feedback = feedbackRaw.map(f => ({
+      id: f.id,
+      nota: f.nota,
+      comentario: f.comentario ?? '',
+      fotos: f.fotos ?? [],
+      criadoEm: f.createdAt,
+      vaga: f.vaga ? { id: f.vaga.id, titulo: f.vaga.titulo } : null,
+      voluntario: f.voluntario
+        ? {
+            id: f.voluntario.id,
+            nome: f.voluntario.nome,
+            usuario: f.voluntario.usuario,
+            email: f.voluntario.email
+          }
+        : null
+    }));
+
+    res.json({ usuarios, empresas, vagas, denuncias, feedback });
   } catch (err) {
     console.error('[admin/dados] erro:', err);
     res.status(500).json({ error: 'Erro ao carregar dados.' });
@@ -321,8 +346,8 @@ router.delete('/banir/:tipo/:id', authAdmin, async (req, res) => {
       return res.json({ message: 'Denúncia removida' });
     }
     if (tipo === 'feedback') {
-      // await prisma.feedback.delete({ where: { id } });
-      return res.json({ message: 'Feedback removido (placeholder)' });
+      await prisma.avaliacao.delete({ where: { id } });
+      return res.json({ message: 'Feedback removido' });
     }
     return res.status(400).json({ error: 'Tipo inválido para remoção.' });
   } catch (err) {
