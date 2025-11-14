@@ -276,7 +276,7 @@ async function atualizarStatus(req, res, next) {
         const html = `
           <h3>${assunto}</h3>
           ${mensagem}
-          <p>Não deixe isso te desanimar, participe de outras vagas disponiveis em nosso site.</p>
+          <p>Verifique nosso site para mais detalhes.</p>
         `;
         await enviarEmail(destinatario, assunto, html);
       }

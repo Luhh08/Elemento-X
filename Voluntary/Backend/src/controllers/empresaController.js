@@ -30,6 +30,11 @@ const formatCNPJMask = (d14) => {
     .replace(/(\d{4})(\d)/, "$1-$2");
 };
 
+// escapa regex para pesquisas seguras
+function escapeRegex(s) {
+  return String(s || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 // calcula % de perfil preenchido
 function calcProgresso(e = {}) {
   let pontos = 0;
@@ -72,14 +77,14 @@ async function registrarEmpresa(req, res) {
     const email        = String(empresa.email || "").trim().toLowerCase();
     const senha        = String(empresa.senha || "");
 
-    const cnpj             = String(empresa.cnpj || "").replace(/\D/g, "");
-    const telefone_empresa = String(empresa.telefone_empresa || "").replace(/\D/g, "");
-    const cep              = String(empresa.cep || "").replace(/\D/g, "");
-    const endereco         = String(empresa.endereco || "").trim();
+    const cnpj              = String(empresa.cnpj || "").replace(/\D/g, "");
+    const telefone_empresa  = String(empresa.telefone_empresa || "").replace(/\D/g, "");
+    const cep               = String(empresa.cep || "").replace(/\D/g, "");
+    const endereco          = String(empresa.endereco || "").trim();
 
-    const nome                  = String(representante.nome || "").trim();
-    const cpf                   = String(representante.cpf || "").replace(/\D/g, "");
-    const cargo                 = String(representante.cargo || "").trim();
+    const nome              = String(representante.nome || "").trim();
+    const cpf               = String(representante.cpf || "").replace(/\D/g, "");
+    const cargo             = String(representante.cargo || "").trim();
     const email_representante   = String(representante.email_representante || "").trim().toLowerCase();
     const telefone_representante= String(representante.telefone_representante || "").replace(/\D/g, "");
 
@@ -94,72 +99,55 @@ async function registrarEmpresa(req, res) {
       return res.status(400).json({ error: "Preencha todos os campos do representante." });
     }
 
-    // ================================
-    // Empresa banida
-    // ================================
-    const empresaBanida = await prisma.empresa.findFirst({
-      where: {
-        OR: [
-          { email },
-          { cnpj },
-          { telefone_empresa },
-        ],
-        isBanned: true,
-      },
-    });
+    const empresaOr = [];
+    if (email) empresaOr.push({ email });
+    if (cnpj) empresaOr.push({ cnpj });
+    if (telefone_empresa) empresaOr.push({ telefone_empresa });
 
-    if (empresaBanida) {
-      return res.status(403).json({
-        error: "Cadastro bloqueado. Este e-mail, CNPJ ou telefone está banido do sistema.",
+    if (empresaOr.length) {
+      const empresaExistente = await prisma.empresa.findFirst({
+        where: { OR: empresaOr },
+        select: {
+          email: true,
+          cnpj: true,
+          telefone_empresa: true,
+          isBanned: true,
+          banReason: true,
+        },
       });
+
+      if (empresaExistente) {
+        if (empresaExistente.isBanned) {
+          return res.status(403).json({
+            error: `Cadastro bloqueado. Motivo: ${empresaExistente.banReason || "Este e-mail, CNPJ ou telefone está banido do sistema."}`,
+          });
+        }
+        let campo = "dados fornecidos";
+        if (email && empresaExistente.email === email) campo = "e-mail";
+        else if (cnpj && empresaExistente.cnpj === cnpj) campo = "CNPJ";
+        else if (telefone_empresa && empresaExistente.telefone_empresa === telefone_empresa) campo = "telefone";
+
+        return res.status(409).json({
+          error: `Já existe uma empresa cadastrada com este ${campo}.`,
+        });
+      }
     }
+    const repOr = [];
+    if (email_representante) repOr.push({ email_representante });
+    if (cpf) repOr.push({ cpf });
+    if (telefone_representante) repOr.push({ telefone_representante });
 
-    // ================================
-    // Duplicidade da empresa
-    // ================================
-    const empresaDuplicada = await prisma.empresa.findFirst({
-      where: {
-        OR: [
-          { email },
-          { cnpj },
-          { telefone_empresa },
-        ],
-      },
-    });
-
-    if (empresaDuplicada) {
-      let campo = "dados fornecidos";
-      if (empresaDuplicada.email === email) campo = "e-mail";
-      else if (empresaDuplicada.cnpj === cnpj) campo = "CNPJ";
-      else if (empresaDuplicada.telefone_empresa === telefone_empresa) campo = "telefone";
-
-      return res.status(409).json({
-        error: `Já existe uma empresa cadastrada com este ${campo}.`,
+    if (repOr.length) {
+      const representanteDuplicado = await prisma.representanteLegal.findFirst({
+        where: { OR: repOr },
       });
+
+      if (representanteDuplicado) {
+        return res.status(409).json({
+          error: "Já existe um representante cadastrado com estes dados (e-mail, CPF ou telefone).",
+        });
+      }
     }
-
-    // ================================
-    // Duplicidade do representante
-    // ================================
-    const representanteDuplicado = await prisma.representanteLegal.findFirst({
-      where: {
-        OR: [
-          { email_representante },
-          { cpf },
-          { telefone_representante },
-        ],
-      },
-    });
-
-    if (representanteDuplicado) {
-      return res.status(409).json({
-        error: "Já existe um representante cadastrado com estes dados (e-mail, CPF ou telefone).",
-      });
-    }
-
-    // ================================
-    // Criação da empresa
-    // ================================
     const hashed = await bcrypt.hash(senha, 10);
     const token  = crypto.randomBytes(24).toString("hex");
 
@@ -176,9 +164,6 @@ async function registrarEmpresa(req, res) {
       },
     });
 
-    // ================================
-    // Criação do representante
-    // ================================
     await prisma.representanteLegal.create({
       data: {
         nome,
@@ -205,18 +190,17 @@ async function registrarEmpresa(req, res) {
 
     if (err.code === "P2002") {
       const target = String(err.meta?.target || "");
-      if (target.includes("email")) {
-        return res.status(409).json({ error: "E-mail da empresa já cadastrado." });
-      }
-      if (target.includes("cnpj")) {
-        return res.status(409).json({ error: "CNPJ já cadastrado." });
-      }
-      if (target.includes("telefone_empresa")) {
-        return res.status(409).json({ error: "Telefone da empresa já cadastrado." });
-      }
-      return res.status(409).json({ error: "Valor duplicado em campo único." });
+      // CORREÇÃO: Usar os nomes dos campos que são @unique no seu schema
+      let campo = "dados fornecidos";
+      if (target.includes("email")) campo = "e-mail da empresa";
+      else if (target.includes("cnpj")) campo = "CNPJ";
+      else if (target.includes("telefone_empresa")) campo = "telefone da empresa";
+      else if (target.includes("email_representante")) campo = "e-mail do representante";
+      else if (target.includes("cpf")) campo = "CPF do representante";
+      else if (target.includes("telefone_representante")) campo = "telefone do representante";
+      
+      return res.status(409).json({ error: `Valor duplicado no campo único: ${campo}.` });
     }
-
     return res.status(500).json({ error: "Erro interno do servidor." });
   }
 }
@@ -269,6 +253,7 @@ async function solicitarRedefinicao(req, res) {
 
     const resetUrl = `${process.env.FRONTEND_URL}/reset-empresa?token=${token}`;
 
+    // A parte do Nodemailer geralmente fica em um util, mas mantendo o original
     const transporter = require("nodemailer").createTransport({
       service: "gmail",
       auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
@@ -329,11 +314,11 @@ async function loginEmpresa(req, res) {
     if (!empresa) empresa = await prisma.empresa.findUnique({ where: { cnpj: formatCNPJ(cnpjDigits) } });
     if (!empresa) return res.status(401).json({ error: "CNPJ não encontrado." });
 
-if (empresa.isBanned) {
-  return res.status(403).json({
-    error: `Conta banida. Motivo: ${empresa.banReason || "Violação das regras."}`,
-  });
-}
+  if (empresa.isBanned) {
+    return res.status(403).json({
+      error: `Conta banida. Motivo: ${empresa.banReason || "Violação das regras."}`,
+    });
+  }
 
     const ok = await bcrypt.compare(senhaDescriptografada, empresa.senha);
     if (!ok) return res.status(401).json({ error: "Senha incorreta." });
@@ -418,7 +403,8 @@ async function obterPerfilPorId(req, res) {
         cep: true,
         validacao: true,
         criadoEm: true,
-        representantes: true,
+        // REPRESENTANTES: É um campo interno, deve ser removido de endpoints públicos
+        // representantes: true, // Removido
         descricao: true,
         tags: true,
         logoUrl: true,
@@ -626,9 +612,9 @@ async function criarVagaParaEmpresa(req, res, next) {
       status = "ABERTA",
       dataInicio,
       dataFim,
-      tags,                  // pode vir array ou string (FormData)
-      turno,                 // idem
-      imagens,               // URLs no body (opcional)
+      tags,            // pode vir array ou string (FormData)
+      turno,           // idem
+      imagens,         // URLs no body (opcional)
       imagens_existentes,    // URLs de imagens já salvas (manter)
     } = req.body;
 
@@ -673,31 +659,9 @@ function isHex24(s) {
   return typeof s === "string" && /^[a-f0-9]{24}$/i.test(s);
 }
 
-async function resolveEmpresaId(idOrHandle) {
-  // Se parecer um ObjectId, tenta direto
-  if (isHex24(idOrHandle)) {
-    const byId = await prisma.empresa.findUnique({
-      where: { id: String(idOrHandle) },
-      select: { id: true },
-    });
-    if (byId) return byId.id;
-  }
-  // Caso contrário (ou se não encontrou), tenta pelo @usuario
-  const handle = String(idOrHandle || "").replace(/^@+/, "").trim().toLowerCase();
-  if (handle) {
-    const byUser = await prisma.empresa.findFirst({
-      where: { usuario: handle },
-      select: { id: true },
-    });
-    if (byUser) return byUser.id;
-  }
-  return null;
-}
-
-function isHex24(s){ return typeof s==="string" && /^[a-f0-9]{24}$/i.test(s); }
-
+// CORREÇÃO: Removemos a duplicação da função resolveEmpresaId
 async function resolveEmpresaId(idOrHandle){
-  // 1) tenta por id de Empresa
+  // 1) tenta por id de Empresa (ObjectId)
   if (isHex24(idOrHandle)) {
     const e = await prisma.empresa.findUnique({
       where: { id: String(idOrHandle) },
@@ -755,7 +719,7 @@ async function listarVagasPublicasPorEmpresa(req, res){
     if (!empresaId) return res.status(404).json({ error: "Empresa não encontrada" });
 
     const vagas = await prisma.vaga.findMany({
-      where: { empresaId },
+      where: { empresaId, status: "ABERTA" }, // Adicionado status 'ABERTA' para público
       orderBy: { id: "desc" },
       select: {
         id: true, titulo: true, descricao: true, tags: true, turno: true,
@@ -769,13 +733,18 @@ async function listarVagasPublicasPorEmpresa(req, res){
   }
 }
 
+// CORREÇÃO: O campo 'email' na empresa é 'email' (do schema)
 function gerarTokenEmpresa(empresa) {
+  // Certifique-se de que a constante SECRET está definida no escopo onde esta função é usada
+  // (assumindo que seja no arquivo de rotas ou em outro local).
+  const SECRET = process.env.JWT_SECRET || "dev-secret"; 
+  
   return jwt.sign(
     {
       id: empresa.id,
       empresaId: empresa.id, // 🔥 importante para o middleware reconhecer
       tipo: "empresa",
-      email: empresa.email_empresa
+      email: empresa.email // CORREÇÃO: Usar 'email' conforme o schema
     },
     SECRET,
     { expiresIn: "7d" }

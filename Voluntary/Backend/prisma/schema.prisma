@@ -63,7 +63,7 @@ model Empresa {
   representantes     RepresentanteLegal[]
 
   // Perfil público
-  usuario          String?  @unique
+  usuario           String?
   descricao         String?                       
   tags              String[] @default([])         
   bannerUrl         String?                       
