@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Cal+Sans&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="css/vagas.css">
   <link rel="stylesheet" href="css/notificacoes.css">
   <style>
@@ -18,26 +19,37 @@
   </style>
 </head>
 <body>
-<header class="site-header">
-  <div class="container header-container">
-    <a href="#" class="logo-link"><h1 class="logo">Voluntary</h1></a>
-    <nav class="main-navigation"></nav>
+<header class="site-header compact-header">
+  <div class="header-compact">
+    <button class="round-btn back-btn" id="btnBack" type="button" aria-label="Voltar">
+      <i class="fa-solid fa-arrow-left"></i>
+    </button>
     <div class="header-actions">
       <div class="notification-wrapper" id="notificationWrapper">
-        <button id="notifBtn" class="icon-btn" title="Notificações"><i class="fa-solid fa-bell"></i><span class="notification-count">3</span></button>
-        <div class="notif-panel" id="notifPanel"></div>
-      </div>
-      <div class="user-menu">
-        <img src="img/default-avatar.jpg" alt="Foto do usuário" class="user-avatar" id="userAvatar">
-        <div class="dropdown-menu" id="dropdownMenu">
-          <a href="perfil-usuario.html" class="dropdown-item"><span class="icon"><i class="fa-solid fa-user"></i></span> Perfil</a>
-          <a href="configuracoes.html" class="dropdown-item"><span class="icon"><i class="fa-solid fa-gear"></i></span> Configurações</a>
-          <a href="login.html" class="dropdown-item logout"><span class="icon"><i class="fa-solid fa-arrow-right-from-bracket"></i></span> Sair</a>
+        <button id="notifBtn" class="round-btn bell-btn" type="button" title="Notificações">
+          <i class="fa-solid fa-bell"></i><span class="notification-count"></span>
+        </button>
+        <div class="notif-panel" id="notifPanel">
+          <div class="notif-header">Notificações</div>
+          <p class="notif-empty">Carregando...</p>
         </div>
       </div>
+      <button class="round-btn avatar-btn" id="menuToggle" type="button" aria-label="Abrir menu">
+        <img src="img/default-avatar.jpg" alt="Menu">
+      </button>
     </div>
   </div>
 </header>
+
+<div class="nav-drawer" id="navDrawer">
+  <div class="drawer-inner">
+    <button class="close-drawer" id="closeDrawer" type="button" aria-label="Fechar menu">&times;</button>
+    <h2 class="drawer-title">Voluntary</h2>
+    <nav id="drawerMenu" class="drawer-menu"></nav>
+  </div>
+</div>
+<div class="drawer-overlay" id="drawerOverlay"></div>
+
 
 <section class="jobs-section">
   <div class="container jobs-container">
@@ -74,6 +86,24 @@
     </main>
   </div>
 </section>
+
+<div id="modalRecusa" class="popup" aria-hidden="true">
+  <div class="popup-dialog dialog-sm">
+    <button class="close" type="button" data-close-recusa>
+      <i class="ri-close-line"></i>
+    </button>
+    <form class="form" onsubmit="return false;">
+      <h3 style="margin-bottom:12px">Motivo da recusa</h3>
+      <label class="textarea">
+        <textarea id="motivoRecusa" rows="5" placeholder="Explique brevemente o motivo..."></textarea>
+      </label>
+      <div class="form-actions">
+        <button class="chip outline" type="button" data-close-recusa>Cancelar</button>
+        <button class="chip big danger" type="button" id="confirmRecusaBtn">Enviar recusa</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <script src="scripts/gerenciar_aplicacoes.js"></script>
 <script src="scripts/notificacoes.js"></script>

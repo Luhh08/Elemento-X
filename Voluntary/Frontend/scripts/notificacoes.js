@@ -15,40 +15,113 @@
     }[m]));
 
   document.addEventListener("DOMContentLoaded", () => {
-    buildHeaderNavigation();
+    const openNotifications = initNotificationWidget();
+    buildNavigation(openNotifications);
+    attachNotificationTriggers(openNotifications);
     initUserMenu();
-    initNotificationWidget();
   });
 
-  function buildHeaderNavigation() {
-    const nav = document.querySelector(".main-navigation");
-    if (!nav) return;
+  function buildNavigation(openNotificationsCb) {
+    const links = getNavigationLinks();
+    const mainNav = document.querySelector(".main-navigation");
+    if (mainNav) {
+      mainNav.innerHTML = renderLinks(links, "nav-pill");
+      mainNav.addEventListener("click", (e) => {
+        const pill = e.target.closest(".nav-pill");
+        if (!pill) return;
+        const action = pill.dataset.action;
+        if (action === "notifications") {
+          e.preventDefault();
+          openNotificationsCb?.();
+        }
+      });
+    }
+
+    const drawerMenu = document.getElementById("drawerMenu");
+    if (drawerMenu) {
+      drawerMenu.innerHTML = renderLinks(links, "drawer-pill");
+      drawerMenu.addEventListener("click", (e) => {
+        const pill = e.target.closest(".drawer-pill");
+        if (!pill) return;
+        const action = pill.dataset.action;
+        if (action === "notifications") {
+          e.preventDefault();
+          toggleDrawer(false);
+          openNotificationsCb?.();
+          return;
+        }
+        toggleDrawer(false);
+      });
+    }
+
+    const menuToggle = document.getElementById("menuToggle");
+    const closeDrawer = document.getElementById("closeDrawer");
+    const overlay = document.getElementById("drawerOverlay");
+    const backBtn = document.getElementById("btnBack");
+    menuToggle?.addEventListener("click", () => toggleDrawer(true));
+    closeDrawer?.addEventListener("click", () => toggleDrawer(false));
+    overlay?.addEventListener("click", () => toggleDrawer(false));
+    backBtn?.addEventListener("click", () => history.back());
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") toggleDrawer(false);
+    });
+  }
+
+  function attachNotificationTriggers(openFn) {
+    if (typeof openFn !== "function") return;
+    document.querySelectorAll("[data-open-notifications]").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.preventDefault();
+        openFn();
+      });
+    });
+  }
+
+  function toggleDrawer(forceOpen) {
+    const drawer = document.getElementById("navDrawer");
+    const overlay = document.getElementById("drawerOverlay");
+    if (!drawer || !overlay) return;
+    const willOpen = forceOpen === true ? true : forceOpen === false ? false : !drawer.classList.contains("open");
+    drawer.classList.toggle("open", willOpen);
+    overlay.classList.toggle("show", willOpen);
+  }
+
+  function getNavigationLinks() {
     const tipo = (localStorage.getItem("tipoConta") || localStorage.getItem("role") || "").toLowerCase();
     const isEmpresa = tipo.includes("empresa");
     const userId = localStorage.getItem("userId") || "";
+    if (isEmpresa) {
+      return [
+        { href: "pesquisar-volutarios.html", label: "Procurar Voluntarios", icon: "fa-users" },
+        { href: "gerenciar_aplicacoes.html", label: "Aplicações", icon: "fa-key" },
+        { href: "login_empresa.html", label: "Sair", icon: "fa-arrow-right-from-bracket", danger: true },
+      ];
+    }
+    return [
+      { href: "vagas.html", label: "Procurar Vagas", icon: "fa-search" },
+      {
+        href: userId ? `perfil-usuario.html?id=${encodeURIComponent(userId)}` : "login.html",
+        label: "Minhas candidaturas",
+        icon: "fa-clipboard-check",
+      },
+      { href: "login.html", label: "Sair", icon: "fa-arrow-right-from-bracket", danger: true },
+    ];
+}
 
-    const links = isEmpresa
-      ? [
-          { href: "pesquisar-volutarios.html", label: "Procurar Voluntários", icon: "fa-users" },
-          { href: "gerenciar_aplicacoes.html", label: "Aplicações", icon: "fa-key" },
-        ]
-      : [
-          { href: "vagas.html", label: "Procurar Vagas", icon: "fa-search" },
-          { href: userId ? `perfil-usuario.html?id=${encodeURIComponent(userId)}` : "login.html", label: "Minhas candidaturas", icon: "fa-clipboard-check" },
-        ];
-
-    nav.innerHTML = `
-      <div class="nav-links">
-        ${links
-          .map(
-            (link) => `
-          <a class="nav-pill" href="${link.href}">
-            <i class="fa-solid ${link.icon}"></i>
-            ${link.label}
-          </a>`
-          )
-          .join("")}
-      </div>`;
+  function renderLinks(links, baseClass) {
+    return links
+      .map((link) => {
+        const className = `${baseClass}${link.danger ? " danger" : ""}`;
+        if (link.action) {
+          return `<button type="button" class="${className}" data-action="${link.action}">
+            <i class="fa-solid ${link.icon}"></i>${link.label}
+          </button>`;
+        }
+        return `<a class="${className}" href="${link.href}">
+          <i class="fa-solid ${link.icon}"></i>${link.label}
+        </a>`;
+      })
+      .join("");
   }
 
   function initUserMenu() {
@@ -94,17 +167,18 @@
     const btn = document.getElementById("notifBtn");
     const panel = document.getElementById("notifPanel");
     const counterEls = document.querySelectorAll(".notification-count");
-    if (!wrapper || !btn || !panel) return;
+    if (!wrapper || !btn || !panel) return null;
 
     let cache = [];
     const token = localStorage.getItem("token");
 
     btn.addEventListener("click", async (e) => {
+      e.preventDefault();
       e.stopPropagation();
-      panel.classList.toggle("active");
       if (panel.classList.contains("active")) {
-        await carregarNotificacoes();
-        marcarTodasComoLidas(counterEls);
+        panel.classList.remove("active");
+      } else {
+        await abrirPainel();
       }
     });
 
@@ -160,7 +234,7 @@
       }
     }
 
-    async function marcarTodasComoLidas(counterTargets) {
+    async function marcarTodasComoLidas() {
       if (!token) return;
       try {
         await fetch("/api/notificacoes/marcar-todas", {
@@ -169,7 +243,7 @@
         });
         cache = cache.map((n) => ({ ...n, lida: true }));
         panel.querySelectorAll(".notif-item").forEach((item) => item.classList.remove("unread"));
-        updateCounter(counterTargets, 0);
+        updateCounter(counterEls, 0);
       } catch (err) {
         console.error("Erro ao marcar notificações como lidas:", err);
       }
@@ -204,7 +278,14 @@
         ${lista.length ? corpo : `<p class="notif-empty">Nenhuma notificação recente.</p>`}`;
     }
 
+    async function abrirPainel() {
+      panel.classList.add("active");
+      await carregarNotificacoes();
+      await marcarTodasComoLidas();
+    }
+
     carregarNotificacoes();
+    return abrirPainel;
   }
 
   function updateCounter(counters, value) {

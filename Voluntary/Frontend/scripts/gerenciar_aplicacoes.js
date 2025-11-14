@@ -11,6 +11,10 @@
   const qTags = document.getElementById('pesquisar_tags');
   const tagActiveBar = document.getElementById('tagActiveBar');
   const tagResults = document.getElementById('tagResults');
+  const modalRecusa = document.getElementById('modalRecusa');
+  const motivoRecusaInput = document.getElementById('motivoRecusa');
+  const confirmRecusaBtn = document.getElementById('confirmRecusaBtn');
+  let pendingRejectId = null;
 
   const state = {
     page: 1,
@@ -216,14 +220,55 @@
       });
     });
     grid.querySelectorAll('[data-reject]').forEach(b=>{
-      b.addEventListener('click', async ()=>{
-        const id=b.getAttribute('data-reject');
-        await updateStatus(id,'RECUSADA');
+      b.addEventListener('click', ()=>{
+        pendingRejectId = b.getAttribute('data-reject');
+        if(motivoRecusaInput) motivoRecusaInput.value = "";
+        openRecusaModal();
       });
     });
   }
 
-  async function updateStatus(id,status){
+  function openRecusaModal(){
+    if(!modalRecusa) return;
+    modalRecusa.setAttribute('aria-hidden','false');
+    document.body.classList.add('modal-open');
+    motivoRecusaInput?.focus({ preventScroll:true });
+  }
+  function closeRecusaModal(resetId=true){
+    if(!modalRecusa) return;
+    modalRecusa.setAttribute('aria-hidden','true');
+    document.body.classList.remove('modal-open');
+    if(resetId) pendingRejectId = null;
+    if(motivoRecusaInput) motivoRecusaInput.value = "";
+  }
+  document.querySelectorAll('[data-close-recusa]').forEach(btn=>{
+    btn.addEventListener('click', ()=>closeRecusaModal());
+  });
+  modalRecusa?.addEventListener('click',(e)=>{
+    const dialog = modalRecusa.querySelector('.popup-dialog');
+    if(dialog && !dialog.contains(e.target)) closeRecusaModal();
+  });
+  confirmRecusaBtn?.addEventListener('click', async ()=>{
+    const reason = (motivoRecusaInput?.value || "").trim();
+    if(!pendingRejectId){
+      closeRecusaModal(false);
+      return;
+    }
+    if(!reason){
+      alert("Informe o motivo da recusa.");
+      motivoRecusaInput?.focus();
+      return;
+    }
+    const ok = await updateStatus(pendingRejectId,'RECUSADA',reason);
+    if(ok) closeRecusaModal();
+  });
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape' && modalRecusa?.getAttribute('aria-hidden') === 'false'){
+      closeRecusaModal();
+    }
+  });
+
+  async function updateStatus(id,status,reason=""){
     const token = getAuthToken();
     try{
       const res = await fetch(`${API_BASE}/candidaturas/${encodeURIComponent(id)}/status`,{
@@ -232,15 +277,19 @@
           'Content-Type':'application/json',
           ...(token?{'Authorization':`Bearer ${token}`}:{}),
         },
-        body:JSON.stringify({status})
+        body:JSON.stringify({
+          status,
+          ...(reason ? { motivoRecusa: reason } : {})
+        })
       });
       if(res.ok){
         const item=state.items.find(i=>i.id===id);
         if(item){ item.status=status; render(); }
-        return;
+        return true;
       }
     }catch(_){}
     alert('Não foi possível atualizar o status.');
+    return false;
   }
 
   async function fetchApps(page = 1, pageSize = PAGE_SIZE) {
