@@ -1,4 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
+const path = require("path");
 const prisma = new PrismaClient();
 
 async function listarVagasPublicas(req, res, next) {
@@ -85,6 +86,21 @@ async function getVaga(req, res, next) {
 async function atualizarVaga(req, res, next) {
   try {
     const { id } = req.params;
+    const empresaId =
+      req.user?.empresaId ||
+      (req.user?.tipo === "empresa" ? req.user?.id : null);
+    if (!empresaId) {
+      return res.status(403).json({ error: "Apenas empresas podem atualizar vagas." });
+    }
+
+    const vagaAtual = await prisma.vaga.findUnique({
+      where: { id },
+      select: { id: true, empresaId: true }
+    });
+    if (!vagaAtual) return res.status(404).json({ error: "Vaga não encontrada" });
+    if (String(vagaAtual.empresaId) !== String(empresaId)) {
+      return res.status(403).json({ error: "Você não pode editar esta vaga." });
+    }
 
     const {
       titulo = "",
@@ -176,9 +192,37 @@ async function listarTagsDoSistema(req, res) {
   }
 }
 
+async function deletarVaga(req, res, next) {
+  try {
+    const { id } = req.params;
+    const empresaId =
+      req.user?.empresaId ||
+      (req.user?.tipo === "empresa" ? req.user?.id : null);
+    if (!empresaId) {
+      return res.status(403).json({ error: "Apenas empresas podem excluir vagas." });
+    }
+
+    const vaga = await prisma.vaga.findUnique({
+      where: { id },
+      select: { id: true, empresaId: true }
+    });
+    if (!vaga) return res.status(404).json({ error: "Vaga não encontrada." });
+    if (String(vaga.empresaId) !== String(empresaId)) {
+      return res.status(403).json({ error: "Você não pode excluir esta vaga." });
+    }
+
+    await prisma.candidatura.deleteMany({ where: { vagaId: id } });
+    await prisma.vaga.delete({ where: { id } });
+    res.json({ message: "Vaga excluída com sucesso." });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listarVagasPublicas,
   getVaga,
-  atualizarVaga, 
+  atualizarVaga,
+  deletarVaga,
   listarTagsDoSistema,
 };

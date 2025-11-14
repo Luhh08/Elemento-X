@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap');
+
 /* ============
    Voluntary — Tela de Entrada
    ============ */
@@ -74,9 +76,10 @@ body{
 
 .brand-wordmark{
   font-family: "Alfa Slab One", serif;
+  font-weight: 400;
   font-size: 40px;
-  line-height: 1;
-  letter-spacing: -0.03em;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
   color: #14c9b6;                
   text-shadow:
     0 10px 24px rgba(0,0,0,.35),  

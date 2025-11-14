@@ -8,6 +8,48 @@ const { sendAdminNotice, tplBanimento, tplDesbanimento } = require('../utils/mai
 const prisma = new PrismaClient();
 const router = express.Router();
 
+async function fetchAdminFeedback(limit = 200) {
+  const feedbackRaw = await prisma.avaliacao.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    include: {
+      vaga: {
+        select: {
+          id: true,
+          titulo: true,
+          empresa: { select: { id: true, razao_social: true } }
+        }
+      },
+      voluntario: { select: { id: true, nome: true, usuario: true, email: true } }
+    }
+  });
+
+  return feedbackRaw.map(f => ({
+    id: f.id,
+    nota: f.nota,
+    comentario: f.comentario ?? '',
+    fotos: f.fotos ?? [],
+    criadoEm: f.createdAt,
+    vaga: f.vaga
+      ? {
+          id: f.vaga.id,
+          titulo: f.vaga.titulo,
+          empresa: f.vaga.empresa
+            ? { id: f.vaga.empresa.id, nome: f.vaga.empresa.razao_social }
+            : null
+        }
+      : null,
+    voluntario: f.voluntario
+      ? {
+          id: f.voluntario.id,
+          nome: f.voluntario.nome,
+          usuario: f.voluntario.usuario,
+          email: f.voluntario.email
+        }
+      : null
+  }));
+}
+
 /* ===========================
    LOGIN
 =========================== */
@@ -209,35 +251,22 @@ router.get('/dados', authAdmin, async (_req, res) => {
       return { ...d, alvo, quemDenunciou: reporter };
     });
 
-    const feedbackRaw = await prisma.avaliacao.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 200,
-      include: {
-        vaga: { select: { id: true, titulo: true } },
-        voluntario: { select: { id: true, nome: true, usuario: true, email: true } }
-      }
-    });
-    const feedback = feedbackRaw.map(f => ({
-      id: f.id,
-      nota: f.nota,
-      comentario: f.comentario ?? '',
-      fotos: f.fotos ?? [],
-      criadoEm: f.createdAt,
-      vaga: f.vaga ? { id: f.vaga.id, titulo: f.vaga.titulo } : null,
-      voluntario: f.voluntario
-        ? {
-            id: f.voluntario.id,
-            nome: f.voluntario.nome,
-            usuario: f.voluntario.usuario,
-            email: f.voluntario.email
-          }
-        : null
-    }));
+    const feedback = await fetchAdminFeedback();
 
     res.json({ usuarios, empresas, vagas, denuncias, feedback });
   } catch (err) {
     console.error('[admin/dados] erro:', err);
     res.status(500).json({ error: 'Erro ao carregar dados.' });
+  }
+});
+
+router.get('/feedback', authAdmin, async (_req, res) => {
+  try {
+    const feedback = await fetchAdminFeedback();
+    res.json({ feedback });
+  } catch (err) {
+    console.error('[admin/feedback] erro:', err);
+    res.status(500).json({ error: 'Erro ao carregar feedbacks.' });
   }
 });
 

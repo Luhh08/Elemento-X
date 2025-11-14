@@ -40,6 +40,7 @@ formLogin.addEventListener("submit", async (e) => {
     localStorage.setItem("role", "usuario");
     localStorage.setItem("userId", payload.usuario?.id || "");
     localStorage.removeItem("empresaId");
+    localStorage.removeItem("empresaLogoUrl");
 
     if (payload.usuario?.email) localStorage.setItem("email", payload.usuario.email);
     if (payload.usuario?.nome)  localStorage.setItem("nome", payload.usuario.nome);

@@ -31,6 +31,7 @@ const el = {
   fotoBtn: $("#fotoPlaceholder"),
   fotoInput: $("#fotoInput"),
   salvar: $("#salvarBtn"),
+  deleteBtn: document.getElementById("deleteVagaBtn"),
   previewFrame: document.getElementById("vagaPreviewFrame"),
   thumbs: document.getElementById("thumbs"),
 };
@@ -40,6 +41,11 @@ const VAGA_ID = qs.get("id");
 const IS_EDIT = Boolean(VAGA_ID);
 
 const MAX_FOTOS = 8;
+
+if (el.deleteBtn) {
+  el.deleteBtn.hidden = !IS_EDIT;
+  el.deleteBtn.addEventListener("click", excluirVagaAtual);
+}
 
 // ===== turnos =====
 function getTurnos() {
@@ -303,4 +309,37 @@ el.salvar?.addEventListener("click", async (e) => {
     alert("❌ " + (err.message || "Falha ao salvar a vaga."));
   }
 });
+
+async function excluirVagaAtual(){
+  if (!IS_EDIT || !VAGA_ID) return;
+  if (!confirm("Deseja excluir esta vaga? Essa ação não pode ser desfeita.")) return;
+  const token = localStorage.getItem("token");
+  if (!token) {
+    alert("Sessão expirada. Faça login novamente.");
+    return;
+  }
+  const btn = el.deleteBtn;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Excluindo...";
+  }
+  try{
+    const resp = await fetch(`${API}/vagas/${encodeURIComponent(VAGA_ID)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) throw new Error(data?.error || "Não foi possível excluir a vaga.");
+    alert("Vaga excluída com sucesso.");
+    location.href = "perfil-empresa.html";
+  }catch(err){
+    console.error(err);
+    alert(err.message || "Erro ao excluir a vaga.");
+  }finally{
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Excluir vaga";
+    }
+  }
+}
 

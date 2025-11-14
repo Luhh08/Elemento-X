@@ -318,16 +318,23 @@ function statusBadgeForAccount(item) {
           <td>${data}</td>
           <td>${actionButtonHTML(item, 'denuncias')}</td>`;
       } else if (tipo === 'feedback') {
-        const nota = item.nota || '—';
-        const comentario = (item.comentario || '—').substring(0, 50);
+        const nota = item.nota ?? '—';
+        const comentarioFull = item.comentario || '—';
+        const comentario = comentarioFull.length > 120
+          ? `${comentarioFull.slice(0, 117)}...`
+          : comentarioFull;
+        const vagaTitulo = escapeHtml(getTituloVaga(item.vaga || {}));
+        const empresaNome = escapeHtml(getEmpresaNomeFromVaga(item.vaga || {}));
+        const voluntarioNome = escapeHtml(getNome(item.voluntario || {}));
         const data = item.criadoEm ? new Date(item.criadoEm).toLocaleDateString('pt-BR') : '—';
         cols = `
           <td><input type="checkbox" data-id="${id}"></td>
           <td>${id}</td>
-          <td>${getTituloVaga(item.vaga || {})}</td>
-          <td>${getNome(item.voluntario || {})}</td>
+          <td>${vagaTitulo}</td>
+          <td>${empresaNome}</td>
+          <td>${voluntarioNome}</td>
           <td>${nota} ⭐</td>
-          <td>${comentario}...</td>
+          <td>${escapeHtml(comentario)}</td>
           <td>${data}</td>
           <td>${actionButtonHTML(item, 'feedback')}</td>`;
       }
@@ -454,18 +461,42 @@ function applySearch() {
   // --------- Load inicial ---------
   async function loadAll() {
     try {
-      const r = await fetch(`${API_BASE}/dados`, { headers: headers() });
-      if (r.status === 401 || r.status === 403) {
+      const [painelResp, feedbackResp] = await Promise.all([
+        fetch(`${API_BASE}/dados`, { headers: headers() }),
+        fetch(`${API_BASE}/feedback`, { headers: headers() })
+      ]);
+
+      const unauthorized = [painelResp, feedbackResp].some(r => r.status === 401 || r.status === 403);
+      if (unauthorized) {
         localStorage.removeItem('adminToken');
         return location.replace('login_adm.html');
       }
-      const data = await r.json();
+
+      if (!painelResp.ok) {
+        throw new Error('Falha ao carregar dados principais do painel.');
+      }
+
+      const data = await painelResp.json();
+      let feedbackList = Array.isArray(data.feedback) ? data.feedback : [];
+
+      if (feedbackResp.ok) {
+        try {
+          const feedbackPayload = await feedbackResp.json();
+          if (Array.isArray(feedbackPayload.feedback)) {
+            feedbackList = feedbackPayload.feedback;
+          }
+        } catch (err) {
+          console.warn('[admin] Erro ao interpretar feedbacks', err);
+        }
+      } else {
+        console.warn('[admin] Falha ao buscar feedbacks. Status:', feedbackResp.status);
+      }
 
       state.raw.usuarios   = data.usuarios   || [];
       state.raw.empresas   = data.empresas   || [];
       state.raw.vagas      = data.vagas      || [];
       state.raw.denuncias  = data.denuncias  || [];
-      state.raw.feedback   = data.feedback   || [];
+      state.raw.feedback   = feedbackList;
 
       state.filtered.usuarios  = state.raw.usuarios.slice();
       state.filtered.empresas  = state.raw.empresas.slice();

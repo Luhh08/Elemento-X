@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap');
+
 :root{
   --accent: #2bb9b9;
   --muted: #6b7280;
@@ -5,6 +7,8 @@
   --round: 12px;
   --glass: rgba(255,255,255,0.85);
   --shadow: 0 6px 18px rgba(15,23,42,0.12);
+  --logo-font: "Alfa Slab One", serif;
+  --logo-letter-spacing: -0.04em;
 }
 
 /* base */
@@ -42,10 +46,11 @@ body::before{
   margin:0 auto 14px;
 }
 .brand{
-  font-family:"Alfa Slab One",serif;
+  font-family:var(--logo-font);
   font-weight:400;
-  letter-spacing:-0.03em;
-  color:var(--accent);
+  letter-spacing:var(--logo-letter-spacing);
+  line-height:1.1;
+  color: #0bb1a6;
   font-size:28px;
 }
 .header-actions{display:flex;gap:12px;align-items:center}

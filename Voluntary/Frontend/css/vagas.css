@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap');
+
 :root{
   --color-primary:#08cbcb;
   --color-secondary:#014d44;
@@ -28,6 +30,7 @@
 
   --font-main:'Inter',sans-serif;
   --font-logo:'Alfa Slab One',serif;
+  --logo-letter-spacing:-0.04em;
 }
 
 *{box-sizing:border-box}
@@ -48,9 +51,18 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;padding:0}
 .header-container{display:flex;align-items:center;justify-content:space-between;width:100%;gap:var(--space-24)}
 .header-compact{display:flex;align-items:center;justify-content:space-between;width:100%;gap:16px}
 .logo{
-  font-family:var(--font-logo);font-weight:400;font-size:40px;line-height:1.2;letter-spacing:-1.2px;margin:0;
-  background:linear-gradient(90deg,#00ffd3 0%,#ffd9b4 73.08%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  font-family:var(--font-logo);
+  font-weight:400;
+  font-size:40px;
+  line-height:1.1;
+  letter-spacing:var(--logo-letter-spacing);
+  margin:0;
+  color:#06C9A8;
+  background:none;
+  -webkit-background-clip:initial;
+  background-clip:initial;
+  -webkit-text-fill-color:#06C9A8;
+  text-fill-color:#06C9A8;
 }
 .main-navigation{flex-grow:1}
 .btn{display:flex;justify-content:center;align-items:center;padding:var(--space-10);border-radius:var(--radius-10);font-size:16px;line-height:1}

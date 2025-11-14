@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap');
+
 :root {
   --color-primary: #08cbcb;
   --color-secondary: #014d44;
@@ -9,6 +11,7 @@
   --color-border: #d9d9d9;
   --font-main: 'Inter', sans-serif;
   --font-logo: 'Alfa Slab One', serif;
+  --logo-letter-spacing: -0.04em;
 }
 
 body {
@@ -59,17 +62,14 @@ button {
   gap: 24px;
 }
 .logo {
-  font-family: "Alfa Slab One", serif;
+  font-family: var(--font-logo);
   font-weight: 400;
   font-size: 40px;
-  line-height: 1.2;
-  letter-spacing: -1.2px;
+  line-height: 1.1;
+  letter-spacing: var(--logo-letter-spacing);
   margin: 0;
-  background: linear-gradient(90deg, #00ffd3 0%, #ffd9b4 73.08%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-fill-color: transparent;
+  color: #0bb1a6;
+
 }
 .main-navigation {
   flex-grow: 1;

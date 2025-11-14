@@ -88,6 +88,7 @@ localStorage.setItem("tipoConta", "empresa");
     localStorage.setItem("empresaId", id);
     localStorage.setItem("userId", id); // compat com telas antigas
     localStorage.setItem("empresa_nome", data?.empresa?.razao_social || "");
+    localStorage.setItem("empresaLogoUrl", data?.empresa?.logoUrl || "");
 
     console.log("[LOGIN EMPRESA] ok • empresaId =", id);
 

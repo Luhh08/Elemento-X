@@ -15,7 +15,10 @@ html, body {
     }
 
 .logo{
-    font-family: 'Poppins', "Cal Sans", sans-serif;
+    font-family: "Alfa Slab One", serif;
+    font-weight: 400;
+    letter-spacing: -1px;
+    line-height: 1.15;
 }
 
 .registro-container {
@@ -47,9 +50,11 @@ html, body {
 }
 
 .logo-area h1 {
-    font-size: 2.2em;
-    font-weight: 700;
-    letter-spacing: 2px;
+    font-family: "Alfa Slab One", serif;
+    font-size: 2.3em;
+    font-weight: 400;
+    letter-spacing: -1px;
+    line-height: 120%;
 }
 
 .logo-area p {

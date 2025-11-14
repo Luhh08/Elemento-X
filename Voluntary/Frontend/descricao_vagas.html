@@ -177,7 +177,17 @@
     return v?.empresaId || v?.empresa?.id || v?.ownerId || v?.usuarioId || null;
   }
   function getLoggedEmpresaId(){
-    return localStorage.getItem("empresaId") || null;
+    const tipo = (localStorage.getItem("tipoConta") || localStorage.getItem("role") || "").toLowerCase();
+    const empresaId = localStorage.getItem("empresaId");
+    if (empresaId) return empresaId;
+    if (tipo.includes("empresa")) return localStorage.getItem("userId") || null;
+    return null;
+  }
+  function viewerOwnsVaga(ownerId){
+    const owner = ownerId || null;
+    const logged = getLoggedEmpresaId();
+    if (!owner || !logged) return false;
+    return String(logged) === String(owner);
   }
 
   if (btnEdit){
@@ -421,13 +431,11 @@
       if (!resp.ok) throw new Error("vaga não encontrada");
       const v = await resp.json();
 
-      try{
-        const loggedId = localStorage.getItem("userId") || localStorage.getItem("empresaId");
-        const ownerId  = extractOwnerId(v);
-        if (btnReport && loggedId && ownerId && String(loggedId) === String(ownerId)){
-          btnReport.style.display = "none";
-        }
-      }catch{}
+      const ownerId = extractOwnerId(v);
+      const isOwner = viewerOwnsVaga(ownerId);
+      if (btnReport && isOwner) btnReport.style.display = "none";
+      if (btnEdit)   btnEdit.style.display   = isOwner ? "" : "none";
+      if (btnDelete) btnDelete.style.display = isOwner ? "" : "none";
 
       let imgs = [];
       if (Array.isArray(v.imagens)) imgs = v.imagens;

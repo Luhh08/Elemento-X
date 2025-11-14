@@ -96,12 +96,12 @@ function resolveCapaFromVaga(v = {}){
 }
 
 // ========= sessão / página =========
-// (definimos aqui para evitar duplicidades em outras partes do arquivo)
 const token  = localStorage.getItem("token");      // opcional
 const userId = localStorage.getItem("userId");     // opcional
 const params   = new URLSearchParams(location.search);
-const viewedId = params.get("id") || userId;       // permite público via ?id=
-const isSelf   = userId && viewedId === userId;
+const viewedIdParam = params.get("id");
+const viewedId = viewedIdParam || userId;          // permite público via ?id=
+const isSelf   = Boolean(userId && viewedId && String(viewedId) === String(userId));
 
 console.log("📊 Variáveis globais inicializadas:");
 console.log("   token=", !!token);
@@ -128,6 +128,7 @@ function mapCandidaturaStatus(s){
   }
 }
 
+// --------- sidebar (empresa vendo usuário) + botão "Meu perfil" ---------
 function setupSidebarForViewer(){
   try{
     const tipo = (localStorage.getItem("tipoConta") || localStorage.getItem("role") || "").toLowerCase();
@@ -136,7 +137,12 @@ function setupSidebarForViewer(){
 
     const menu = document.querySelector(".sidebar .menu");
     if(menu){
+      // inclui o botão de "Meu perfil" aqui também,
+      // para quando uma empresa estiver vendo o perfil de um voluntário
       menu.innerHTML = `
+              <a id="btnVoltarPerfilNav" class="pill" hidden href="#">
+          <i class="ri-user-shared-line"></i> Meu perfil
+        </a>
         <a class="pill" href="pesquisar-volutarios.html">
           <i class="ri-search-line"></i> Procurar Voluntarios
         </a>
@@ -151,6 +157,7 @@ function setupSidebarForViewer(){
             <p class="notif-empty">Carregando...</p>
           </div>
         </div>
+
         <a class="pill pill-accent" href="gerenciar_aplicacoes.html">
           <i class="ri-key-2-line"></i> Aplicações
         </a>
@@ -450,21 +457,26 @@ const btnNavMeuPerfil = document.getElementById("btnVoltarPerfilNav");
 // mostra/oculta ações
 if(btnEditar)    btnEditar.style.display   = isSelf ? "" : "none";
 if(btnDenunciar) btnDenunciar.style.display= (userId && !isSelf) ? "" : "none";
-const myProfileUrl = (!isSelf) ? resolveMeuPerfilUrl() : null;
+
+const myProfileUrl = (!isSelf ? resolveMeuPerfilUrl() : null);
 const goToMyProfile = () => {
   if (myProfileUrl) window.location.href = myProfileUrl;
 };
 
+// botão dentro do conteúdo do perfil
 if(btnMeuPerfil){
   if(myProfileUrl){
     btnMeuPerfil.hidden = false;
     btnMeuPerfil.addEventListener("click", goToMyProfile);
   } else {
     btnMeuPerfil.hidden = true;
+    btnMeuPerfil.removeAttribute?.("href");
   }
 }
+
+// botão na sidebar (nav)
 if (btnNavMeuPerfil) {
-  if (myProfileUrl) {
+  if (!isSelf && myProfileUrl) {
     btnNavMeuPerfil.hidden = false;
     btnNavMeuPerfil.href = myProfileUrl;
     btnNavMeuPerfil.addEventListener("click", (ev) => {
@@ -533,11 +545,11 @@ async function carregarPerfil(){
     console.log("   ⚠ viewedId inválido, carregando histórico apenas");
     await carregarHistoricoCandidaturas(); 
     return; 
-  } // nada a exibir no perfil, mas tenta histórico
+  }
 
   try{
     const headers = { };
-    if(token) headers.Authorization = `Bearer ${token}`;  // usa se existir
+    if(token) headers.Authorization = `Bearer ${token}`;
 
     const url = `/api/usuario/${encodeURIComponent(viewedId)}`;
     console.log("   🔄 Fazendo fetch para:", url);
@@ -605,7 +617,6 @@ async function carregarPerfil(){
     console.error("Erro ao carregar perfil:", err);
   }
 
-  // histórico só se logado (a função já trata caso não haja token)
   await carregarHistoricoCandidaturas();
 }
 
@@ -618,11 +629,9 @@ function atualizarBarraProgresso(valor){
 }
 
 // ========= denúncia ==========
-// (aproveita os mesmos popupDenuncia / popupDenunciaOk e closeAllPopups/openPopup acima)
 const formDenuncia = $("#formDenuncia");
 const motivoDenunciaInput = $("#motivoDenuncia");
 
-// Enviar denúncia
 if (formDenuncia) {
   formDenuncia.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -649,7 +658,6 @@ if (formDenuncia) {
         body: JSON.stringify(body)
       });
       if (!resp.ok) throw new Error("Falha ao enviar denúncia.");
-      // sucesso
       if (motivoDenunciaInput) motivoDenunciaInput.value = "";
       closeAllPopups();
       openPopup(popupDenunciaOk);

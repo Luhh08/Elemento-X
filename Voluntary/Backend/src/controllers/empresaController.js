@@ -65,64 +65,110 @@ async function registrarEmpresa(req, res) {
         .json({ error: "Dados de empresa e representante são obrigatórios." });
     }
 
-const empresaBanida = await prisma.empresa.findFirst({
-  where: {
-    OR: [{ email }, { cnpj }],
-    isBanned: true,
-  },
-});
+    // ================================
+    // NORMALIZAÇÃO
+    // ================================
+    const razao_social = String(empresa.razao_social || "").trim();
+    const email        = String(empresa.email || "").trim().toLowerCase();
+    const senha        = String(empresa.senha || "");
 
-if (empresaBanida) {
-  return res.status(403).json({
-    error: "Cadastro bloqueado. Este e-mail ou CNPJ está banido do sistema.",
-  });
-}
+    const cnpj             = String(empresa.cnpj || "").replace(/\D/g, "");
+    const telefone_empresa = String(empresa.telefone_empresa || "").replace(/\D/g, "");
+    const cep              = String(empresa.cep || "").replace(/\D/g, "");
+    const endereco         = String(empresa.endereco || "").trim();
 
-    const {
-      razao_social,
-      email,
-      senha,
-      cnpj,
-      telefone_empresa,
-      endereco,
-      cep,
-    } = empresa;
-    const {
-      nome,
-      cpf,
-      cargo,
-      email_representante,
-      telefone_representante,
-    } = representante;
+    const nome                  = String(representante.nome || "").trim();
+    const cpf                   = String(representante.cpf || "").replace(/\D/g, "");
+    const cargo                 = String(representante.cargo || "").trim();
+    const email_representante   = String(representante.email_representante || "").trim().toLowerCase();
+    const telefone_representante= String(representante.telefone_representante || "").replace(/\D/g, "");
 
-    if (
-      !razao_social ||
-      !email ||
-      !senha ||
-      !cnpj ||
-      !telefone_empresa ||
-      !endereco ||
-      !cep
-    ) {
-      return res
-        .status(400)
-        .json({ error: "Preencha todos os campos da empresa." });
+    // ================================
+    // Validações básicas
+    // ================================
+    if (!razao_social || !email || !senha || !cnpj || !telefone_empresa || !cep || !endereco) {
+      return res.status(400).json({ error: "Preencha todos os campos da empresa." });
     }
+
     if (!nome || !cpf || !cargo || !email_representante || !telefone_representante) {
-      return res
-        .status(400)
-        .json({ error: "Preencha todos os campos do representante." });
+      return res.status(400).json({ error: "Preencha todos os campos do representante." });
     }
 
+    // ================================
+    // Empresa banida
+    // ================================
+    const empresaBanida = await prisma.empresa.findFirst({
+      where: {
+        OR: [
+          { email },
+          { cnpj },
+          { telefone_empresa },
+        ],
+        isBanned: true,
+      },
+    });
+
+    if (empresaBanida) {
+      return res.status(403).json({
+        error: "Cadastro bloqueado. Este e-mail, CNPJ ou telefone está banido do sistema.",
+      });
+    }
+
+    // ================================
+    // Duplicidade da empresa
+    // ================================
+    const empresaDuplicada = await prisma.empresa.findFirst({
+      where: {
+        OR: [
+          { email },
+          { cnpj },
+          { telefone_empresa },
+        ],
+      },
+    });
+
+    if (empresaDuplicada) {
+      let campo = "dados fornecidos";
+      if (empresaDuplicada.email === email) campo = "e-mail";
+      else if (empresaDuplicada.cnpj === cnpj) campo = "CNPJ";
+      else if (empresaDuplicada.telefone_empresa === telefone_empresa) campo = "telefone";
+
+      return res.status(409).json({
+        error: `Já existe uma empresa cadastrada com este ${campo}.`,
+      });
+    }
+
+    // ================================
+    // Duplicidade do representante
+    // ================================
+    const representanteDuplicado = await prisma.representanteLegal.findFirst({
+      where: {
+        OR: [
+          { email_representante },
+          { cpf },
+          { telefone_representante },
+        ],
+      },
+    });
+
+    if (representanteDuplicado) {
+      return res.status(409).json({
+        error: "Já existe um representante cadastrado com estes dados (e-mail, CPF ou telefone).",
+      });
+    }
+
+    // ================================
+    // Criação da empresa
+    // ================================
     const hashed = await bcrypt.hash(senha, 10);
-    const token = crypto.randomBytes(24).toString("hex");
+    const token  = crypto.randomBytes(24).toString("hex");
 
     const novaEmpresa = await prisma.empresa.create({
       data: {
         razao_social,
         email,
         senha: hashed,
-        cnpj, // pode ser com máscara; login aceita ambos
+        cnpj,
         telefone_empresa,
         endereco,
         cep,
@@ -130,6 +176,9 @@ if (empresaBanida) {
       },
     });
 
+    // ================================
+    // Criação do representante
+    // ================================
     await prisma.representanteLegal.create({
       data: {
         nome,
@@ -146,16 +195,32 @@ if (empresaBanida) {
     return res.status(201).json({
       message: "Empresa e representante cadastrados. Verifique seu e-mail.",
     });
+
   } catch (err) {
-    console.error("registrarEmpresa error:", err);
+    console.error("registrarEmpresa error (detalhe):", {
+      code: err.code,
+      meta: err.meta,
+      message: err.message,
+    });
+
     if (err.code === "P2002") {
-      return res
-        .status(409)
-        .json({ error: "E-mail, CPF ou CNPJ já cadastrado." });
+      const target = String(err.meta?.target || "");
+      if (target.includes("email")) {
+        return res.status(409).json({ error: "E-mail da empresa já cadastrado." });
+      }
+      if (target.includes("cnpj")) {
+        return res.status(409).json({ error: "CNPJ já cadastrado." });
+      }
+      if (target.includes("telefone_empresa")) {
+        return res.status(409).json({ error: "Telefone da empresa já cadastrado." });
+      }
+      return res.status(409).json({ error: "Valor duplicado em campo único." });
     }
+
     return res.status(500).json({ error: "Erro interno do servidor." });
   }
 }
+
 
 // ================================
 // Verificar e-mail via token

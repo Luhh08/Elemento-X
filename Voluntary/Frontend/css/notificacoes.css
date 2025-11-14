@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap');
+
 /* === PAINEL DE NOTIFICAÇÕES === */
 .notification-wrapper {
   position: relative;
@@ -196,10 +198,16 @@
 .drawer-title{
   margin:0;
   font-family:'Alfa Slab One',serif;
+  font-weight:400;
+  letter-spacing:-0.04em;
+  line-height:1.1;
   font-size:32px;
-  background:linear-gradient(90deg,#00ffd3 0%,#ffd9b4 73%);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
+  color:#06C9A8;
+  background:none;
+  -webkit-background-clip:initial;
+  background-clip:initial;
+  -webkit-text-fill-color:#06C9A8;
+  text-fill-color:#06C9A8;
 }
 .drawer-menu{
   display:flex;

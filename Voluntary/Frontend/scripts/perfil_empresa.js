@@ -7,12 +7,12 @@ const empresaId = localStorage.getItem("empresaId") || localStorage.getItem("use
 const tipoConta = (localStorage.getItem("tipoConta") || localStorage.getItem("role") || "").toLowerCase();
 
 const qs = new URLSearchParams(location.search);
-const viewedId = qs.get("id") || empresaId;
+const viewedIdParam = qs.get("id");
+const viewedId = viewedIdParam || empresaId;
 
 const modoPublico = (qs.get("public") === "true") || !token;
 
-const isSelf = viewedId && empresaId && String(viewedId) === String(empresaId);
-const btnNavMeuPerfil = document.getElementById("btnVoltarPerfilNav");
+const isSelf = Boolean(viewedId && empresaId && String(viewedId) === String(empresaId));
 
 if (!qs.get("id") && viewedId) {
   history.replaceState(null, "", `${location.pathname}?id=${encodeURIComponent(viewedId)}${modoPublico ? "&public=true" : ""}`);
@@ -27,22 +27,13 @@ setupSidebarForVisitor();
 function toggleActions() {
   const show = (sel, state) => { const el = document.querySelector(sel); if (el) el.hidden = !state; };
 
-  if (modoPublico) {
-    show("#btnEditar", false);
-    show("#btnGerenciar", false);
-    show("#btnPublicar", false);
-    show("#btnDenunciar", !!token);
-    if (btnMeuPerfil) btnMeuPerfil.hidden = true;
-    if (btnNavMeuPerfil) btnNavMeuPerfil.hidden = true;
-    return;
-  }
+  // pega sempre os botões atuais do DOM
+  const btnMeuPerfil    = document.getElementById("btnMeuPerfil");
+  const btnNavMeuPerfil = document.getElementById("btnVoltarPerfilNav");
 
-  show("#btnEditar", isSelf);
-  show("#btnDenunciar", !isSelf);
-  show("#btnGerenciar", isSelf);
-  show("#btnPublicar", isSelf);
-  const meuPerfilUrl = (!isSelf) ? resolveMeuPerfilUrl() : null;
-  const wireBtn = (btn) => {
+  const meuPerfilUrl = (!isSelf ? resolveMeuPerfilUrl() : null);
+
+  const wireBtn = (btn, addSpacing = false) => {
     if (!btn) return;
     if (meuPerfilUrl) {
       btn.hidden = false;
@@ -53,12 +44,29 @@ function toggleActions() {
       };
     } else {
       btn.hidden = true;
+      btn.style.marginTop = "";
+      btn.style.marginBottom = "";
       btn.removeAttribute("href");
       btn.onclick = null;
     }
   };
+
+  if (modoPublico) {
+    show("#btnEditar", false);
+    show("#btnGerenciar", false);
+    show("#btnPublicar", false);
+    show("#btnDenunciar", !!token);
+    wireBtn(btnMeuPerfil);
+    wireBtn(btnNavMeuPerfil, true);
+    return;
+  }
+
+  show("#btnEditar", isSelf);
+  show("#btnDenunciar", !isSelf);
+  show("#btnGerenciar", isSelf);
+  show("#btnPublicar", isSelf);
   wireBtn(btnMeuPerfil);
-  wireBtn(btnNavMeuPerfil);
+  wireBtn(btnNavMeuPerfil, true);
 }
 
 function setupSidebarForVisitor(){
@@ -70,6 +78,9 @@ function setupSidebarForVisitor(){
     const menu = document.querySelector(".sidebar .menu");
     if(menu){
       menu.innerHTML = `
+       <a id="btnVoltarPerfilNav" class="pill" href="#">
+          <i class="ri-user-line"></i>Meu perfil
+        </a>
         <a class="pill" href="vagas.html">
           <i class="ri-search-line"></i> Procurar Vagas
         </a>

@@ -18,7 +18,10 @@ html, body {
 
 /* Logo */
 .logo {
-  font-family: 'Poppins', "Cal Sans", sans-serif;
+  font-family: "Alfa Slab One", serif;
+  font-weight: 400;
+  letter-spacing: -1px;
+  line-height: 1.15;
 }
 
 /* Container principal */
