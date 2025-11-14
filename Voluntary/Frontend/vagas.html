@@ -124,6 +124,15 @@
   const activeBar  = $("#tagActiveBar");
   const searchIn   = $("#pesquisar_tags");
 
+  const horarioInputs = document.querySelectorAll('input[name="horario"]');
+  const modalidadeInputs = document.querySelectorAll('input[name="modalidade"]');
+
+  const normalizeValue = (s="") => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const getCheckedValues = (name) =>
+    Array.from(document.querySelectorAll(`input[name="${name}"]:checked`))
+      .map(cb => normalizeValue(cb.value))
+      .filter(Boolean);
+
   // API base
   const SAME_ORIGIN = location.origin.includes(':3000');
   const API_BASE    = SAME_ORIGIN ? '/api' : 'http://localhost:3000/api';
@@ -179,12 +188,23 @@
 
   // filtra cards já renderizados
   window.applyFilters = function applyFilters(){
-    const want = Array.from(active).map(s => s.toLowerCase());
+    const wantTags = Array.from(active).map(s => s.toLowerCase());
+    const wantHorarios = getCheckedValues("horario");
+    const wantModalidades = getCheckedValues("modalidade");
+
     document.querySelectorAll(".job-card").forEach(card => {
       const tags = Array.from(card.querySelectorAll(".tag-vaga"))
         .map(e => e.textContent.trim().toLowerCase());
-      const ok = want.every(t => tags.includes(t));
-      card.hidden = !ok && want.length > 0;
+      const turnos = (card.dataset.turnos || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+      const modalidade = normalizeValue(card.dataset.modalidade || "");
+
+      let ok = true;
+      if (wantTags.length && !wantTags.every(t => tags.includes(t))) ok = false;
+      if (ok && wantHorarios.length && !wantHorarios.some(h => turnos.includes(h))) ok = false;
+      if (ok && wantModalidades.length) {
+        if (!modalidade || !wantModalidades.includes(modalidade)) ok = false;
+      }
+      card.hidden = !ok;
     });
   };
 
@@ -209,6 +229,8 @@
 
   // eventos
   searchIn.addEventListener("input", renderResults);
+  horarioInputs.forEach(cb => cb.addEventListener("change", () => window.applyFilters()));
+  modalidadeInputs.forEach(cb => cb.addEventListener("change", () => window.applyFilters()));
 
   // start
   renderActive();

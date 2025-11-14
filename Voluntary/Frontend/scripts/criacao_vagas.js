@@ -1,5 +1,53 @@
 const API = location.origin.includes(":3000") ? "/api" : "http://localhost:3000/api";
 
+const empresaState = {
+  id: localStorage.getItem("empresaId") || localStorage.getItem("userId") || "",
+  nome: localStorage.getItem("empresa_nome") || "Minha empresa",
+  logo: localStorage.getItem("empresaLogoUrl") || ""
+};
+
+function getEmpresaState() {
+  const lsId = localStorage.getItem("empresaId") || localStorage.getItem("userId") || "";
+  const lsNome = localStorage.getItem("empresa_nome") || "";
+  const lsLogo = localStorage.getItem("empresaLogoUrl");
+
+  if (lsId) empresaState.id = lsId;
+  if (lsNome) empresaState.nome = lsNome;
+  if (lsLogo !== null) empresaState.logo = lsLogo;
+
+  return { ...empresaState };
+}
+
+async function refreshEmpresaInfo() {
+  const { id } = getEmpresaState();
+  if (!id) return;
+  try {
+    const token = localStorage.getItem("token");
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const resp = await fetch(`${API}/empresas/${encodeURIComponent(id)}`, { headers });
+    if (!resp.ok) return;
+    const data = await resp.json().catch(() => null);
+    if (!data) return;
+
+    if (data.logoUrl) {
+      empresaState.logo = data.logoUrl;
+      localStorage.setItem("empresaLogoUrl", data.logoUrl);
+    }
+    if (data.razao_social) {
+      empresaState.nome = data.razao_social;
+      localStorage.setItem("empresa_nome", data.razao_social);
+    }
+    if (data.id) {
+      empresaState.id = data.id;
+      localStorage.setItem("empresaId", data.id);
+      localStorage.setItem("userId", data.id);
+    }
+    postPreview();
+  } catch (err) {
+    console.warn("Não foi possível atualizar os dados da empresa para o preview.", err);
+  }
+}
+
 async function resolveVagaEditEndpoints(vagaId, empresaId, token){
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
   const candidates = [
@@ -160,12 +208,13 @@ el.fotoBtn?.addEventListener("drop", (e)=>{
 async function buildPreviewPayload(){
   const novas = await Promise.all(fotosSelecionadas.map(fileToDataURL));
   const imagens = [...imagensExistentes, ...novas];
+  const empresaInfo = getEmpresaState();
 
   return {
     titulo: el.nome?.value?.trim() || "Nome do projeto",
-    empresa: localStorage.getItem("empresa_nome") || "Minha empresa",
-    empresaId: localStorage.getItem("empresaId") || localStorage.getItem("userId") || "",
-    empresaLogo: localStorage.getItem("empresaLogoUrl") || "",
+    empresa: empresaInfo.nome || "Minha empresa",
+    empresaId: empresaInfo.id || "",
+    empresaLogo: empresaInfo.logo || "",
     descricao: el.desc?.value?.trim() || "",
     tags: (el.tags?.value||"").split(",").map(s=>s.trim()).filter(Boolean),
     local: el.local?.value?.trim() || "",
@@ -250,6 +299,7 @@ async function loadVagaParaEdicao(){
   }
 }
 
+refreshEmpresaInfo();
 renderThumbs();
 postPreview();
 loadVagaParaEdicao();

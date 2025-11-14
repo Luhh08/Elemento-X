@@ -21,11 +21,20 @@
     total: 0,
     q: '',
     activeTags: new Set(),
-    allTags: []
+    allTags: [],
+    selectedHorarios: new Set()
   };
 
   const esc  = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const norm = (s) => String(s ?? '').toLowerCase();
+  const stripAccents = (s='') => s.normalize("NFD").replace(/[\u0300-\u036f]/g,'');
+  const normalizeHorario = (v='') => {
+    const txt = stripAccents(norm(v));
+    if(txt.includes('man')) return 'manha';
+    if(txt.includes('tard')) return 'tarde';
+    if(txt.includes('noit')) return 'noite';
+    return txt || '';
+  };
   const asArray = (v) => Array.isArray(v) ? v.filter(Boolean) : v ? [v] : [];
 
   function formatTelefoneBR(v){
@@ -42,7 +51,9 @@
     const email  = u.emailcontato || '—';
     const tel    = u.telefonecontato || '';
     const skills = asArray(u.competencias || u.skills || u.tags);
-    const horarios = asArray(u.preferenciaHorario || u.horario || []);
+    const horarios = asArray(u.preferenciaHorario || u.horario || [])
+      .map(normalizeHorario)
+      .filter(Boolean);
     return { id, nome, foto, email, tel, skills, horarios };
   }
 
@@ -121,6 +132,10 @@
       const skills = v.skills.map(norm);
       const passTags = act.every(t => skills.includes(t));
       if(!passTags) return false;
+      if(state.selectedHorarios.size){
+        const matchHorario = v.horarios.some(h => state.selectedHorarios.has(h));
+        if(!matchHorario) return false;
+      }
 
       if(!q) return true;
       const hay = norm([v.nome, v.email, v.tel, ...v.skills].join(' | '));
@@ -187,6 +202,15 @@
       applyFilters();
     });
     Q_TAGS?.addEventListener('input', renderResultsBox);
+    document.querySelectorAll('input[name="horario"]').forEach(cb=>{
+      cb.addEventListener('change', ()=>{
+        const val = normalizeHorario(cb.value);
+        if(!val) return;
+        if(cb.checked) state.selectedHorarios.add(val);
+        else state.selectedHorarios.delete(val);
+        applyFilters();
+      });
+    });
   }
 
   async function fetchUsuarios(){

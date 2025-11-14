@@ -272,6 +272,18 @@ body::before{
 .modal-content{background:#fff;padding:18px;border-radius:10px;min-width:320px;max-width:600px;box-shadow:var(--shadow)}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
 
+/* popup estilo perfil */
+.popup{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:none;align-items:center;justify-content:center;padding:20px;z-index:150}
+.popup[aria-hidden="false"]{display:flex;}
+.popup-dialog{width:min(860px,90vw);background:#eaf1f0;border-radius:16px;padding:24px;position:relative;box-shadow:0 15px 40px rgba(0,0,0,0.25);max-height:95vh;overflow:auto}
+.popup-dialog.dialog-sm{width:min(600px,92vw);}
+.popup .close{position:absolute;right:12px;top:12px;border:none;background:transparent;cursor:pointer;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:22px;}
+.popup .form{display:flex;flex-direction:column;gap:12px;}
+.popup .textarea textarea{width:100%;min-height:160px;border:1.5px solid #cfd8dc;border-radius:14px;padding:14px;font-family:inherit;font-size:15px;resize:vertical;}
+.popup .form-actions{display:flex;justify-content:flex-end;gap:10px;}
+.chip{background:#f6f6f6;border:1.5px solid #cfd8dc;border-radius:999px;padding:9px 18px;font-weight:600;cursor:pointer;}
+.chip.big{background:#0bb1a6;color:#fff;border:none;}
+
 /* preview (iframe) */
 body.live{ background:transparent !important; padding:0 !important; }
 body.live .site-header{ display:none !important; }

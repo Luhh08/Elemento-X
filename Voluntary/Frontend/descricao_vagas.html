@@ -63,7 +63,7 @@
         <div class="content-header">
           <h1 id="jobTitle" class="job-title">Vaga</h1>
           <div id="companyProfile" class="company-mini">
-            <img id="companyAvatar" class="company-avatar" src="img/default-company.png" alt="Logo da empresa">
+            <img id="companyAvatar" class="company-avatar" src="img/default-avatar.jpg" alt="Logo da empresa">
             <div class="company-mini-info">
               <span id="companyName" class="company-name">Nome da empresa</span>
               <a id="companyLink" class="company-link" href="#" target="_blank" rel="noopener" hidden>Ver perfil</a>
@@ -117,7 +117,7 @@
         <!-- painel de aplicação -->
         <div class="apply-panel">
           <div class="apply-note">
-            Ao clicar no botão de aplicar vaga, os seus dados serão enviados para a empresa
+            Ao aplicar para a vaga, seus dados serão enviados à empresa. Aguarde a análise da sua candidatura.
           </div>
           <div class="apply-row">
             <button id="applyBtn" data-vaga-id="" class="apply-btn">Aplicar</button>
@@ -133,15 +133,17 @@
     </aside>
   </main>
 
-  <div id="reportModal" class="modal" aria-hidden="true">
-    <div class="modal-content">
-      <h3>Denunciar vaga</h3>
-      <p>Explique o motivo da denúncia (opcional):</p>
-      <textarea id="reportText" rows="5" placeholder="Motivo..."></textarea>
-      <div class="modal-actions">
-        <button class="small-btn" data-close>Cancelar</button>
-        <button class="small-btn primary">Enviar</button>
-      </div>
+  <div id="reportModal" class="popup" aria-hidden="true">
+    <div class="popup-dialog dialog-sm">
+      <button class="close" data-close><i class="ri-close-line"></i></button>
+      <form id="formReportDenuncia" class="form">
+        <label class="textarea">
+          <textarea id="reportText" rows="6" placeholder="Motivo da denúncia"></textarea>
+        </label>
+        <div class="form-actions" style="display:flex;justify-content:flex-end;margin-top:12px">
+          <button type="submit" class="chip big">Enviar</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -159,8 +161,13 @@
   <script>
 (function () {
   const DEFAULT_VAGA_IMG = "img/default-vaga.jpg";
-  const DEFAULT_COMPANY_IMG = "img/default-company.png";
-  const API_PREFIX = (typeof window !== "undefined" && window.API_BASE) ? window.API_BASE : "/api";
+  const DEFAULT_COMPANY_IMG = "img/default-avatar.jpg";
+  const isBackendHost = location.origin && location.origin.includes(":3000");
+  const API_BASE = isBackendHost ? "" : "http://localhost:3000";
+  const API_PREFIX = `${API_BASE}/api`;
+  const UPLOAD_PREFIX = `${API_BASE}/uploads`;
+  const empresaInfoCache = new Map();
+  let lastPreviewPayload = null;
 
   const qs = new URLSearchParams(location.search);
   const live = qs.get("live") === "1";
@@ -170,6 +177,10 @@
   const btnEdit   = document.getElementById("editBtn");
   const btnDelete = document.getElementById("deleteBtn");
   const btnReport = document.getElementById("reportBtn");
+  const reportModal = document.getElementById("reportModal");
+  const reportText  = document.getElementById("reportText");
+  const reportSend  = reportModal?.querySelector(".primary");
+  const reportCloseBtns = reportModal?.querySelectorAll("[data-close]");
 
   [btnEdit, btnDelete].forEach(b => { if (b) b.style.display = "none"; });
 
@@ -197,6 +208,77 @@
       location.href = `criacao_vagas.html?modo=editar&id=${encodeURIComponent(id)}`;
     });
   }
+
+  function openReport(){
+    const token = localStorage.getItem("token");
+    if (!token){
+      alert("Faça login para denunciar uma vaga.");
+      return;
+    }
+    if (!reportModal) return;
+    openModal(reportModal);
+    reportText?.focus();
+  }
+
+  function closeReport(){
+    if (!reportModal) return;
+    closeModal(reportModal);
+    if (reportText) reportText.value = "";
+  }
+
+  btnReport?.addEventListener("click", openReport);
+  reportCloseBtns?.forEach(btn => btn.addEventListener("click", closeReport));
+
+  document.getElementById("formReportDenuncia")?.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    if (!vagaId){
+      alert("Não foi possível identificar a vaga.");
+      return;
+    }
+    const token = localStorage.getItem("token");
+    if (!token){
+      alert("Faça login para denunciar uma vaga.");
+      return;
+    }
+    const mensagem = (reportText?.value || "").trim();
+    if (!mensagem){
+      alert("Descreva o motivo da denúncia.");
+      reportText?.focus();
+      return;
+    }
+    const submitBtn = e.submitter || reportSend;
+    const original = submitBtn?.textContent;
+    if (submitBtn){
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Enviando...";
+    }
+    try{
+      const resp = await fetch("/api/denuncias",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization":`Bearer ${token}`
+        },
+        body: JSON.stringify({
+          tipo:"vaga",
+          alvoId: vagaId,
+          mensagem
+        })
+      });
+      const data = await resp.json().catch(()=> ({}));
+      if (!resp.ok) throw new Error(data?.error || "Não foi possível enviar sua denúncia.");
+      alert("Denúncia enviada. Obrigado por reportar.");
+      closeReport();
+    }catch(err){
+      console.error(err);
+      alert(err.message || "Falha ao enviar denúncia. Tente novamente mais tarde.");
+    }finally{
+      if (submitBtn){
+        submitBtn.disabled = false;
+        submitBtn.textContent = original || "Enviar";
+      }
+    }
+  });
 
   const confirmModal     = document.getElementById("confirmDelete");
   const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
@@ -280,12 +362,15 @@
     if (/^(https?:|data:)/i.test(src)) return src;
     try { src = new URL(src, location.origin).pathname; } catch {}
     src = src.replace(/\/?backend\/(?=uploads\/)/i, "/");
-    const p = src.toLowerCase().indexOf("/uploads/");
-    if (p !== -1) {
-      const rel = src.slice(p);
-      return `${API_PREFIX}${rel}`;
+    const idx = src.toLowerCase().indexOf("/uploads/");
+    if (idx !== -1) {
+      const rel = src.slice(idx).replace(/^\/uploads/i, "");
+      return `${UPLOAD_PREFIX}/${rel.replace(/^\/+/, "")}`;
     }
-    if (/^uploads\//i.test(src)) return `${API_PREFIX}/${src}`;
+    if (/^uploads\//i.test(src)) {
+      const rel = src.replace(/^uploads\//i, "");
+      return `${UPLOAD_PREFIX}/${rel}`;
+    }
     return src || FALLBACK;
   }
   function resolveCompanyLogo(src){
@@ -296,12 +381,57 @@
     clean = clean.replace(/^\/?api\/(?=uploads\/)/i,"/");
     const idx = clean.toLowerCase().indexOf("/uploads/");
     if (idx !== -1){
-      const rel = clean.slice(idx);
-      return `${API_PREFIX}${rel}`;
+      const rel = clean.slice(idx).replace(/^\/uploads/i, "");
+      return `${UPLOAD_PREFIX}/${rel.replace(/^\/+/, "")}`;
     }
-    if (/^uploads\//i.test(clean)) return `${API_PREFIX}/${clean}`;
-    if (!clean.startsWith("/") && /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(clean)) return `${API_PREFIX}/uploads/${clean}`;
+    if (/^uploads\//i.test(clean)) {
+      const rel = clean.replace(/^uploads\//i, "");
+      return `${UPLOAD_PREFIX}/${rel}`;
+    }
+    if (!clean.startsWith("/") && /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(clean)) return `${UPLOAD_PREFIX}/${clean}`;
     return clean || DEFAULT_COMPANY_IMG;
+  }
+
+  async function ensureEmpresaLogo(payload){
+    const empresaId = payload?.empresaId || payload?.empresa?.id;
+    const hasLogo =
+      payload?.empresaLogo ||
+      payload?.empresaLogoUrl ||
+      payload?.logoUrl ||
+      payload?.logo ||
+      payload?.empresa?.logoUrl;
+    if (!empresaId || hasLogo) return;
+    const cacheKey = String(empresaId);
+    if (!empresaInfoCache.has(cacheKey)) {
+      const promise = fetch(`${API_PREFIX}/empresas/${encodeURIComponent(empresaId)}/public`)
+        .then(resp => (resp.ok ? resp.json() : null))
+        .catch(() => null);
+      empresaInfoCache.set(cacheKey, promise);
+    }
+    const data = await empresaInfoCache.get(cacheKey);
+    if (data?.logoUrl) {
+      applyFetchedLogo(cacheKey, data);
+    }
+  }
+
+  function applyFetchedLogo(empresaId, data){
+    if (!lastPreviewPayload) return;
+    const currentId =
+      lastPreviewPayload.empresaId ||
+      lastPreviewPayload?.empresa?.id ||
+      null;
+    if (!currentId || String(currentId) !== String(empresaId)) return;
+    lastPreviewPayload = {
+      ...lastPreviewPayload,
+      empresaLogo: data.logoUrl,
+      empresa: {
+        ...(lastPreviewPayload.empresa || {}),
+        id: empresaId,
+        razao_social: data.razao_social || lastPreviewPayload.empresa?.razao_social,
+        logoUrl: data.logoUrl
+      }
+    };
+    updateCompanyProfile(lastPreviewPayload);
   }
 
   const ensureArray = (x) => Array.isArray(x) ? x : (x ? [x] : []);
@@ -362,18 +492,28 @@
   }
 
   function updateCompanyProfile(p){
-    const nome = p?.empresa || p?.empresaNome || "Empresa";
+    const nome = p?.empresa || p?.empresaNome || p?.empresa?.razao_social || "Empresa";
     if (el.company){
       el.company.textContent = nome || "Empresa";
     }
     if (el.companyAvatar){
-      const logoSrc = resolveCompanyLogo(p?.empresaLogo || p?.empresaLogoUrl || p?.logoUrl || p?.logo || "");
+      const logoSrc = resolveCompanyLogo(
+        p?.empresaLogo ||
+        p?.empresaLogoUrl ||
+        p?.logoUrl ||
+        p?.logo ||
+        p?.empresa?.logoUrl ||
+        ""
+      );
       el.companyAvatar.src = logoSrc;
       el.companyAvatar.alt = `Logo de ${nome || "Empresa"}`;
     }
     if (el.companyLink){
       const empresaId = p?.empresaId || p?.empresa?.id || null;
-      const perfilUrl = p?.empresaPerfil || (empresaId ? `perfil-empresa.html?id=${encodeURIComponent(empresaId)}${live ? "&public=true" : ""}` : "");
+      const ownerView = empresaId ? viewerOwnsVaga(empresaId) : false;
+      const perfilUrl = p?.empresaPerfil || (empresaId
+        ? `perfil-empresa.html?id=${encodeURIComponent(empresaId)}${ownerView ? "" : "&public=true"}`
+        : "");
       if (perfilUrl){
         el.companyLink.href = perfilUrl;
         el.companyLink.hidden = false;
@@ -388,8 +528,13 @@
 
   function applyPreview(p){
     if (!p) return;
+    lastPreviewPayload = {
+      ...p,
+      empresa: p?.empresa ? { ...p.empresa } : p?.empresa
+    };
     el.title.textContent   = p.titulo || "Vaga";
     updateCompanyProfile(p);
+    ensureEmpresaLogo(lastPreviewPayload);
     el.desc.textContent    = p.descricao || "—";
     el.loc.textContent     = p.local || "—";
     el.turno.textContent   = ensureArray(p.turno).join(", ") || "—";

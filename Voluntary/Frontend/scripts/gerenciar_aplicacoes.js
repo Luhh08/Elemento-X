@@ -24,7 +24,8 @@
     tagsActive: new Set(),
     allTags: [],
     q: '',
-    turnos: new Set()
+    turnos: new Set(),
+    loadingButtons: new Set()
   };
 
   // === HELPERS ===
@@ -72,6 +73,30 @@
 
   function cardHTML(x){
     const linkVaga = x.vagaId ? `descricao_vagas.html?id=${encodeURIComponent(x.vagaId)}` : '#';
+    const loadingAccept = state.loadingButtons.has(`ACCEPT:${x.id}`);
+    const loadingReject = state.loadingButtons.has(`REJECT:${x.id}`);
+    const upperStatus = (x.status || "").toUpperCase();
+    const isAccepted = upperStatus === "ACEITA";
+    const isRejected = upperStatus === "RECUSADA";
+    const vagaFinalizada = x.vagaStatus === "FINALIZADA";
+    const vagaAndamento = x.vagaStatus === "ANDAMENTO";
+    let actionsHTML = '';
+    if (vagaFinalizada || vagaAndamento) {
+      actionsHTML = "";
+    } else if (isAccepted || isRejected) {
+      actionsHTML = "";
+    } else {
+      actionsHTML = `
+        <button class="btn-accept" data-accept="${esc(x.id)}" ${loadingAccept ? "disabled" : ""}>
+          ${loadingAccept ? "Processando..." : "Aceitar aplicação"}
+        </button>
+        <button class="btn-reject" data-reject="${esc(x.id)}" ${loadingReject ? "disabled" : ""}>
+          ${loadingReject ? "Aguarde..." : "Recusar aplicação"}
+        </button>`;
+    }
+    let statusBadge = x.status || '';
+    if (vagaFinalizada && isAccepted) statusBadge = "Participou da vaga";
+    else if (vagaAndamento && isAccepted) statusBadge = "Participando";
     return `
     <article class="job-card">
   <div class="job-card-image-wrapper">
@@ -80,7 +105,7 @@
   <div class="vaga">
     <div class="badge-vaga">
       <a href="${linkVaga}">${esc(x.vagaTitulo)}</a>
-      <span class="mini">${esc(x.status || '')}</span>
+      <span class="mini">${esc(statusBadge)}</span>
     </div>
 
     <p class="titulo_vaga">${esc(x.nome)}</p>
@@ -105,11 +130,7 @@
     </div>
 
       <div class="card-actions">
-      ${(['ANDAMENTO','FINALIZADA'].includes(x.vagaStatus) ?
-        `<span class="note">Vaga ${esc(x.vagaStatus.toLowerCase())}. Ações desabilitadas.</span>` :
-        `<button class="btn-accept" data-accept="${esc(x.id)}">Aceitar aplicação</button>
-         <button class="btn-reject" data-reject="${esc(x.id)}">Recusar aplicação</button>`
-      )}
+      ${actionsHTML}
       <a href="perfil-usuario.html?id=${encodeURIComponent(x.raw?.voluntario?.id || x.raw?.usuario?.id || '')}" class="btn btn-details">Ver Perfil Detalhado</a>
     </div>
   </div>
@@ -124,6 +145,9 @@
     const turnos = [...state.turnos].map(norm);
 
     let list = state.items.filter(x=>{
+      const status = (x.status || "").toUpperCase();
+      if (x.vagaStatus === "FINALIZADA" && status === "RECUSADA") return false;
+      if ((x.vagaStatus === "FINALIZADA" || x.vagaStatus === "ANDAMENTO") && status === "INSCRITA") return false;
       if(tags.length && !tags.every(t => x.skills.map(norm).includes(t))) return false;
       if(turnos.length && !turnos.some(t => x.turnos.map(norm).includes(t))) return false;
       if(!q) return true;
@@ -270,6 +294,9 @@
 
   async function updateStatus(id,status,reason=""){
     const token = getAuthToken();
+    const key = `${status === "ACEITA" ? "ACCEPT" : "REJECT"}:${id}`;
+    state.loadingButtons.add(key);
+    render();
     try{
       const res = await fetch(`${API_BASE}/candidaturas/${encodeURIComponent(id)}/status`,{
         method:'PATCH',
@@ -287,9 +314,14 @@
         if(item){ item.status=status; render(); }
         return true;
       }
-    }catch(_){}
-    alert('Não foi possível atualizar o status.');
-    return false;
+      throw new Error();
+    }catch(_){
+      alert('Não foi possível atualizar o status.');
+      return false;
+    } finally {
+      state.loadingButtons.delete(key);
+      render();
+    }
   }
 
   async function fetchApps(page = 1, pageSize = PAGE_SIZE) {

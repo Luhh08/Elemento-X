@@ -333,7 +333,7 @@ async function enrichWithEmpresaInfo(items){
 
 function renderHistorico(items){
   if(!historicoContainer) return;
-  historicoContainer.querySelectorAll(".vaga-card").forEach(el=>el.remove());
+  historicoContainer.querySelector(".hist-wrap")?.remove();
 
   const wrap = document.createElement("div");
   wrap.className = "hist-wrap";
@@ -597,7 +597,10 @@ async function carregarPerfil(){
     $("#editUsuario") && ($("#editUsuario").value = data.usuario || "");
     $("#editDescricao") && ($("#editDescricao").value = data.descricao || "");
     $("#editEmailContato") && ($("#editEmailContato").value = data.emailcontato || "");
-    $("#editTelefoneContato") && ($("#editTelefoneContato").value = formatTelefoneBR(data.telefonecontato || ""));
+    if ($("#editTelefoneContato")) {
+      const telFormatado = data.telefonecontato ? formatTelefoneBR(data.telefonecontato) : "";
+      $("#editTelefoneContato").value = telFormatado === "—" ? "" : telFormatado;
+    }
     $("#editCompetencias") && ($("#editCompetencias").value = (data.competencias||[]).join(", "));
 
     aplicarMascaraTelefone($("#editTelefoneContato"));
@@ -619,6 +622,144 @@ async function carregarPerfil(){
 
   await carregarHistoricoCandidaturas();
 }
+
+function coletarCompetencias(){
+  const input = $("#editCompetencias");
+  if (!input) return [];
+  if (input._chips?.value && Array.isArray(input._chips.value)) {
+    return input._chips.value.filter(Boolean);
+  }
+  return (input.value || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function coletarHorarios(){
+  return Array.from(document.querySelectorAll('input[name="disp[]"]:checked'))
+    .map((cb) => cb.value)
+    .filter(Boolean);
+}
+
+$("#formEdicao")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!isSelf) {
+    alert("Você só pode editar o próprio perfil.");
+    return;
+  }
+  if (!token) {
+    alert("Faça login novamente para editar seu perfil.");
+    window.location.href = "login.html";
+    return;
+  }
+
+  const btn = e.submitter || $("#formEdicao button[type='submit']");
+  const originalText = btn?.textContent;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Salvando...";
+  }
+
+  const payload = {
+    nome: $("#editNome")?.value?.trim(),
+    usuario: ($("#editUsuario")?.value || "").trim().replace(/^@+/, ""),
+    descricao: $("#editDescricao")?.value?.trim(),
+    competencias: coletarCompetencias(),
+    preferenciaHorario: coletarHorarios(),
+    emailcontato: $("#editEmailContato")?.value?.trim(),
+    telefonecontato: ($("#editTelefoneContato")?.value || "").replace(/\D/g, "")
+  };
+
+  try {
+    const resp = await fetch(`/api/usuario/${encodeURIComponent(viewedId)}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      throw new Error(data?.error || `Erro ao atualizar perfil (HTTP ${resp.status})`);
+    }
+    await carregarPerfil();
+    closeAllPopups();
+    alert("✅ Perfil atualizado com sucesso!");
+  } catch (err) {
+    console.error("Erro ao salvar perfil:", err);
+    alert(err.message || "Não foi possível salvar as alterações.");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = originalText || "Salvar";
+    }
+  }
+});
+
+async function uploadImagemUsuario(tipo){
+  if (!isSelf) {
+    alert("Você só pode alterar imagens do seu próprio perfil.");
+    return;
+  }
+  if (!token) {
+    alert("Faça login novamente para alterar suas imagens.");
+    window.location.href = "login.html";
+    return;
+  }
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.onchange = async (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append("imagem", file);
+    const btn =
+      tipo === "foto"
+        ? document.getElementById("btnNovaFoto")
+        : document.getElementById("btnNovoBanner");
+    const original = btn?.textContent;
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Enviando...";
+    }
+    try {
+      const resp = await fetch(`/api/usuario/${encodeURIComponent(viewedId)}/upload/${tipo}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        throw new Error(data?.error || `Falha ao enviar ${tipo === "foto" ? "foto" : "banner"}.`);
+      }
+      const userData = data?.usuario || {};
+      if (tipo === "foto" && userData.fotoUrl) {
+        $("#fotoUsuario") && ($("#fotoUsuario").src = userData.fotoUrl);
+        $("#fotoPreview") && ($("#fotoPreview").src = userData.fotoUrl);
+      }
+      if (tipo === "banner" && userData.bannerUrl) {
+        $("#bannerUsuario") && ($("#bannerUsuario").src = userData.bannerUrl);
+        $("#bannerPreview") && ($("#bannerPreview").src = userData.bannerUrl);
+      }
+      alert("✅ Imagem atualizada com sucesso!");
+    } catch (err) {
+      console.error("Erro no upload:", err);
+      alert(err.message || "Não foi possível enviar a imagem.");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = original || "Enviar";
+      }
+      input.value = "";
+    }
+  };
+  input.click();
+}
+
+$("#btnNovaFoto")?.addEventListener("click", () => uploadImagemUsuario("foto"));
+$("#btnNovoBanner")?.addEventListener("click", () => uploadImagemUsuario("banner"));
 
 function atualizarBarraProgresso(valor){
   const p = Math.max(0, Math.min(100, Number(valor||0)));

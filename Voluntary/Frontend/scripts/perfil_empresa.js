@@ -2,6 +2,7 @@ const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 
 const popupFeedbacks = document.getElementById("popupFeedbacks");
+const MIN_PROGRESS_PUBLICAR = 30;
 const token = localStorage.getItem("token");
 const empresaId = localStorage.getItem("empresaId") || localStorage.getItem("userId") || "";
 const tipoConta = (localStorage.getItem("tipoConta") || localStorage.getItem("role") || "").toLowerCase();
@@ -10,9 +11,14 @@ const qs = new URLSearchParams(location.search);
 const viewedIdParam = qs.get("id");
 const viewedId = viewedIdParam || empresaId;
 
-const modoPublico = (qs.get("public") === "true") || !token;
+let modoPublico = (qs.get("public") === "true") || !token;
 
 const isSelf = Boolean(viewedId && empresaId && String(viewedId) === String(empresaId));
+
+// Visitantes (usuários ou outras empresas) sempre consomem as rotas públicas
+if (!isSelf) {
+  modoPublico = true;
+}
 
 if (!qs.get("id") && viewedId) {
   history.replaceState(null, "", `${location.pathname}?id=${encodeURIComponent(viewedId)}${modoPublico ? "&public=true" : ""}`);
@@ -302,9 +308,9 @@ function calcProgressoEmpresaFront(e = {}) {
 function travarPublicacaoVaga(pct) {
   const btn = document.getElementById("btnPublicar");
   if (!btn) return;
-  const ok = Number(pct) >= 100 && !modoPublico && isSelf;
+  const ok = Number(pct) >= MIN_PROGRESS_PUBLICAR && !modoPublico && isSelf;
   btn.hidden = !ok;
-  if (!ok) btn.title = "Complete 100% do perfil para publicar uma vaga";
+  if (!ok) btn.title = `Complete pelo menos ${MIN_PROGRESS_PUBLICAR}% do perfil para publicar uma vaga`;
   else btn.removeAttribute("title");
 }
 
@@ -439,8 +445,8 @@ async function carregarPerfilEmpresa(){
       const wrap = document.getElementById("progressWrap") || document.querySelector(".progress-wrap");
       if (wrap) wrap.style.display = "none";
       const [perfilRes, vagasRes] = await Promise.all([
-        fetch(`/api/empresas/${viewedId}/public`),
-        fetch(`/api/empresas/${viewedId}/vagas/public`)
+        fetch(`/api/empresas/${encodeURIComponent(viewedId)}/public`),
+        fetch(`/api/empresas/${encodeURIComponent(viewedId)}/vagas/public`)
       ]);
       perfil = await perfilRes.json();
       vagas = await vagasRes.json();

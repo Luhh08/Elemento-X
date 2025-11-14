@@ -12,6 +12,16 @@ const sharp = require("sharp");
 const BASE = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
 
 const prisma = new PrismaClient();
+const MIN_PROFILE_PROGRESS_TO_PUBLISH = Math.min(
+  100,
+  Math.max(0, Number(process.env.MIN_PROFILE_PROGRESS_TO_PUBLISH || 30))
+);
+const VAGA_STATUS_SET = new Set([
+  "ABERTA",
+  "INSCRICOES_FINALIZADAS",
+  "ANDAMENTO",
+  "FINALIZADA",
+]);
 
 // use a MESMA chave que o frontend (ideal: vir do .env)
 const EMPRESA_AES_KEY =
@@ -594,12 +604,13 @@ async function criarVagaParaEmpresa(req, res, next) {
       return res.status(404).json({ error: "Empresa não encontrada" });
     }
 
-    // 3) bloqueio de perfil < 100%
+    // 3) bloqueio de perfil < mínimo configurado
     const progresso = calcProgresso(empresa);
-    if (progresso < 100) {
+    if (progresso < MIN_PROFILE_PROGRESS_TO_PUBLISH) {
       return res.status(403).json({
-        error: "Complete 100% do perfil da empresa para publicar uma vaga.",
-        progressoAtual: progresso
+        error: `Complete pelo menos ${MIN_PROFILE_PROGRESS_TO_PUBLISH}% do perfil da empresa para publicar uma vaga.`,
+        progressoAtual: progresso,
+        minimoNecessario: MIN_PROFILE_PROGRESS_TO_PUBLISH
         // (opcional) envie também "faltando": camposFaltando(empresa)
       });
     }
@@ -718,8 +729,19 @@ async function listarVagasPublicasPorEmpresa(req, res){
     const empresaId = await resolveEmpresaId(req.params.idOrHandle);
     if (!empresaId) return res.status(404).json({ error: "Empresa não encontrada" });
 
+    const where = { empresaId };
+    const statusFiltro = normalizeList(req.query?.status)
+      .map((s) => s.toUpperCase())
+      .filter((s) => VAGA_STATUS_SET.has(s));
+
+    if (statusFiltro.length === 1) {
+      where.status = statusFiltro[0];
+    } else if (statusFiltro.length > 1) {
+      where.status = { in: statusFiltro };
+    }
+
     const vagas = await prisma.vaga.findMany({
-      where: { empresaId, status: "ABERTA" }, // Adicionado status 'ABERTA' para público
+      where,
       orderBy: { id: "desc" },
       select: {
         id: true, titulo: true, descricao: true, tags: true, turno: true,

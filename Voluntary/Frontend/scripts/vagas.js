@@ -15,6 +15,23 @@
 
   const clamp = (txt, n = 160) => (txt || '').length > n ? txt.slice(0, n).trim() + '…' : (txt || '');
   const asArray = (v) => Array.isArray(v) ? v.filter(Boolean) : v ? [v] : [];
+  const stripAccents = (s="") => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const normalizeTurno = (v="") => {
+    const txt = stripAccents(String(v).toLowerCase());
+    if (txt.includes("man")) return "manha";
+    if (txt.includes("tard")) return "tarde";
+    if (txt.includes("noit")) return "noite";
+    return txt || "";
+  };
+  const inferModalidade = (raw) => {
+    const txtLocal = stripAccents(String(raw.local || "").toLowerCase());
+    const tagsLower = asArray(raw.tags).map(t => stripAccents(String(t).toLowerCase()));
+    const has = (word) => tagsLower.some(t => t.includes(word)) || txtLocal.includes(word);
+    if (has("remot")) return "remoto";
+    if (has("hibr")) return "hibrido";
+    if (has("presen")) return "presencial";
+    return "";
+  };
 
   const absolutize = (url) => {
     if (!url) return null;
@@ -33,6 +50,8 @@
     const empresaId    = raw.empresa?.id || raw.empresaId || null;
     const empresaNome  = raw.empresa?.razao_social || raw.empresa?.usuario || '';
     const empresaLogo  = absolutize(raw.empresa?.logoUrl) || DEFAULT_AVATAR;
+    const turnos = asArray(raw.turno || raw.turnos).map(normalizeTurno).filter(Boolean);
+    const modalidade = inferModalidade(raw);
 
     const tags = [...asArray(raw.tags)];
 
@@ -45,7 +64,9 @@
       tags,
       empresaId,
       empresaNome,
-      empresaLogo
+      empresaLogo,
+      turnos,
+      modalidade
     };
   }
 
@@ -57,7 +78,7 @@
   : `perfil-empresa.html?id=${encodeURIComponent(v.empresaId)}&public=true`;
 
     return `
-      <article class="job-card">
+      <article class="job-card" data-turnos="${(v.turnos || []).join(',')}" data-modalidade="${v.modalidade || ''}">
         <div class="job-card-image-wrapper">
           <img src="${v.img}" alt="${v.titulo}" class="job-card-image" loading="lazy"
                onerror="this.src='${PLACEHOLDER}'">
