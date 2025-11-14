@@ -60,7 +60,8 @@
   const input = $("#fotosInput");
   const drop = $(".drop");
   const previews = $("#previews");
-  const filesBucket = []; // mantemos aqui para enviar depois
+  const filesBucket = []; 
+  
 
   function readableSize(bytes){
     const mb = bytes / (1024*1024);
@@ -112,7 +113,7 @@
   drop?.addEventListener("click", () => input?.click());
   input?.addEventListener("change", () => {
     for (const f of input.files || []) validateAndPush(f);
-    input.value = ""; // permite escolher as mesmas fotos de novo
+    input.value = ""; 
   });
 
   // suporte a arrastar-e-soltar
