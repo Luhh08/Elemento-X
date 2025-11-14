@@ -158,6 +158,8 @@ async function buildPreviewPayload(){
   return {
     titulo: el.nome?.value?.trim() || "Nome do projeto",
     empresa: localStorage.getItem("empresa_nome") || "Minha empresa",
+    empresaId: localStorage.getItem("empresaId") || localStorage.getItem("userId") || "",
+    empresaLogo: localStorage.getItem("empresaLogoUrl") || "",
     descricao: el.desc?.value?.trim() || "",
     tags: (el.tags?.value||"").split(",").map(s=>s.trim()).filter(Boolean),
     local: el.local?.value?.trim() || "",

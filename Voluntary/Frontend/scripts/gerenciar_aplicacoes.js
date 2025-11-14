@@ -245,7 +245,7 @@
     btn.addEventListener('click', ()=>closeRecusaModal());
   });
   modalRecusa?.addEventListener('click',(e)=>{
-    const dialog = modalRecusa.querySelector('.popup-dialog');
+    const dialog = modalRecusa.querySelector('.modal-card');
     if(dialog && !dialog.contains(e.target)) closeRecusaModal();
   });
   confirmRecusaBtn?.addEventListener('click', async ()=>{

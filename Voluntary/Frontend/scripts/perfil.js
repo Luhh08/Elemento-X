@@ -114,6 +114,8 @@ if(!params.get("id") && viewedId){
   history.replaceState(null,"",`${location.pathname}?id=${encodeURIComponent(viewedId)}`);
 }
 
+setupSidebarForViewer();
+
 // ========= mapeamentos de status =========
 function mapCandidaturaStatus(s){
   const v = String(s||"").toUpperCase();
@@ -123,6 +125,41 @@ function mapCandidaturaStatus(s){
     case "RECUSADO": return { text:"Inscrição recusada", cls:"status-finalizado" };
     case "INSCRITA":
     default:         return { text:"Inscrição em análise", cls:"status-inscrita" };
+  }
+}
+
+function setupSidebarForViewer(){
+  try{
+    const tipo = (localStorage.getItem("tipoConta") || localStorage.getItem("role") || "").toLowerCase();
+    const viewerIsEmpresa = tipo.includes("empresa");
+    if(!viewerIsEmpresa) return; // já é versão usuário por padrão
+
+    const menu = document.querySelector(".sidebar .menu");
+    if(menu){
+      menu.innerHTML = `
+        <a class="pill" href="pesquisar-volutarios.html">
+          <i class="ri-search-line"></i> Procurar Voluntarios
+        </a>
+        <div class="notification-wrapper">
+          <button type="button" class="pill" data-open-notifications>
+            <i class="ri-notification-3-line"></i>
+            Notificações
+            <span class="notification-count"></span>
+          </button>
+          <div class="notif-panel">
+            <div class="notif-header">Notificações</div>
+            <p class="notif-empty">Carregando...</p>
+          </div>
+        </div>
+        <a class="pill pill-accent" href="gerenciar_aplicacoes.html">
+          <i class="ri-key-2-line"></i> Aplicações
+        </a>
+      `;
+    }
+    const logout = document.querySelector(".pill-logout");
+    if(logout) logout.href = "login_empresa.html";
+  }catch(err){
+    console.warn("Falha ao ajustar sidebar do perfil para o visitante:", err);
   }
 }
 
@@ -183,6 +220,9 @@ function historicoCard(item){
   const titulo   = v.titulo || "Vaga";
   const capaUrl  = v._thumb || resolveCapaFromVaga(v);
   const linkVaga = vagaId ? `descricao_vagas.html?id=${encodeURIComponent(vagaId)}` : "#";
+  const status   = String(item.status || "").toUpperCase();
+  const rejectionReason = status === "RECUSADA" ? (item.motivoRecusa || "").trim() : "";
+  const rejectionHtml = rejectionReason ? esc(rejectionReason).replace(/\n/g,"<br>") : "";
 
   const emp         = v.empresa || {};
   const empresaId   = emp.id || v.empresaId || null;
@@ -227,6 +267,7 @@ function historicoCard(item){
         <span class="status ${row.chipClass}">${esc(row.chipText)}</span>
         ${row.btnHtml}
       </div>
+      ${rejectionHtml ? `<div class="hist-reason"><strong>Motivo da recusa</strong>${rejectionHtml}</div>` : ""}
     </div>
   </article>`;
 }
@@ -302,6 +343,7 @@ async function carregarHistoricoCandidaturas(){
     const items = (data.items || []).map((it)=>({
       id: it.id,
       status: it.status || "INSCRITA",
+      motivoRecusa: it.motivoRecusa || "",
       vaga: {
         id: it.vaga?.id,
         titulo: it.vaga?.titulo,

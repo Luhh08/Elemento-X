@@ -16,35 +16,38 @@
   </style>
 </head>
 <body>
-  <a href="javascript:history.back()" class="btn-voltar">
-  <i class="ri-arrow-left-line"></i> Voltar
-</a>
-  <header class="site-header">
-    <div class="brand">Voluntary</div>
-    <div class="header-actions">
-      <div class="notification-wrapper" id="notificationWrapper">
-        <button id="notifBtn" class="icon-btn" title="Notificações">
-          <i class="fa-solid fa-bell"></i>
-        </button>
-        <div class="notif-panel" id="notifPanel">
-          <div class="notif-header">Notificações</div>
-          <div class="notif-item">
-            <div class="notif-title">Nova mensagem recebida <i class="fa-solid fa-envelope"></i></div>
-            <div class="notif-time">Há 2 minutos</div>
-          </div>
-          <div class="notif-item">
-            <div class="notif-title">Seu cadastro foi aprovado <i class="fa-solid fa-check"></i></div>
-            <div class="notif-time">Há 15 minutos</div>
-          </div>
-          <div class="notif-item">
-            <div class="notif-title">Projeto “Verde Limpo” precisa de voluntários <i class="fa-solid fa-seedling"></i></div>
-            <div class="notif-time">Há 1 hora</div>
+  <header class="site-header compact-header">
+    <div class="header-compact">
+      <button class="round-btn back-btn" id="btnBack" type="button" aria-label="Voltar">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <div class="header-actions">
+        <div class="notification-wrapper" id="notificationWrapper">
+          <button id="notifBtn" class="round-btn bell-btn" type="button" title="Notificações">
+            <i class="fa-solid fa-bell"></i>
+            <span class="notification-count"></span>
+          </button>
+          <div class="notif-panel" id="notifPanel">
+            <div class="notif-header">Notificações</div>
+            <p class="notif-empty">Carregando...</p>
           </div>
         </div>
+        <button class="round-btn avatar-btn" id="menuToggle" type="button" aria-label="Abrir menu">
+          <img src="img/default-avatar.jpg" alt="Menu">
+        </button>
       </div>
-      <div class="avatar"><a href="perfil-usuario.html"><img src="img/default-avatar.jpg" width="22" height="22" alt="perfil"></a></div>
     </div>
   </header>
+
+  <div class="nav-drawer" id="navDrawer">
+    <div class="drawer-inner">
+      <button class="close-drawer" id="closeDrawer" type="button" aria-label="Fechar menu">&times;</button>
+      <h2 class="drawer-title">Voluntary</h2>
+      <nav id="drawerMenu" class="drawer-menu"></nav>
+    </div>
+  </div>
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+
 
   <main class="page">
     <article class="job-card">
@@ -59,7 +62,13 @@
       <section class="content">
         <div class="content-header">
           <h1 id="jobTitle" class="job-title">Vaga</h1>
-          <div id="companyName" class="company">Nome_empresa</div>
+          <div id="companyProfile" class="company-mini">
+            <img id="companyAvatar" class="company-avatar" src="img/default-company.png" alt="Logo da empresa">
+            <div class="company-mini-info">
+              <span id="companyName" class="company-name">Nome da empresa</span>
+              <a id="companyLink" class="company-link" href="#" target="_blank" rel="noopener" hidden>Ver perfil</a>
+            </div>
+          </div>
 
           <div class="job-actions">
             <button id="reportBtn" class="btn pill danger">Denunciar</button>
@@ -150,6 +159,7 @@
   <script>
 (function () {
   const DEFAULT_VAGA_IMG = "img/default-vaga.jpg";
+  const DEFAULT_COMPANY_IMG = "img/default-company.png";
   const API_PREFIX = (typeof window !== "undefined" && window.API_BASE) ? window.API_BASE : "/api";
 
   const qs = new URLSearchParams(location.search);
@@ -215,6 +225,9 @@
   const el = {
     title:  document.getElementById("jobTitle"),
     company:document.getElementById("companyName"),
+    companyCard: document.getElementById("companyProfile"),
+    companyAvatar: document.getElementById("companyAvatar"),
+    companyLink: document.getElementById("companyLink"),
     desc:   document.getElementById("jobDesc"),
     tags:   document.getElementById("tagsList"),
     turno:  document.getElementById("jobTurno"),
@@ -264,6 +277,21 @@
     }
     if (/^uploads\//i.test(src)) return `${API_PREFIX}/${src}`;
     return src || FALLBACK;
+  }
+  function resolveCompanyLogo(src){
+    if (!src) return DEFAULT_COMPANY_IMG;
+    let clean = String(src).trim().replace(/\\/g,"/");
+    if (!clean || clean === "[object Object]") return DEFAULT_COMPANY_IMG;
+    if (/^(https?:|data:)/i.test(clean)) return clean;
+    clean = clean.replace(/^\/?api\/(?=uploads\/)/i,"/");
+    const idx = clean.toLowerCase().indexOf("/uploads/");
+    if (idx !== -1){
+      const rel = clean.slice(idx);
+      return `${API_PREFIX}${rel}`;
+    }
+    if (/^uploads\//i.test(clean)) return `${API_PREFIX}/${clean}`;
+    if (!clean.startsWith("/") && /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(clean)) return `${API_PREFIX}/uploads/${clean}`;
+    return clean || DEFAULT_COMPANY_IMG;
   }
 
   const ensureArray = (x) => Array.isArray(x) ? x : (x ? [x] : []);
@@ -323,10 +351,35 @@
     }
   }
 
+  function updateCompanyProfile(p){
+    const nome = p?.empresa || p?.empresaNome || "Empresa";
+    if (el.company){
+      el.company.textContent = nome || "Empresa";
+    }
+    if (el.companyAvatar){
+      const logoSrc = resolveCompanyLogo(p?.empresaLogo || p?.empresaLogoUrl || p?.logoUrl || p?.logo || "");
+      el.companyAvatar.src = logoSrc;
+      el.companyAvatar.alt = `Logo de ${nome || "Empresa"}`;
+    }
+    if (el.companyLink){
+      const empresaId = p?.empresaId || p?.empresa?.id || null;
+      const perfilUrl = p?.empresaPerfil || (empresaId ? `perfil-empresa.html?id=${encodeURIComponent(empresaId)}${live ? "&public=true" : ""}` : "");
+      if (perfilUrl){
+        el.companyLink.href = perfilUrl;
+        el.companyLink.hidden = false;
+      }else{
+        el.companyLink.hidden = true;
+      }
+    }
+    if (el.companyCard){
+      el.companyCard.hidden = false;
+    }
+  }
+
   function applyPreview(p){
     if (!p) return;
     el.title.textContent   = p.titulo || "Vaga";
-    el.company.textContent = p.empresa || p.empresaNome || "Empresa";
+    updateCompanyProfile(p);
     el.desc.textContent    = p.descricao || "—";
     el.loc.textContent     = p.local || "—";
     el.turno.textContent   = ensureArray(p.turno).join(", ") || "—";
@@ -387,6 +440,8 @@
       applyPreview({
         titulo: v.titulo,
         empresa: v.empresa?.razao_social,
+        empresaId: v.empresa?.id || v.empresaId || extractOwnerId(v),
+        empresaLogo: v.empresa?.logoUrl || v.logoUrl || v.empresaLogo,
         descricao: v.descricao,
         tags: v.tags,
         local: v.local,

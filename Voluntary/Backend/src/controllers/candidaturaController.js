@@ -234,7 +234,8 @@ async function listarCandidaturasDaVaga(req, res, next) {
 async function atualizarStatus(req, res, next) {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, motivoRecusa } = req.body;
+    const reason = typeof motivoRecusa === "string" ? motivoRecusa.trim().slice(0, 500) : "";
 
     const valid = ["ACEITA", "RECUSADA", "INSCRITA", "EM_ANDAMENTO"];
     if (!valid.includes(String(status || ""))) {
@@ -264,14 +265,18 @@ async function atualizarStatus(req, res, next) {
       const destinatario = candidaturaAtual.voluntario?.email || null;
       if (destinatario && (status === 'ACEITA' || status === 'RECUSADA')) {
         const assunto = status === 'ACEITA' ? 'Sua candidatura foi aceita!' : 'Sua candidatura foi recusada';
-        const mensagem = status === 'ACEITA'
+        let mensagem = status === 'ACEITA'
           ? `<p>Parabéns ${candidaturaAtual.voluntario.nome}, sua candidatura para a vaga <strong>${candidaturaAtual.vaga.titulo}</strong> foi <strong>aceita</strong>.</p>`
           : `<p>Olá ${candidaturaAtual.voluntario.nome}, sua candidatura para a vaga <strong>${candidaturaAtual.vaga.titulo}</strong> foi <strong>recusada</strong>.</p>`;
+
+        if (status === 'RECUSADA' && reason) {
+          mensagem += `<p><strong>Motivo informado:</strong> ${escapeHtml(reason)}</p>`;
+        }
 
         const html = `
           <h3>${assunto}</h3>
           ${mensagem}
-          <p>Verifique sua área de candidaturas para mais detalhes.</p>
+          <p>Não deixe isso te desanimar, participe de outras vagas disponiveis em nosso site.</p>
         `;
         await enviarEmail(destinatario, assunto, html);
       }
@@ -280,6 +285,11 @@ async function atualizarStatus(req, res, next) {
     }
 
     try {
+      let mensagemNotificacao = `A vaga "${candidaturaAtual.vaga.titulo}" agora está marcada como ${mapStatusTexto(status)}.`;
+      if (status === "RECUSADA" && reason) {
+        mensagemNotificacao += ` Motivo informado: ${reason}`;
+      }
+
       await registrarNotificacao({
         usuarioId: candidaturaAtual.voluntario?.id,
         titulo: status === "ACEITA"
@@ -287,7 +297,7 @@ async function atualizarStatus(req, res, next) {
           : status === "RECUSADA"
             ? "Sua candidatura foi recusada"
             : "Status da candidatura atualizado",
-        mensagem: `A vaga "${candidaturaAtual.vaga.titulo}" agora está marcada como ${mapStatusTexto(status)}.`,
+        mensagem: mensagemNotificacao,
         categoria: "STATUS_CANDIDATURA",
         link: `/descricao_vagas.html?id=${candidaturaAtual.vaga.id}`
       });
@@ -295,7 +305,7 @@ async function atualizarStatus(req, res, next) {
       console.error("Erro ao registrar notificação de status:", e);
     }
 
-    res.json({ message: "Status atualizado.", candidatura: up });
+    res.json({ message: "Status atualizado.", candidatura: up, motivoRecusa: reason || undefined });
   } catch (err) {
     next(err);
   }
@@ -312,6 +322,16 @@ function mapStatusTexto(status) {
     default:
       return "em análise";
   }
+}
+
+function escapeHtml(str = "") {
+  return String(str).replace(/[&<>"']/g, (m) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[m]));
 }
 
 module.exports = {

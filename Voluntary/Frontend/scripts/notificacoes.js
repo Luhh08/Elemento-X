@@ -19,6 +19,7 @@
     buildNavigation(openNotifications);
     attachNotificationTriggers(openNotifications);
     initUserMenu();
+    initHeaderAvatar();
   });
 
   function buildNavigation(openNotificationsCb) {
@@ -69,11 +70,11 @@
 
   function attachNotificationTriggers(openFn) {
     if (typeof openFn !== "function") return;
-    document.querySelectorAll("[data-open-notifications]").forEach((el) => {
-      el.addEventListener("click", (e) => {
-        e.preventDefault();
-        openFn();
-      });
+    document.addEventListener("click", (e) => {
+      const trigger = e.target.closest("[data-open-notifications]");
+      if (!trigger) return;
+      e.preventDefault();
+      openFn();
     });
   }
 
@@ -90,17 +91,23 @@
     const tipo = (localStorage.getItem("tipoConta") || localStorage.getItem("role") || "").toLowerCase();
     const isEmpresa = tipo.includes("empresa");
     const userId = localStorage.getItem("userId") || "";
+    const empresaId = localStorage.getItem("empresaId") || userId || "";
+    const perfilEmpresaHref = empresaId ? `perfil-empresa.html?id=${encodeURIComponent(empresaId)}` : "login_empresa.html";
+    const perfilUsuarioHref = userId ? `perfil-usuario.html?id=${encodeURIComponent(userId)}` : "login.html";
+
     if (isEmpresa) {
       return [
+        { href: perfilEmpresaHref, label: "Perfil", icon: "fa-building" },
         { href: "pesquisar-volutarios.html", label: "Procurar Voluntarios", icon: "fa-users" },
         { href: "gerenciar_aplicacoes.html", label: "Aplicações", icon: "fa-key" },
         { href: "login_empresa.html", label: "Sair", icon: "fa-arrow-right-from-bracket", danger: true },
       ];
     }
     return [
+      { href: perfilUsuarioHref, label: "Perfil", icon: "fa-user" },
       { href: "vagas.html", label: "Procurar Vagas", icon: "fa-search" },
       {
-        href: userId ? `perfil-usuario.html?id=${encodeURIComponent(userId)}` : "login.html",
+        href: perfilUsuarioHref,
         label: "Minhas candidaturas",
         icon: "fa-clipboard-check",
       },
@@ -162,15 +169,82 @@
     document.addEventListener("click", () => dropdown.classList.remove("active"));
   }
 
+  function initHeaderAvatar() {
+    const avatarEls = Array.from(document.querySelectorAll("#headerAvatar, .avatar-btn img"));
+    if (!avatarEls.length) return;
+
+    const tipo = (localStorage.getItem("tipoConta") || localStorage.getItem("role") || "").toLowerCase();
+    const token = localStorage.getItem("token") || "";
+    const isEmpresa = tipo.includes("empresa");
+    const userId = localStorage.getItem("userId") || "";
+    const empresaId = localStorage.getItem("empresaId") || "";
+    const accountId = isEmpresa ? (empresaId || userId) : userId;
+    if (!accountId) return;
+
+    const endpoint = isEmpresa ? `/api/empresas/${encodeURIComponent(accountId)}` : `/api/usuario/${encodeURIComponent(accountId)}`;
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    fetch(endpoint, { headers })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data) return;
+        const rawSrc = extractAvatarUrl(data, isEmpresa);
+        const finalSrc = normalizeUploadUrl(rawSrc);
+        if (!finalSrc) return;
+        avatarEls.forEach((img) => {
+          img.src = finalSrc;
+        });
+      })
+      .catch((err) => console.error("Erro ao carregar avatar do header:", err));
+  }
+
+  function extractAvatarUrl(data, isEmpresa) {
+    if (!data) return "";
+    if (isEmpresa) {
+      return data.logoUrl || data.logo || data.bannerUrl || "";
+    }
+    return data.fotoUrl || data.foto || data.avatar || "";
+  }
+
+  function normalizeUploadUrl(src) {
+    if (!src) return "";
+    let s = String(src).trim().replace(/\\/g, "/");
+    if (!s || s === "[object Object]") return "";
+    if (/^https?:|^data:/i.test(s)) return s;
+    if (/^\/?api\/uploads\//i.test(s)) return s.startsWith("/") ? s : `/${s}`;
+    if (/^\/?uploads\//i.test(s)) {
+      s = s.replace(/^\/?/, "");
+      return `/api/${s}`;
+    }
+    if (!s.includes("/") && /\.(jpe?g|png|webp|gif|bmp|avif)$/i.test(s)) {
+      return `/api/uploads/${s}`;
+    }
+    return s;
+  }
+
   function initNotificationWidget() {
-    const wrapper = document.getElementById("notificationWrapper");
-    const btn = document.getElementById("notifBtn");
-    const panel = document.getElementById("notifPanel");
-    const counterEls = document.querySelectorAll(".notification-count");
-    if (!wrapper || !btn || !panel) return null;
+    const wrappers = Array.from(document.querySelectorAll(".notification-wrapper"));
+    if (!wrappers.length) return null;
+    const handlers = wrappers
+      .map((wrapper) => createWrapperController(wrapper))
+      .filter(Boolean);
+    return handlers[0]?.open || null;
+  }
+
+  function createWrapperController(wrapper) {
+    const btn = wrapper.querySelector("button");
+    const panel = wrapper.querySelector(".notif-panel");
+    const counterEls = wrapper.querySelectorAll(".notification-count");
+    if (!btn || !panel) return null;
 
     let cache = [];
     const token = localStorage.getItem("token");
+
+    const abrirPainel = async () => {
+      panel.classList.add("active");
+      await carregarNotificacoes();
+      await marcarTodasComoLidas();
+    };
 
     btn.addEventListener("click", async (e) => {
       e.preventDefault();
@@ -183,7 +257,8 @@
     });
 
     document.addEventListener("click", (e) => {
-      if (!panel.contains(e.target) && e.target !== btn) {
+      if (e.target.closest("[data-open-notifications]")) return;
+      if (!panel.contains(e.target) && !btn.contains(e.target)) {
         panel.classList.remove("active");
       }
     });
@@ -278,14 +353,8 @@
         ${lista.length ? corpo : `<p class="notif-empty">Nenhuma notificação recente.</p>`}`;
     }
 
-    async function abrirPainel() {
-      panel.classList.add("active");
-      await carregarNotificacoes();
-      await marcarTodasComoLidas();
-    }
-
     carregarNotificacoes();
-    return abrirPainel;
+    return { open: abrirPainel };
   }
 
   function updateCounter(counters, value) {

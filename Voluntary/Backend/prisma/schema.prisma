@@ -140,6 +140,7 @@ model Candidatura {
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   status       StatusCandidatura @default(INSCRITA)
+  motivoRecusa String?
 
   voluntarioId String            @db.ObjectId
   voluntario   Usuario           @relation(fields: [voluntarioId], references: [id])

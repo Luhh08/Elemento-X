@@ -21,6 +21,8 @@ if (!modoPublico && (!token || !empresaId || !tipoConta.includes("empresa"))) {
   window.location.href = "login_empresa.html";
 }
 
+setupSidebarForVisitor();
+
 function toggleActions() {
   const show = (sel, state) => { const el = document.querySelector(sel); if (el) el.hidden = !state; };
 
@@ -36,6 +38,38 @@ function toggleActions() {
   show("#btnDenunciar", !isSelf);
   show("#btnGerenciar", isSelf);
   show("#btnPublicar", isSelf);
+}
+
+function setupSidebarForVisitor(){
+  try{
+    const tipo = (localStorage.getItem("tipoConta") || localStorage.getItem("role") || "").toLowerCase();
+    const viewerIsEmpresa = tipo.includes("empresa");
+    if(viewerIsEmpresa) return; // já está no layout padrão da empresa
+
+    const menu = document.querySelector(".sidebar .menu");
+    if(menu){
+      menu.innerHTML = `
+        <a class="pill" href="vagas.html">
+          <i class="ri-search-line"></i> Procurar Vagas
+        </a>
+        <div class="notification-wrapper">
+          <button type="button" class="pill">
+            <i class="ri-notification-3-line"></i>
+            Notificações
+            <span class="notification-count"></span>
+          </button>
+          <div class="notif-panel">
+            <div class="notif-header">Notificações</div>
+            <p class="notif-empty">Carregando...</p>
+          </div>
+        </div>
+      `;
+    }
+    const logout = document.getElementById("logout") || document.querySelector(".pill-logout");
+    if(logout) logout.href = "login.html";
+  }catch(err){
+    console.warn("Falha ao ajustar sidebar da empresa para visitante:", err);
+  }
 }
 
 const popupEdicao = $("#popupEdicao");

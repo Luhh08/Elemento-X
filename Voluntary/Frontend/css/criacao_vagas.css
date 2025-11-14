@@ -21,8 +21,38 @@ body{
   color: var(--ink);
   background: linear-gradient(#FFB783,#A2FFF4);
   min-height:100vh;
-  display:flex; align-items:flex-start; justify-content:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  gap:24px;
   padding:24px;
+}
+
+.round-btn{
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  border:none;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 6px 14px rgba(0,0,0,0.12);
+  cursor:pointer;
+}
+.round-btn i{font-size:18px;color:#0f172a;}
+.back-btn{
+  background:#dffcf9;
+  border:2px solid #bfeee8;
+  color:#0f172a;
+}
+.back-btn:hover{background:#d3f3ef;}
+.solo-back{
+  position:fixed;
+  top:24px;
+  left:24px;
+  z-index:80;
 }
 
 /* Layout */
@@ -31,6 +61,7 @@ body{
   grid-template-columns: 1fr 1fr;
   gap:22px;
   width:min(1100px, 100%);
+  margin-top:40px;
 }
 
 .card{

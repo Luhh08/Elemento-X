@@ -43,8 +43,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;padding:0}
 .container{max-width:1100px;margin:0 auto;padding:0 var(--space-32)}
 
 /* HEADER */
-.site-header{background:var(--color-white);border-bottom:1px solid #cacaca;height:72px;display:flex;align-items:center;padding:18px 0}
+.site-header{background:var(--color-white);border-bottom:1px solid #cacaca;padding:12px 0}
+.compact-header{position:sticky;top:0;z-index:50}
 .header-container{display:flex;align-items:center;justify-content:space-between;width:100%;gap:var(--space-24)}
+.header-compact{display:flex;align-items:center;justify-content:space-between;width:100%;gap:16px}
 .logo{
   font-family:var(--font-logo);font-weight:400;font-size:40px;line-height:1.2;letter-spacing:-1.2px;margin:0;
   background:linear-gradient(90deg,#00ffd3 0%,#ffd9b4 73.08%);
@@ -54,18 +56,6 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;padding:0}
 .btn{display:flex;justify-content:center;align-items:center;padding:var(--space-10);border-radius:var(--radius-10);font-size:16px;line-height:1}
 .btn-login{background:var(--color-secondary);color:var(--color-white);padding:0 20.5px}
 .btn-signup{background:var(--color-primary);color:#f5f5f5}
-
-.header-actions{display:flex;align-items:center;gap:var(--space-24);position:relative}
-.user-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #e0e0e0;cursor:pointer}
-.dropdown-menu{
-  position:absolute;top:55px;right:0;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.1);
-  display:none;flex-direction:column;min-width:200px;overflow:hidden;z-index:100
-}
-.dropdown-menu.active{display:flex;animation:fadeIn .2s ease-in-out}
-.dropdown-item{display:flex;align-items:center;gap:10px;padding:12px 16px;color:#1e1e1e;font-size:15px;font-weight:500;transition:background .3s}
-.dropdown-item:hover{background:#f5f5f5}
-.dropdown-item.logout{border-top:1px solid #eee;color:#d9534f}
-@keyframes fadeIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
 
 /* LAYOUT */
 .jobs-section{padding:var(--space-32) 0}
@@ -313,3 +303,4 @@ h3 {
   background-color: #00b8bd;
   transform: scale(1.02);
 }
+.notification-wrapper[hidden]{display:none}

@@ -601,6 +601,24 @@ body.modal-open { overflow: hidden; }
 .card.history .chip.outline:hover {
   filter: brightness(0.97);
 }
+.card.history .hist-reason{
+  margin-top:12px;
+  padding:12px 14px;
+  border-radius:14px;
+  background:#fff1f2;
+  border:1px solid #fecdd3;
+  font-size:14px;
+  line-height:1.45;
+  color:#9f1239;
+}
+.card.history .hist-reason strong{
+  display:block;
+  font-size:12px;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  margin-bottom:6px;
+  color:#831843;
+}
 
 .btn-voltar {
   display: inline-flex;
@@ -625,4 +643,35 @@ body.modal-open { overflow: hidden; }
 
 .btn-voltar i {
   font-size: 18px;
+}
+.menu .notification-wrapper {
+  width: 100%;
+}
+
+.menu .notification-wrapper .pill {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar .notification-wrapper {
+  position: relative;
+}
+
+.sidebar .notification-wrapper .notif-panel {
+  position: absolute;
+  top: 0;
+  left: 100%;             
+  margin-left: 12px;
+  z-index: 99999;
+}
+
+.sidebar .notification-wrapper {
+  position: relative;
+  z-index: 60;
+}
+
+.sidebar {
+  z-index: 50;
 }

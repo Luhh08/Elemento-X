@@ -627,3 +627,35 @@ a.chip:hover { filter: brightness(.98); }
 .btn-voltar i {
   font-size: 18px;
 }
+
+.sidebar .notification-wrapper {
+  position: relative;
+}
+
+.sidebar .notification-wrapper .notif-panel {
+  position: absolute;
+  top: 0;
+  left: 100%;             
+  margin-left: 12px;
+  z-index: 99999;
+}
+
+.sidebar .notification-wrapper {
+  position: relative;
+  z-index: 60;
+}
+
+.sidebar {
+  z-index: 50;
+}
+
+.menu .notification-wrapper {
+  width: 100%;
+}
+
+.menu .notification-wrapper .pill {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

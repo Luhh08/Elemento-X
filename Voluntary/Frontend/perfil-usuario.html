@@ -10,45 +10,30 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
 </head>
 <body>
-  <header class="site-header compact-header">
-    <div class="header-compact">
-      <button class="round-btn back-btn" id="btnBack" type="button" aria-label="Voltar">
-        <i class="fa-solid fa-arrow-left"></i>
-      </button>
-      <div class="header-actions">
-        <div class="notification-wrapper" id="notificationWrapper">
-          <button id="notifBtn" class="round-btn bell-btn" type="button" title="Notificações">
-            <i class="fa-solid fa-bell"></i><span class="notification-count"></span>
-          </button>
-          <div class="notif-panel" id="notifPanel">
-            <div class="notif-header">Notificações</div>
-            <p class="notif-empty">Carregando...</p>
-          </div>
-        </div>
-        <button class="round-btn avatar-btn" id="menuToggle" type="button" aria-label="Abrir menu">
-          <img src="img/default-avatar.jpg" alt="Menu" id="headerAvatar">
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <div class="nav-drawer" id="navDrawer">
-    <div class="drawer-inner">
-      <button class="close-drawer" id="closeDrawer" type="button" aria-label="Fechar menu">&times;</button>
-      <h2 class="drawer-title">Voluntary</h2>
-      <nav id="drawerMenu" class="drawer-menu"></nav>
-    </div>
-  </div>
-  <div class="drawer-overlay" id="drawerOverlay"></div>
   <div class="page">
 
     <!-- Sidebar -->
     <aside class="sidebar">
       <h1 class="brand">Voluntary</h1>
-      <nav class="menu">
-        <a class="pill" href="vagas.html"><i class="ri-search-line"></i> Procurar Vagas</a>
-        <a class="pill" href="#" data-open-notifications><i class="ri-notification-3-line"></i> Notificações</a>
-      </nav>
+<nav class="menu">
+  <a class="pill" href="vagas.html">
+    <i class="ri-search-line"></i> Procurar Vagas
+  </a>
+
+  <!-- Botão de notificações integrado com notificações.js -->
+  <div class="notification-wrapper">
+    <button type="button" class="pill">
+      <i class="ri-notification-3-line"></i>
+      Notificações
+      <span class="notification-count"></span>
+    </button>
+
+    <div class="notif-panel">
+      <div class="notif-header">Notificações</div>
+      <p class="notif-empty">Carregando...</p>
+    </div>
+  </div>
+</nav>
       <a class="pill pill-logout" href="login.html"><i class="ri-logout-box-r-line"></i> Sair</a>
     </aside>
 
