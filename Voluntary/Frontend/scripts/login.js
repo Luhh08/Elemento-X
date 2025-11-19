@@ -1,9 +1,5 @@
 const formLogin = document.querySelector(".login-form");
 
-// A MESMA chave AES usada pelo backend (process.env.FLE_MASTER_KEY)
-// Troque aqui se for diferente:
-const SECRET_KEY = "chaveSeguraDe32Caracteres1234567890";
-
 const LOGIN_URL = "/api/users/login";
 
 formLogin.addEventListener("submit", async (e) => {
