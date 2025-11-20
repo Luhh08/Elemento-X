@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 const authAdmin = require('../middlewares/authAdmin');
-const { sendAdminNotice, tplBanimento, tplDesbanimento } = require('../utils/mailBan');
+const { sendAdminNotice, tplBanimento, tplDesbanimento, tplBanimentoVaga, tplDesbanimentoVaga } = require('../utils/mailBan');
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -303,10 +303,23 @@ router.post('/banir/:tipo/:id', authAdmin, async (req, res) => {
       // (opcional) banir vagas da empresa:
       // await prisma.vaga.updateMany({ where: { empresaId: id }, data: { isBanned: true, banReason: 'Conta da empresa banida' }});
     } else if (tipo === 'vaga') {
-      await prisma.vaga.update({
+      const vaga = await prisma.vaga.update({
         where: { id },
-        data: { isBanned: true, banReason }
+        data: { isBanned: true, banReason },
+        include: { empresa: { select: { razao_social: true, email: true, emailcontato: true } } }
       });
+      const destinatario = vaga.empresa?.emailcontato || vaga.empresa?.email || null;
+      if (destinatario) {
+        await sendAdminNotice(
+          destinatario,
+          'Sua vaga foi banida',
+          tplBanimentoVaga({
+            empresaNome: vaga.empresa?.razao_social,
+            vagaTitulo: vaga.titulo,
+            motivo: banReason
+          })
+        );
+      }
     } else {
       return res.status(400).json({ error: 'Tipo inválido para banimento.' });
     }
@@ -349,10 +362,22 @@ router.post('/desbanir/:tipo/:id', authAdmin, async (req, res) => {
         tplDesbanimento({ nome: e.razao_social || e.usuario })
       );
     } else if (tipo === 'vaga') {
-      await prisma.vaga.update({
+      const vaga = await prisma.vaga.update({
         where: { id },
-        data: { isBanned: false, banReason: null }
+        data: { isBanned: false, banReason: null },
+        include: { empresa: { select: { razao_social: true, email: true, emailcontato: true } } }
       });
+      const destinatario = vaga.empresa?.emailcontato || vaga.empresa?.email || null;
+      if (destinatario) {
+        await sendAdminNotice(
+          destinatario,
+          'Sua vaga foi reativada',
+          tplDesbanimentoVaga({
+            empresaNome: vaga.empresa?.razao_social,
+            vagaTitulo: vaga.titulo
+          })
+        );
+      }
     } else {
       return res.status(400).json({ error: 'Tipo inválido para desbanir.' });
     }

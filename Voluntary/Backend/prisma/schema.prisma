@@ -120,6 +120,8 @@ model Vaga{
   dataFim     DateTime?
   imagens     String[]   
   aplicacoes  Int        @default(0)
+  isBanned    Boolean    @default(false)
+  banReason   String?
   empresa    Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
 
 

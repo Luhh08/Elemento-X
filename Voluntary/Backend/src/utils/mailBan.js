@@ -37,4 +37,32 @@ function tplDesbanimento({ nome }) {
     </div>`;
 }
 
-module.exports = { sendAdminNotice, tplBanimento, tplDesbanimento };
+function tplBanimentoVaga({ empresaNome, vagaTitulo, motivo }) {
+  return `
+    <div style="font-family:Arial,Helvetica,sans-serif">
+      <h2>Vaga banida</h2>
+      <p>Olá ${empresaNome || "responsável"},</p>
+      <p>Sua vaga <strong>${vagaTitulo || "vaga"}</strong> foi <strong>banida</strong> por violação das regras do Voluntary.</p>
+      ${motivo ? `<p><b>Motivo:</b> ${motivo}</p>` : ""}
+      <p>Se precisar de esclarecimentos, responda este e-mail com mais detalhes.</p>
+      <br/><p>Atenciosamente,<br/>Equipe Voluntary</p>
+    </div>`;
+}
+
+function tplDesbanimentoVaga({ empresaNome, vagaTitulo }) {
+  return `
+    <div style="font-family:Arial,Helvetica,sans-serif">
+      <h2>Vaga reativada</h2>
+      <p>Olá ${empresaNome || "responsável"},</p>
+      <p>A vaga <strong>${vagaTitulo || "vaga"}</strong> foi <strong>reativada</strong> e está disponível novamente.</p>
+      <br/><p>Atenciosamente,<br/>Equipe Voluntary</p>
+    </div>`;
+}
+
+module.exports = {
+  sendAdminNotice,
+  tplBanimento,
+  tplDesbanimento,
+  tplBanimentoVaga,
+  tplDesbanimentoVaga,
+};

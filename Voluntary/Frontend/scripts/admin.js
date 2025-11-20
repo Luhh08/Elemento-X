@@ -171,7 +171,7 @@ function statusBadgeForAccount(item) {
         : `<button class="resolver-btn" data-role="resolver-denuncia" data-id="${id}" style="margin-right:6px;">Marcar resolvida</button>`;
       const alvoTipo = getDenunciaTipo(item);
       const alvoId = getDenunciaTargetId(item);
-      const moderationLabel = alvoTipo === 'vaga' ? 'Excluir' : 'Banir';
+      const moderationLabel = 'Banir';
       const modBtn = (alvoId && alvoTipo)
         ? `<button class="ban" data-tipo="${alvoTipo}" data-acao="banir" data-id="${alvoId}">${moderationLabel}</button>`
         : '';

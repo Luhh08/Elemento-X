@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const { sendAdminNotice, tplBanimento, tplDesbanimento } = require('../utils/mailBan');
+const { sendAdminNotice, tplBanimento, tplDesbanimento, tplBanimentoVaga, tplDesbanimentoVaga } = require('../utils/mailBan');
 const prisma = new PrismaClient();
 
 function parseTipo(tipo) {
@@ -62,7 +62,19 @@ async function banirRecurso(req, res) {
       const e = await prisma.empresa.update({ where: { id }, data });
       await sendAdminNotice(e.email, 'Sua conta foi banida', tplBanimento({ nome: e.razao_social || e.usuario, motivo: data.banReason }));
     } else if (tipo === 'vaga') {
-      await prisma.vaga.update({ where: { id }, data });
+      const v = await prisma.vaga.update({
+        where: { id },
+        data,
+        include: { empresa: { select: { razao_social: true, email: true, emailcontato: true } } }
+      });
+      const destinatario = v.empresa?.emailcontato || v.empresa?.email || null;
+      if (destinatario) {
+        await sendAdminNotice(
+          destinatario,
+          'Sua vaga foi banida',
+          tplBanimentoVaga({ empresaNome: v.empresa?.razao_social, vagaTitulo: v.titulo, motivo: data.banReason })
+        );
+      }
     } else {
       return res.status(400).json({ error: 'Tipo não suportado para ban' });
     }
@@ -89,7 +101,19 @@ async function desbanir(req, res) {
       const e = await prisma.empresa.update({ where: { id }, data: clear });
       await sendAdminNotice(e.email, 'Sua conta foi reativada', tplDesbanimento({ nome: e.razao_social || e.usuario }));
     } else if (tipo === 'vaga') {
-      await prisma.vaga.update({ where: { id }, data: clear });
+      const v = await prisma.vaga.update({
+        where: { id },
+        data: clear,
+        include: { empresa: { select: { razao_social: true, email: true, emailcontato: true } } }
+      });
+      const destinatario = v.empresa?.emailcontato || v.empresa?.email || null;
+      if (destinatario) {
+        await sendAdminNotice(
+          destinatario,
+          'Sua vaga foi reativada',
+          tplDesbanimentoVaga({ empresaNome: v.empresa?.razao_social, vagaTitulo: v.titulo })
+        );
+      }
     } else {
       return res.status(400).json({ error: 'Tipo não suportado para desbanir' });
     }
