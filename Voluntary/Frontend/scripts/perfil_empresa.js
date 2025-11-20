@@ -593,8 +593,9 @@ async function uploadImagem(tipo) {
         headers: { Authorization: `Bearer ${token}` },
         body: fd
       });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || "Erro no upload.");
+      let data = {};
+      try { data = await resp.json(); } catch { /* resposta não-JSON */ }
+      if (!resp.ok) throw new Error(data.error || `Erro no upload (HTTP ${resp.status}).`);
 
       if (tipo === "logo") {
         const novoLogo = data.empresa.logoUrl || defaultAvatar;
@@ -614,7 +615,7 @@ async function uploadImagem(tipo) {
       alert("🖼️ Imagem enviada!");
     } catch (err) {
       console.error(err);
-      alert("❌ Falha no upload.");
+      alert(`❌ ${err.message || "Falha no upload."}`);
     }
   };
   input.click();

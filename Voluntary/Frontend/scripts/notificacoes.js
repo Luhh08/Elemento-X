@@ -94,6 +94,7 @@
     const empresaId = localStorage.getItem("empresaId") || userId || "";
     const perfilEmpresaHref = empresaId ? `perfil-empresa.html?id=${encodeURIComponent(empresaId)}` : "login_empresa.html";
     const perfilUsuarioHref = userId ? `perfil-usuario.html?id=${encodeURIComponent(userId)}` : "login.html";
+    const isDescricaoVagaPage = (location.pathname || "").toLowerCase().includes("descricao_vagas.html");
 
     if (isEmpresa) {
       return [
@@ -103,16 +104,18 @@
         { href: "login_empresa.html", label: "Sair", icon: "fa-arrow-right-from-bracket", danger: true },
       ];
     }
-    return [
+    const links = [
       { href: perfilUsuarioHref, label: "Perfil", icon: "fa-user" },
       { href: "vagas.html", label: "Procurar Vagas", icon: "fa-search" },
-      {
-        href: perfilUsuarioHref,
-        label: "Minhas candidaturas",
-        icon: "fa-clipboard-check",
-      },
-      { href: "login.html", label: "Sair", icon: "fa-arrow-right-from-bracket", danger: true },
     ];
+
+    // Na descrição da vaga ocultamos o atalho de candidaturas (evita "Minhas aplicações")
+    if (!isDescricaoVagaPage) {
+      links.push({ href: perfilUsuarioHref, label: "Minhas candidaturas", icon: "fa-clipboard-check" });
+    }
+
+    links.push({ href: "login.html", label: "Sair", icon: "fa-arrow-right-from-bracket", danger: true });
+    return links;
 }
 
   function renderLinks(links, baseClass) {

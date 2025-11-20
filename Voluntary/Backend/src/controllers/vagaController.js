@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const path = require("path");
+const { registrarNotificacao } = require("../utils/notificacaoService");
 const prisma = new PrismaClient();
 
 async function listarVagasPublicas(req, res, next) {
@@ -95,7 +96,13 @@ async function atualizarVaga(req, res, next) {
 
     const vagaAtual = await prisma.vaga.findUnique({
       where: { id },
-      select: { id: true, empresaId: true }
+      select: {
+        id: true,
+        empresaId: true,
+        status: true,
+        titulo: true,
+        empresa: { select: { email: true, emailcontato: true } },
+      }
     });
     if (!vagaAtual) return res.status(404).json({ error: "Vaga não encontrada" });
     if (String(vagaAtual.empresaId) !== String(empresaId)) {
@@ -128,21 +135,92 @@ async function atualizarVaga(req, res, next) {
 
     const imagensFinal = [...imagensExistentes, ...novasImagens];
 
+    const novoStatus = String(status || "ABERTA").trim().toUpperCase();
+    const statusAnterior = String(vagaAtual.status || "").trim().toUpperCase();
+    const contatoEmpresa =
+      vagaAtual?.empresa?.emailcontato ||
+      vagaAtual?.empresa?.email ||
+      "o e-mail informado pela empresa";
+
     const updated = await prisma.vaga.update({
       where: { id },
       data: {
         titulo,
         descricao,
         local,
-        status,
+        status: novoStatus,
         tags,
         turno: turnos,       
         dataInicio: dtInicio,
         dataFim: dtFim,
         imagens: imagensFinal,
       },
-      select: { id: true },
+      select: { id: true, status: true, titulo: true },
     });
+
+    // Notificar voluntários quando a vaga mudar para ANDAMENTO
+    if (statusAnterior !== "ANDAMENTO" && novoStatus === "ANDAMENTO") {
+      try {
+        const candidaturas = await prisma.candidatura.findMany({
+          where: { vagaId: id },
+          select: { voluntarioId: true },
+        });
+        const dedupe = new Set();
+        const notifications = [];
+        for (const c of candidaturas) {
+          if (!c.voluntarioId) continue;
+          const key = c.voluntarioId;
+          if (dedupe.has(key)) continue;
+          dedupe.add(key);
+          notifications.push({
+            titulo: "Vaga em andamento",
+            mensagem: `A vaga "${vagaAtual.titulo || updated.titulo || "Vaga"}" iniciou, fique atento sobre horário e local de participação. Para dúvidas, envie um e-mail para ${contatoEmpresa}.`,
+            categoria: "VAGA",
+            link: `/descricao_vagas.html?id=${encodeURIComponent(id)}`,
+            usuarioId: c.voluntarioId,
+          });
+        }
+        if (notifications.length) {
+          for (const n of notifications) {
+            await registrarNotificacao(n);
+          }
+        }
+      } catch (notifyErr) {
+        console.error("Falha ao notificar voluntários sobre vaga em andamento:", notifyErr);
+      }
+    }
+
+    // Notificar voluntários quando a vaga for FINALIZADA
+    if (statusAnterior !== "FINALIZADA" && novoStatus === "FINALIZADA") {
+      try {
+        const candidaturas = await prisma.candidatura.findMany({
+          where: { vagaId: id },
+          select: { voluntarioId: true },
+        });
+        const dedupe = new Set();
+        const notifications = [];
+        for (const c of candidaturas) {
+          if (!c.voluntarioId) continue;
+          const key = c.voluntarioId;
+          if (dedupe.has(key)) continue;
+          dedupe.add(key);
+          notifications.push({
+            titulo: "Vaga finalizada",
+            mensagem: `A vaga "${vagaAtual.titulo || updated.titulo || "Vaga"}" foi encerrada, muito obrigado por sua participação.`,
+            categoria: "VAGA",
+            link: `/descricao_vagas.html?id=${encodeURIComponent(id)}`,
+            usuarioId: c.voluntarioId,
+          });
+        }
+        if (notifications.length) {
+          for (const n of notifications) {
+            await registrarNotificacao(n);
+          }
+        }
+      } catch (notifyErr) {
+        console.error("Falha ao notificar voluntários sobre vaga finalizada:", notifyErr);
+      }
+    }
 
     res.json(updated);
   } catch (e) {

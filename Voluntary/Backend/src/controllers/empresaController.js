@@ -520,7 +520,7 @@ async function uploadImagem(req, res, next) {
     if (tipo === "banner") {
       try {
         const meta = await sharp(absPath).metadata();
-        const { width, height } = meta || {};
+        const { width, height, format } = meta || {};
         if (!width || !height) {
           await safeUnlink(absPath);
           return res.status(400).json({ error: "Não foi possível ler as dimensões do banner." });
@@ -529,11 +529,21 @@ async function uploadImagem(req, res, next) {
         const MIN_W = 1200, MIN_H = 800; // recomendado
         const sizeOk = width >= MIN_W && height >= MIN_H;
 
+        // Se o banner vier pequeno ou fora da proporção, ajustamos automaticamente
         if (ratio < 1.5 || !sizeOk) {
-          await safeUnlink(absPath);
-          return res.status(400).json({
-            error: "O banner deve ter proporção mínima 3:2 (ex.: 1200×800) ou maior (mais horizontal)."
-          });
+          try {
+            let pipeline = sharp(absPath)
+              .resize(MIN_W, MIN_H, { fit: "cover" }); // força 3:2 cobrindo a área
+            if (format) pipeline = pipeline.toFormat(format); // mantém formato original quando possível
+            const buffer = await pipeline.toBuffer();
+            await fs.writeFile(absPath, buffer);
+          } catch (resizeErr) {
+            await safeUnlink(absPath);
+            console.error("upload banner resize error:", resizeErr);
+            return res.status(400).json({
+              error: "O banner deve ter proporção mínima 3:2 (ex.: 1200×800) ou maior (mais horizontal)."
+            });
+          }
         }
       } catch (e) {
         await safeUnlink(absPath);
