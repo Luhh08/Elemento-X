@@ -180,7 +180,7 @@ function resolveMeuPerfilUrl(){
   return meuUsuarioId ? `perfil-usuario.html?id=${encodeURIComponent(meuUsuarioId)}` : null;
 }
 
-function decideRowUI(item, vagaId, vagaStatus, linkVaga){
+function decideRowUI(item, vagaId, vagaStatus, linkVaga, vagaTitulo=""){
   const vs = String(vagaStatus||"").toUpperCase();
 
   if (vs === "FINALIZADA") {
@@ -197,7 +197,7 @@ function decideRowUI(item, vagaId, vagaStatus, linkVaga){
     return {
       chipText:  "Projeto em andamento",
       chipClass: "status-participando",
-      btnHtml:   `<a class="chip outline chip-link" href="${linkVaga}">Ver detalhes</a>`
+      btnHtml:   `<a class="chip outline chip-link" href="${linkVaga}">Ver detalhes da vaga ${esc(vagaTitulo || "")}</a>`
     };
   }
 
@@ -259,7 +259,7 @@ function historicoCard(item){
     : "#";
 
   // Chip + botão (considera status da VAGA e da CANDIDATURA)
-  const row = decideRowUI(item, vagaId, v.status, linkVaga);
+  const row = decideRowUI(item, vagaId, v.status, linkVaga, titulo);
 
   return `
   <article class="vaga-card">
