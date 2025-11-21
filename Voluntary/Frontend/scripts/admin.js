@@ -58,17 +58,19 @@
   // cria/recupera o campo de motivo no modal
   function ensureReasonField() {
     let fld = modal.querySelector('#ban-reason');
+    let lbl = modal.querySelector('#ban-reason-label');
     if (!fld) {
       const wrap = document.createElement('div');
       wrap.style.marginTop = '10px';
       wrap.innerHTML = `
-        <label for="ban-reason" style="display:block;font-size:13px;margin-bottom:6px;">Motivo do banimento (opcional)</label>
+        <label id="ban-reason-label" for="ban-reason" style="display:block;font-size:13px;margin-bottom:6px;">Motivo (opcional)</label>
         <textarea id="ban-reason" rows="3" style="width:100%;resize:vertical;"></textarea>
       `;
       modalText.insertAdjacentElement('afterend', wrap);
       fld = wrap.querySelector('#ban-reason');
+      lbl = wrap.querySelector('#ban-reason-label');
     }
-    return fld;
+    return { fld, lbl };
   }
 
   function openModal(payload) {
@@ -76,16 +78,25 @@
     state.pending = payload;
     const isBan = ['usuario','empresa','vaga'].includes(payload?.tipo) && payload?.acao === 'banir';
     const isRemove = payload?.acao === 'remover';
+    const showReason = isBan || (payload?.tipo === 'vaga' && isRemove);
+
     modalText.textContent = isBan
       ? 'Tem certeza que deseja BANIR este registro? O acesso será bloqueado, mas os identificadores serão preservados.'
       : (payload?.tipo === 'denuncia' || payload?.tipo === 'feedback' || (payload?.tipo === 'vaga' && isRemove))
         ? `Confirmar remoção definitiva deste ${payload.tipo}?`
         : 'Deseja DESBANIR este registro?';
 
-    // motivo só aparece no ban
-    const reasonField = ensureReasonField();
-    reasonField.parentElement.style.display = isBan ? 'block' : 'none';
-    if (isBan) reasonField.value = '';
+    // motivo aparece no ban e na remoção de vaga (avisa empresa)
+    const { fld, lbl } = ensureReasonField();
+    if (lbl) {
+      lbl.textContent = isBan
+        ? 'Motivo do banimento (opcional)'
+        : 'Motivo da remoção (opcional)';
+    }
+    if (fld) {
+      fld.parentElement.style.display = showReason ? 'block' : 'none';
+      if (showReason) fld.value = '';
+    }
 
     modal.setAttribute('aria-hidden', 'false');
     modal.classList.add('open');
@@ -423,16 +434,16 @@ function applySearch() {
 
     try {
       let url, opt;
+      const { fld: reasonField } = ensureReasonField();
+      const reasonVal = reasonField ? reasonField.value.trim() : '';
 
       if (['usuario','empresa'].includes(p.tipo)) {
         if (p.acao === 'banir') {
-          const reasonField = modal.querySelector('#ban-reason');
-          const reason = reasonField ? reasonField.value.trim() : '';
           url = `${API_BASE}/banir/${p.tipo}/${p.id}`;
           opt = {
             method: 'POST',
             headers: headers(),
-            body: JSON.stringify({ reason: reason || 'Violação das regras' })
+            body: JSON.stringify({ reason: reasonVal || 'Violação das regras' })
           };
         } else {
           url = `${API_BASE}/desbanir/${p.tipo}/${p.id}`;
@@ -441,7 +452,11 @@ function applySearch() {
       } else if (p.tipo === 'vaga') {
         if (p.acao === 'remover') {
           url = `${API_BASE}/vagas/${p.id}`;
-          opt = { method: 'DELETE', headers: headers() };
+          opt = {
+            method: 'DELETE',
+            headers: headers(),
+            body: JSON.stringify({ reason: reasonVal || 'Remoção administrativa da vaga' })
+          };
         } else if (p.acao === 'banir') {
           // fallback para quem ainda estiver marcado como banir
           url = `${API_BASE}/banir/${p.tipo}/${p.id}`;

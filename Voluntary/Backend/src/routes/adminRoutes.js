@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 const authAdmin = require('../middlewares/authAdmin');
 const { sendAdminNotice, tplBanimento, tplDesbanimento, tplBanimentoVaga, tplDesbanimentoVaga } = require('../utils/mailBan');
+const { registrarNotificacao } = require('../utils/notificacaoService');
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -415,8 +416,12 @@ router.delete('/banir/:tipo/:id', authAdmin, async (req, res) => {
 =========================== */
 router.delete('/vagas/:id', authAdmin, async (req, res) => {
   const { id } = req.params;
+  const reason = String(req.body?.reason || '').trim().slice(0, 500) || null;
   try {
-    const vagaExiste = await prisma.vaga.findUnique({ where: { id } });
+    const vagaExiste = await prisma.vaga.findUnique({
+      where: { id },
+      include: { empresa: { select: { id: true, razao_social: true, email: true, emailcontato: true } } }
+    });
     if (!vagaExiste) return res.status(404).json({ error: 'Vaga não encontrada.' });
 
     // limpa dependências para evitar conflitos de FK
@@ -425,6 +430,42 @@ router.delete('/vagas/:id', authAdmin, async (req, res) => {
     await prisma.denuncia.deleteMany({ where: { alvoId: id, tipo: 'vaga' } });
 
     await prisma.vaga.delete({ where: { id } });
+
+    // Avisar a empresa, se houver e-mail de contato
+    const destinatario = vagaExiste.empresa?.emailcontato || vagaExiste.empresa?.email || null;
+    if (destinatario) {
+      const html = `
+        <div style="font-family:Arial,Helvetica,sans-serif">
+          <h2>Vaga removida pela administração</h2>
+          <p>Olá ${vagaExiste.empresa?.razao_social || 'responsável'},</p>
+          <p>A vaga <strong>${vagaExiste.titulo || 'vaga'}</strong> foi removida pela equipe de administração.</p>
+          ${reason ? `<p><strong>Motivo informado:</strong> ${reason}</p>` : ''}
+          <p>Em caso de dúvidas ou para reenviar a vaga com ajustes, responda este e-mail.</p>
+          <br/><p>Atenciosamente,<br/>Equipe Voluntary</p>
+        </div>`;
+      try {
+        await sendAdminNotice(destinatario, 'Sua vaga foi removida', html);
+      } catch (mailErr) {
+        console.error('[admin/remover-vaga] falha ao enviar e-mail:', mailErr);
+      }
+    }
+
+    // Notificação interna para a empresa
+    if (vagaExiste.empresa?.id) {
+      const msg = `Sua vaga "${vagaExiste.titulo || 'vaga'}" foi removida pela administração.${reason ? ' Motivo: ' + reason : ''}`;
+      try {
+        await registrarNotificacao({
+          empresaId: vagaExiste.empresa.id,
+          titulo: 'Vaga removida pela administração',
+          mensagem: msg,
+          categoria: 'VAGA',
+          link: `/perfil-empresa.html?id=${encodeURIComponent(vagaExiste.empresa.id)}`
+        });
+      } catch (notifErr) {
+        console.error('[admin/remover-vaga] falha ao registrar notificação:', notifErr);
+      }
+    }
+
     res.json({ message: 'Vaga removida com sucesso.' });
   } catch (err) {
     console.error('[admin/remover-vaga] erro:', err);
