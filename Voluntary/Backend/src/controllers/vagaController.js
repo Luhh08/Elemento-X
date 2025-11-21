@@ -1,7 +1,9 @@
 const { PrismaClient } = require("@prisma/client");
 const path = require("path");
 const { registrarNotificacao } = require("../utils/notificacaoService");
+const { enviarEmail } = require("../utils/emailUtils");
 const prisma = new PrismaClient();
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 async function listarVagasPublicas(req, res, next) {
   try {
@@ -163,7 +165,10 @@ async function atualizarVaga(req, res, next) {
       try {
         const candidaturas = await prisma.candidatura.findMany({
           where: { vagaId: id },
-          select: { voluntarioId: true },
+          select: {
+            voluntarioId: true,
+            voluntario: { select: { email: true, nome: true } },
+          },
         });
         const dedupe = new Set();
         const notifications = [];
@@ -179,6 +184,23 @@ async function atualizarVaga(req, res, next) {
             link: `/descricao_vagas.html?id=${encodeURIComponent(id)}`,
             usuarioId: c.voluntarioId,
           });
+
+          const destinatario = c.voluntario?.email || null;
+          if (destinatario) {
+            const assunto = "Atualização da sua candidatura - Vaga em andamento";
+            const html = `
+              <h3>Vaga em andamento</h3>
+              <p>Olá ${c.voluntario?.nome || "voluntário"},</p>
+              <p>A vaga <strong>"${vagaAtual.titulo || updated.titulo || "Vaga"}"</strong> iniciou. Fique atento sobre horário e local de participação.</p>
+              <p>Para dúvidas, envie um e-mail para ${contatoEmpresa}.</p>
+              <p>Veja mais detalhes em: <a href="${FRONTEND_URL}/descricao_vagas.html?id=${encodeURIComponent(id)}">Informações da Vaga</a></p>
+            `;
+            try {
+              await enviarEmail(destinatario, assunto, html);
+            } catch (emailErr) {
+              console.error("Falha ao enviar e-mail (vaga em andamento):", emailErr);
+            }
+          }
         }
         if (notifications.length) {
           for (const n of notifications) {
@@ -195,7 +217,10 @@ async function atualizarVaga(req, res, next) {
       try {
         const candidaturas = await prisma.candidatura.findMany({
           where: { vagaId: id },
-          select: { voluntarioId: true },
+          select: {
+            voluntarioId: true,
+            voluntario: { select: { email: true, nome: true } },
+          },
         });
         const dedupe = new Set();
         const notifications = [];
@@ -211,6 +236,22 @@ async function atualizarVaga(req, res, next) {
             link: `/descricao_vagas.html?id=${encodeURIComponent(id)}`,
             usuarioId: c.voluntarioId,
           });
+
+          const destinatario = c.voluntario?.email || null;
+          if (destinatario) {
+            const assunto = "Atualização da sua candidatura - Vaga finalizada";
+            const html = `
+              <h3>Vaga finalizada</h3>
+              <p>Olá ${c.voluntario?.nome || "voluntário"},</p>
+              <p>A vaga <strong>"${vagaAtual.titulo || updated.titulo || "Vaga"}"</strong> foi encerrada, muito obrigado pela sua participação.</p>
+              <p>Veja mais detalhes em: <a href="${FRONTEND_URL}/descricao_vagas.html?id=${encodeURIComponent(id)}">Informações da Vaga</a></p>
+            `;
+            try {
+              await enviarEmail(destinatario, assunto, html);
+            } catch (emailErr) {
+              console.error("Falha ao enviar e-mail (vaga finalizada):", emailErr);
+            }
+          }
         }
         if (notifications.length) {
           for (const n of notifications) {

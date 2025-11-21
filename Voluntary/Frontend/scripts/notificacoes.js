@@ -109,11 +109,6 @@
       { href: "vagas.html", label: "Procurar Vagas", icon: "fa-search" },
     ];
 
-    // Na descrição da vaga ocultamos o atalho de candidaturas (evita "Minhas aplicações")
-    if (!isDescricaoVagaPage) {
-      links.push({ href: perfilUsuarioHref, label: "Minhas candidaturas", icon: "fa-clipboard-check" });
-    }
-
     links.push({ href: "login.html", label: "Sair", icon: "fa-arrow-right-from-bracket", danger: true });
     return links;
 }

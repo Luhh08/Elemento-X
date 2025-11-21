@@ -155,6 +155,7 @@ async function listarUsuarios(req, res, next) {
           emailcontato: true,
           telefonecontato: true,
           competencias: true,
+          preferenciaHorario: true,
           isBanned: true,
         },
       }),
@@ -168,6 +169,7 @@ async function listarUsuarios(req, res, next) {
       emailcontato: u.emailcontato || null,
       telefonecontato: u.telefonecontato || null,
       competencias: Array.isArray(u.competencias) ? u.competencias : [],
+      preferenciaHorario: Array.isArray(u.preferenciaHorario) ? u.preferenciaHorario : (u.preferenciaHorario ? [u.preferenciaHorario] : []),
       isBanned: !!u.isBanned,
     }));
 

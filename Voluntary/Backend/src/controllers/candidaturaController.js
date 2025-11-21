@@ -99,6 +99,12 @@ async function listarCandidaturas(req, res, next) {
       req.user?.empresa?.id ||
       (req.user?.tipo === "empresa" ? (req.user?.empresaId || req.user?.id) : null) ||
       null;
+    const requestedVoluntarioId = String(req.query.usuarioId || req.query.voluntarioId || "").trim();
+    const viewerRole = String(req.user?.role || req.user?.tipo || "").toLowerCase();
+    const isAdmin = viewerRole === "admin";
+    const canOverrideVoluntario =
+      requestedVoluntarioId &&
+      (isAdmin || empresaId || (userId && requestedVoluntarioId === String(userId)));
 
     if (!empresaId && !userId) {
       return res.status(403).json({ error: "Perfil não autorizado para listar candidaturas." });
@@ -106,8 +112,39 @@ async function listarCandidaturas(req, res, next) {
 
     let where = {};
     let include = {};
+    const vagaSelect = {
+      id: true,
+      titulo: true,
+      status: true,
+      empresaId: true,
+      imagens: true,
+      empresa: { select: { id: true, razao_social: true, logoUrl: true } }
+    };
+    const voluntarioSelect = {
+      id: true,
+      nome: true,
+      usuario: true,
+      email: true,
+      emailcontato: true,
+      telefonecontato: true,
+      competencias: true,
+      fotoUrl: true,
+      preferenciaHorario: true
+    };
 
-    if (empresaId) {
+    if (requestedVoluntarioId && !canOverrideVoluntario) {
+      return res.status(403).json({ error: "Você não pode visualizar o histórico deste voluntário." });
+    }
+
+    // Quando o visitante solicitar explicitamente o histórico de um voluntário,
+    // usamos o ID informado (permitido para empresa, admin ou o próprio voluntário).
+    if (canOverrideVoluntario) {
+      where = { voluntarioId: requestedVoluntarioId };
+      include = {
+        vaga: { select: vagaSelect },
+        ...(empresaId || isAdmin ? { voluntario: { select: voluntarioSelect } } : {})
+      };
+    } else if (empresaId) {
       const vagas = await prisma.vaga.findMany({
         where: { empresaId },
         select: { id: true }
@@ -119,43 +156,17 @@ async function listarCandidaturas(req, res, next) {
 
       where = { vagaId: { in: vagaIds } };
       include = {
-        voluntario: {
-          select: {
-            id: true,
-            nome: true,
-            usuario: true,
-            email: true,
-            emailcontato: true,
-            telefonecontato: true,
-            competencias: true,
-            fotoUrl: true,
-            preferenciaHorario: true
-          }
-        },
+        voluntario: { select: voluntarioSelect },
         // 🔴 Agora inclui imagens e dados mínimos da empresa
         vaga: {
-          select: {
-            id: true,
-            titulo: true,
-            status: true,
-            empresaId: true,
-            imagens: true,
-            empresa: { select: { id: true, razao_social: true, logoUrl: true } }
-          }
+          select: vagaSelect
         }
       };
     } else if (userId) {
       where = { voluntarioId: userId };
       include = {
         vaga: {
-          select: {
-            id: true,
-            titulo: true,
-            status: true,
-            empresaId: true,
-            imagens: true,
-            empresa: { select: { id: true, razao_social: true, logoUrl: true } }
-          }
+          select: vagaSelect
         }
       };
     } else {

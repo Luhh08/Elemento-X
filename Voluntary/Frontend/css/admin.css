@@ -404,3 +404,69 @@ button.unban:active{
 button.unban:disabled{
   opacity:.6; cursor:not-allowed; filter: grayscale(.2);
 }
+
+/* --- Ajustes específicos da tabela de Empresas --- */
+#empresas table th:nth-child(1),
+#empresas table td:nth-child(1) { width: 40px; }
+#empresas table th:nth-child(2),
+#empresas table td:nth-child(2) { width: 180px; word-break: break-all; }
+#empresas table th:nth-child(3),
+#empresas table td:nth-child(3) { width: 180px; text-align: left; }
+#empresas table th:nth-child(4),
+#empresas table td:nth-child(4) { width: 240px; text-align: left; }
+#empresas table th:nth-child(5),
+#empresas table td:nth-child(5) { width: 110px; white-space: nowrap; }
+#empresas table th:nth-child(6),
+#empresas table td:nth-child(6) { width: 140px; }
+#empresas table th:nth-child(7),
+#empresas table td:nth-child(7) { width: 150px; }
+
+#empresas td:last-child {
+  white-space: nowrap;
+}
+
+#empresas .status-badge {
+  min-width: 110px;
+  padding: 6px 16px;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+}
+
+#empresas button.ban,
+#empresas button.unban {
+  min-width: 90px;
+  padding: 9px 18px;
+  white-space: nowrap;
+}
+
+/* --- Ajustes específicos da tabela de Feedback --- */
+#feedback table th:nth-child(1),
+#feedback table td:nth-child(1) { width: 40px; }
+#feedback table th:nth-child(2),
+#feedback table td:nth-child(2) { width: 160px; word-break: break-all; }
+#feedback table th:nth-child(3),
+#feedback table td:nth-child(3) { width: 180px; text-align:left; }
+#feedback table th:nth-child(4),
+#feedback table td:nth-child(4) { width: 170px; text-align:left; }
+#feedback table th:nth-child(5),
+#feedback table td:nth-child(5) { width: 150px; text-align:left; }
+#feedback table th:nth-child(6),
+#feedback table td:nth-child(6) { width: 80px; }
+#feedback table th:nth-child(7),
+#feedback table td:nth-child(7) { width: 260px; text-align:left; }
+#feedback table th:nth-child(8),
+#feedback table td:nth-child(8) { width: 120px; white-space: nowrap; }
+#feedback table th:nth-child(9),
+#feedback table td:nth-child(9) { width: 130px; white-space: nowrap; }
+
+#feedback td:last-child {
+  white-space: nowrap;
+}
+
+#feedback button.ban,
+#feedback .action-btn,
+#feedback .btn {
+  min-width: 110px;
+  padding: 10px 18px;
+  white-space: nowrap;
+}
