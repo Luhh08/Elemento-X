@@ -410,4 +410,26 @@ router.delete('/banir/:tipo/:id', authAdmin, async (req, res) => {
   }
 });
 
+/* ===========================
+   REMOVER VAGA (admin)
+=========================== */
+router.delete('/vagas/:id', authAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const vagaExiste = await prisma.vaga.findUnique({ where: { id } });
+    if (!vagaExiste) return res.status(404).json({ error: 'Vaga não encontrada.' });
+
+    // limpa dependências para evitar conflitos de FK
+    await prisma.candidatura.deleteMany({ where: { vagaId: id } });
+    await prisma.avaliacao.deleteMany({ where: { vagaId: id } });
+    await prisma.denuncia.deleteMany({ where: { alvoId: id, tipo: 'vaga' } });
+
+    await prisma.vaga.delete({ where: { id } });
+    res.json({ message: 'Vaga removida com sucesso.' });
+  } catch (err) {
+    console.error('[admin/remover-vaga] erro:', err);
+    res.status(500).json({ error: 'Erro ao remover a vaga.' });
+  }
+});
+
 module.exports = router;

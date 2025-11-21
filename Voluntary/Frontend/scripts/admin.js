@@ -75,9 +75,10 @@
     // payload: { tipo, id, acao }
     state.pending = payload;
     const isBan = ['usuario','empresa','vaga'].includes(payload?.tipo) && payload?.acao === 'banir';
+    const isRemove = payload?.acao === 'remover';
     modalText.textContent = isBan
       ? 'Tem certeza que deseja BANIR este registro? O acesso será bloqueado, mas os identificadores serão preservados.'
-      : (payload?.tipo === 'denuncia' || payload?.tipo === 'feedback')
+      : (payload?.tipo === 'denuncia' || payload?.tipo === 'feedback' || (payload?.tipo === 'vaga' && isRemove))
         ? `Confirmar remoção definitiva deste ${payload.tipo}?`
         : 'Deseja DESBANIR este registro?';
 
@@ -155,8 +156,13 @@ function statusBadgeForAccount(item) {
 }
 
   function actionButtonHTML(item, tipo) {
-    // mostra Banir/Desbanir conforme isBanned (só para usuario/empresa/vaga)
-    if (['usuarios','empresas','vagas'].includes(tipo)) {
+    // Vagas: agora só remover (sem ban/desban)
+    if (tipo === 'vagas') {
+      return `<button class="ban" data-tipo="vaga" data-acao="remover" data-id="${getId(item)}">Remover</button>`;
+    }
+
+    // mostra Banir/Desbanir conforme isBanned (usuários/empresas)
+    if (['usuarios','empresas'].includes(tipo)) {
       const banned = !!item.isBanned;
       const label  = banned ? 'Desbanir' : 'Banir';
       const acao   = banned ? 'desbanir' : 'banir';
@@ -418,7 +424,7 @@ function applySearch() {
     try {
       let url, opt;
 
-      if (['usuario','empresa','vaga'].includes(p.tipo)) {
+      if (['usuario','empresa'].includes(p.tipo)) {
         if (p.acao === 'banir') {
           const reasonField = modal.querySelector('#ban-reason');
           const reason = reasonField ? reasonField.value.trim() : '';
@@ -430,6 +436,18 @@ function applySearch() {
           };
         } else {
           url = `${API_BASE}/desbanir/${p.tipo}/${p.id}`;
+          opt = { method: 'POST', headers: headers() };
+        }
+      } else if (p.tipo === 'vaga') {
+        if (p.acao === 'remover') {
+          url = `${API_BASE}/vagas/${p.id}`;
+          opt = { method: 'DELETE', headers: headers() };
+        } else if (p.acao === 'banir') {
+          // fallback para quem ainda estiver marcado como banir
+          url = `${API_BASE}/banir/${p.tipo}/${p.id}`;
+          opt = { method: 'POST', headers: headers() };
+        } else {
+          url = `${API_BASE}/banir/${p.tipo}/${p.id}`;
           opt = { method: 'POST', headers: headers() };
         }
       } else {
