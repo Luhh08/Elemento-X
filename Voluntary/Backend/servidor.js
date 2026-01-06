@@ -22,11 +22,11 @@ const adminRoutes = require("./src/routes/adminRoutes");
 const avaliacaoRoutes = require("./src/routes/avaliacaoRoutes");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || true,
+    origin: process.env.FRONTEND_URL,
     credentials: true,
   })
 );
